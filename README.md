@@ -67,9 +67,16 @@ cp .env.example .env
 Configure your `.env` variables:
 - `PORT`: HTTP port (defaults to `3000`)
 - `NODE_ENV`: `development` or `production`
-- `GEMINI_API_KEY`: Google Gemini API key (for AI analysis)
+- `GEMINI_API_KEY`: Google Gemini Developer API key (obtain from [Google AI Studio](https://aistudio.google.com))
+- `GEMINI_MODEL`: *(Optional)* Gemini model (defaults to `gemini-1.5-flash`)
 - `GITHUB_TOKEN`: *(Optional)* GitHub personal access token for higher API rate limits
 - `GITLAB_TOKEN`: *(Optional)* GitLab API token
+
+> [!IMPORTANT]
+> **Gemini Developer API Quota vs. Google AI Pro Subscription**:
+> GitEx uses the **Google Gemini Developer API**. Please note that a consumer **Google One AI Premium / Google AI Pro subscription** (for gemini.google.com) does **not** grant Developer API quota or an API key. You must obtain an API key with Developer API quota through [Google AI Studio](https://aistudio.google.com).
+>
+> All API credentials remain strictly server-side on the Node.js application and are never sent to browser code, stored in LocalStorage, or logged.
 
 ### 3. Running Locally
 
