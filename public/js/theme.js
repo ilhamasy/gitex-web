@@ -40,6 +40,10 @@
         toggle.setAttribute('aria-label', 'Switch to dark theme');
       }
     }
+
+    try {
+      window.dispatchEvent(new CustomEvent('gitex-theme-change', { detail: { theme } }));
+    } catch (e) {}
   }
 
   // 1. Immediately apply stored theme to DOM
