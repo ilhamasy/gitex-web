@@ -214,7 +214,10 @@
     %>
     <!-- Left Navigation Rail (Table of Contents) -->
     <nav class="analysis-toc-rail" id="toc-rail" aria-label="Analysis Sections">
-      <div class="toc-header">Table of Contents</div>
+      <div class="toc-header">
+        <span>Table of Contents</span>
+        <button type="button" id="btn-close-mobile-toc" class="btn-close-mobile-toc" aria-label="Close table of contents">✕</button>
+      </div>
       <ol class="toc-list" id="toc-list">
         <% visibleSections.forEach(sec => { %>
           <li>

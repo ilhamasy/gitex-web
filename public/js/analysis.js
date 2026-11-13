@@ -603,6 +603,7 @@ function initTocNavigation() {
       tocRail.classList.remove('open');
       const toggleBtn = document.getElementById('btn-toggle-mobile-toc');
       if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
     }
 
     // 6. Release scroll spy lock after scroll completes
@@ -695,14 +696,39 @@ function initScrollSpy() {
  */
 function initMobileToc() {
   const toggleBtn = document.getElementById('btn-toggle-mobile-toc');
+  const closeBtn = document.getElementById('btn-close-mobile-toc');
   const tocRail = document.getElementById('toc-rail');
 
-  if (!toggleBtn || !tocRail) return;
+  if (!tocRail) return;
 
-  toggleBtn.addEventListener('click', () => {
-    const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-    toggleBtn.setAttribute('aria-expanded', !isExpanded);
-    tocRail.classList.toggle('open', !isExpanded);
+  function closeToc() {
+    tocRail.classList.remove('open');
+    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  function openToc() {
+    tocRail.classList.add('open');
+    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const isOpen = tocRail.classList.contains('open');
+      if (isOpen) closeToc();
+      else openToc();
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeToc);
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && tocRail.classList.contains('open')) {
+      closeToc();
+    }
   });
 }
 

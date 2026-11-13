@@ -38,13 +38,21 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     if (provider === 'github') {
       providerBadge.textContent = 'GITHUB';
       providerBadge.classList.add('is-github');
+      providerBadge.style.display = 'inline-block';
+      if (urlInput) urlInput.classList.add('has-badge');
     } else if (provider === 'gitlab') {
       providerBadge.textContent = 'GITLAB';
       providerBadge.classList.add('is-gitlab');
+      providerBadge.style.display = 'inline-block';
+      if (urlInput) urlInput.classList.add('has-badge');
     } else if (provider === 'invalid') {
       providerBadge.textContent = 'UNSUPPORTED';
+      providerBadge.style.display = 'inline-block';
+      if (urlInput) urlInput.classList.add('has-badge');
     } else {
-      providerBadge.textContent = 'PUBLIC REPO';
+      providerBadge.textContent = '';
+      providerBadge.style.display = 'none';
+      if (urlInput) urlInput.classList.remove('has-badge');
     }
   }
 
