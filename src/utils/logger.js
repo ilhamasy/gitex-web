@@ -23,6 +23,7 @@ export function sanitizeSecrets(text) {
 }
 
 export const logger = {
+  sanitize: sanitizeSecrets,
   info: (msg, ...args) => {
     if (process.env.NODE_ENV !== 'test') {
       console.log(sanitizeSecrets(String(msg)), ...args.map(a => typeof a === 'string' ? sanitizeSecrets(a) : a));
