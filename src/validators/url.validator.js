@@ -54,9 +54,15 @@ export function validateRepositoryUrl(inputUrl) {
     };
   }
 
-  // Prepend https:// only if no scheme is specified
+  // Handle SCP-like SSH syntax: git@github.com:owner/repo.git or git@gitlab.com:owner/repo.git
   let urlString = raw;
-  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/i.test(urlString)) {
+  const sshMatch = raw.match(/^git@(github\.com|gitlab\.com):(.+)$/i);
+  if (sshMatch) {
+    const host = sshMatch[1].toLowerCase();
+    const repoPath = sshMatch[2].replace(/\.git$/i, '').replace(/^\/+/, '');
+    urlString = `https://${host}/${repoPath}`;
+  } else if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/i.test(urlString)) {
+    // Prepend https:// only if no scheme is specified (e.g. "github.com/owner/repo")
     urlString = `https://${urlString}`;
   }
 

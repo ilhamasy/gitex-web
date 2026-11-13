@@ -66,3 +66,4 @@ describe('Repository Validation API (POST /api/repository/validate)', () => {
     assert.ok(res.body.error.includes('Invalid repository path'));
   });
 });
+

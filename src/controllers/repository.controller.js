@@ -1,12 +1,13 @@
-import { validateRepositoryUrl } from '../validators/url.validator.js';
+import { RepositoryService } from '../services/repository/repository.service.js';
 
 /**
  * Controller to validate repository URLs and detect provider
  */
 export const validateUrl = (req, res) => {
+  // Extract only url; never trust client-supplied provider or metadata
   const { url } = req.body || {};
 
-  const result = validateRepositoryUrl(url);
+  const result = RepositoryService.resolveRepository(url);
 
   if (!result.valid) {
     return res.status(400).json({
@@ -23,6 +24,7 @@ export const validateUrl = (req, res) => {
       name: result.name,
       fullName: result.fullName,
       normalizedUrl: result.normalizedUrl,
+      apiUrl: result.apiUrl,
     },
   });
 };

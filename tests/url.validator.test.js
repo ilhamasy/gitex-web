@@ -35,6 +35,14 @@ describe('Repository URL Validator (Unit)', () => {
       assert.equal(res.provider, 'github');
       assert.equal(res.fullName, 'vuejs/core');
     });
+
+    it('accepts GitHub SSH syntax (git@github.com:owner/repo.git)', () => {
+      const res = validateRepositoryUrl('git@github.com:torvalds/linux.git');
+      assert.equal(res.valid, true);
+      assert.equal(res.provider, 'github');
+      assert.equal(res.fullName, 'torvalds/linux');
+      assert.equal(res.normalizedUrl, 'https://github.com/torvalds/linux');
+    });
   });
 
   describe('Valid GitLab URLs', () => {
@@ -116,3 +124,4 @@ describe('Repository URL Validator (Unit)', () => {
     });
   });
 });
+
