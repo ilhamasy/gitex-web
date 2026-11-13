@@ -17,7 +17,7 @@
   function getPreferredTheme() {
     const saved = localStorage.getItem(STORAGE_KEYS.THEME);
     if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'dark'; // Default is dark mode
   }
 
   function applyTheme(theme) {
@@ -65,20 +65,6 @@
     });
   }
 
-  // Example URL button quick-fill
-  const exampleBtn = document.getElementById('btn-example-url');
-  if (exampleBtn && urlInput) {
-    exampleBtn.addEventListener('click', () => {
-      const exampleUrl = exampleBtn.getAttribute('data-url');
-      if (exampleUrl) {
-        urlInput.value = exampleUrl;
-        urlInput.focus();
-        if (providerBadge) {
-          providerBadge.textContent = detectProvider(exampleUrl);
-        }
-      }
-    });
-  }
 
   // -------------------------------------------------------------
   // Recent Analyses (LocalStorage)

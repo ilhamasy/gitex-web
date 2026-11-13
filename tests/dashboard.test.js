@@ -27,12 +27,12 @@ describe('Dashboard Shell (GITEX-002)', () => {
     assert.ok(res.text.includes('id="provider-badge"'));
   });
 
-  it('provides a realistic example URL and supported provider badges', async () => {
+  it('sets dark mode as default and displays supported provider badges', async () => {
     const res = await request(app).get('/');
-    assert.ok(res.text.includes('id="btn-example-url"'));
-    assert.ok(res.text.includes('github.com/expressjs/express'));
+    assert.ok(res.text.includes('data-theme="dark"'));
     assert.ok(res.text.includes('GitHub'));
     assert.ok(res.text.includes('GitLab'));
+    assert.equal(res.text.includes('id="btn-example-url"'), false);
   });
 
   it('renders history section with an informative empty state', async () => {
@@ -52,3 +52,4 @@ describe('Dashboard Shell (GITEX-002)', () => {
     assert.equal(lowercaseHtml.includes('testimonial'), false);
   });
 });
+

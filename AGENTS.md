@@ -10,3 +10,4 @@ This project uses [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/a
 - `antislop-layoutmobile`: Responsive layout across mobile, tablet, laptop, and desktop
 
 Visual direction, tokens, and layouts must adhere strictly to [docs/DESIGN.md](./docs/DESIGN.md).
+
