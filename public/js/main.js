@@ -9,7 +9,6 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   'use strict';
 
   const STORAGE_KEYS = {
-    THEME: 'gitex.theme',
     HISTORY: 'gitex_history',
   };
 
