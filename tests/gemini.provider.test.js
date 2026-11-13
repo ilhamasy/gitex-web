@@ -237,3 +237,4 @@ describe('GeminiProvider — GITEX-008', () => {
     assert.ok(status.error.includes('Invalid API key'));
   });
 });
+

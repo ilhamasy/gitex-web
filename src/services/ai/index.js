@@ -5,6 +5,7 @@ import { AIProvider } from './ai.provider.js';
 export * from './ai.provider.js';
 export * from './gemini.provider.js';
 export * from './ai.errors.js';
+export * from './analysis.service.js';
 
 /**
  * Returns the configured default AI provider instance.
@@ -22,3 +23,4 @@ export default {
   GeminiProvider,
   getDefaultAIProvider,
 };
+
