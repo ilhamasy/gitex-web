@@ -187,21 +187,26 @@
     }
 
     const sectionsList = [
-      { key: 'overview', title: 'Repository Overview', num: '01' },
-      { key: 'purpose', title: 'Purpose & Use Cases', num: '02' },
-      { key: 'features', title: 'Key Features', num: '03' },
-      { key: 'howItWorks', title: 'How It Works', num: '04' },
-      { key: 'prerequisites', title: 'Prerequisites', num: '05' },
-      { key: 'installation', title: 'Installation Guide', num: '06' },
-      { key: 'configuration', title: 'Configuration', num: '07' },
-      { key: 'usage', title: 'Usage & Examples', num: '08' },
-      { key: 'techStack', title: 'Tech Stack', num: '09' },
-      { key: 'limitations', title: 'Limitations & Considerations', num: '10' },
-      { key: 'alternatives', title: 'Alternatives', num: '11' },
-      { key: 'resources', title: 'Official Resources', num: '12' },
+      { key: 'overview', title: 'Repository Overview' },
+      { key: 'purpose', title: 'Purpose & Use Cases' },
+      { key: 'features', title: 'Key Features' },
+      { key: 'howItWorks', title: 'How It Works' },
+      { key: 'prerequisites', title: 'Prerequisites' },
+      { key: 'installation', title: 'Installation Guide' },
+      { key: 'configuration', title: 'Configuration' },
+      { key: 'usage', title: 'Usage & Examples' },
+      { key: 'techStack', title: 'Tech Stack' },
+      { key: 'limitations', title: 'Limitations & Considerations' },
+      { key: 'alternatives', title: 'Alternatives' },
+      { key: 'resources', title: 'Official Resources' },
     ];
 
-    const visibleSections = record && record.analysis ? sectionsList.filter(s => isSectionVisible(s.key, record.analysis)) : sectionsList;
+    const rawVisible = record && record.analysis ? sectionsList.filter(s => isSectionVisible(s.key, record.analysis)) : sectionsList;
+    const visibleSections = rawVisible.map((sec, idx) => ({
+      ...sec,
+      num: String(idx + 1).padStart(2, '0'),
+    }));
+    const sectionNumMap = Object.fromEntries(visibleSections.map(s => [s.key, s.num]));
     %>
     <!-- Left Navigation Rail (Table of Contents) -->
     <nav class="analysis-toc-rail" id="toc-rail" aria-label="Analysis Sections">
@@ -228,7 +233,7 @@
         <section class="analysis-section" id="section-overview" aria-labelledby="heading-overview">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">01</span>
+              <span class="section-number"><%= sectionNumMap['overview'] %></span>
               <h2 id="heading-overview" class="section-title"><%= overview.title || 'Repository Overview' %></h2>
             </div>
             <% if (overview.isIncomplete || overview.status === 'not_documented') { %>
@@ -280,7 +285,7 @@
         <section class="analysis-section" id="section-purpose" aria-labelledby="heading-purpose">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">02</span>
+              <span class="section-number"><%= sectionNumMap['purpose'] %></span>
               <h2 id="heading-purpose" class="section-title"><%= purpose.title || 'Purpose & Use Cases' %></h2>
             </div>
             <% if (purpose.isIncomplete || purpose.status === 'not_documented') { %>
@@ -342,7 +347,7 @@
         <section class="analysis-section" id="section-features" aria-labelledby="heading-features">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">03</span>
+              <span class="section-number"><%= sectionNumMap['features'] %></span>
               <h2 id="heading-features" class="section-title"><%= features.title || 'Key Features' %></h2>
             </div>
             <% if (features.isIncomplete || features.status === 'not_documented') { %>
@@ -392,7 +397,7 @@
         <section class="analysis-section" id="section-howItWorks" aria-labelledby="heading-howItWorks">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">04</span>
+              <span class="section-number"><%= sectionNumMap['howItWorks'] %></span>
               <h2 id="heading-howItWorks" class="section-title"><%= howItWorks.title || 'How It Works' %></h2>
             </div>
             <% if (howItWorks.isIncomplete || howItWorks.status === 'not_documented') { %>
@@ -449,7 +454,7 @@
         <section class="analysis-section" id="section-prerequisites" aria-labelledby="heading-prerequisites">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">05</span>
+              <span class="section-number"><%= sectionNumMap['prerequisites'] %></span>
               <h2 id="heading-prerequisites" class="section-title"><%= prerequisites.title || 'Prerequisites' %></h2>
             </div>
             <% if (prerequisites.isIncomplete || prerequisites.status === 'not_documented') { %>
@@ -510,7 +515,7 @@
         <section class="analysis-section" id="section-installation" aria-labelledby="heading-installation">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">06</span>
+              <span class="section-number"><%= sectionNumMap['installation'] %></span>
               <h2 id="heading-installation" class="section-title"><%= installation.title || 'Installation Guide' %></h2>
             </div>
             <% if (installation.isIncomplete || installation.status === 'not_documented') { %>
@@ -570,7 +575,7 @@
         <section class="analysis-section" id="section-configuration" aria-labelledby="heading-configuration">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">07</span>
+              <span class="section-number"><%= sectionNumMap['configuration'] %></span>
               <h2 id="heading-configuration" class="section-title"><%= configuration.title || 'Configuration' %></h2>
             </div>
             <% if (configuration.isIncomplete || configuration.status === 'not_documented') { %>
@@ -640,7 +645,7 @@
         <section class="analysis-section" id="section-usage" aria-labelledby="heading-usage">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">08</span>
+              <span class="section-number"><%= sectionNumMap['usage'] %></span>
               <h2 id="heading-usage" class="section-title"><%= usage.title || 'Usage & Examples' %></h2>
             </div>
             <% if (usage.isIncomplete || usage.status === 'not_documented') { %>
@@ -699,7 +704,7 @@
         <section class="analysis-section" id="section-techStack" aria-labelledby="heading-techStack">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">09</span>
+              <span class="section-number"><%= sectionNumMap['techStack'] %></span>
               <h2 id="heading-techStack" class="section-title"><%= techStack.title || 'Tech Stack' %></h2>
             </div>
             <% if (techStack.isIncomplete || techStack.status === 'not_documented') { %>
@@ -760,7 +765,7 @@
         <section class="analysis-section" id="section-limitations" aria-labelledby="heading-limitations">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">10</span>
+              <span class="section-number"><%= sectionNumMap['limitations'] %></span>
               <h2 id="heading-limitations" class="section-title"><%= limitations.title || 'Limitations & Considerations' %></h2>
             </div>
             <% if (limitations.isIncomplete || limitations.status === 'not_documented') { %>
@@ -829,7 +834,7 @@
         <section class="analysis-section" id="section-alternatives" aria-labelledby="heading-alternatives">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">11</span>
+              <span class="section-number"><%= sectionNumMap['alternatives'] %></span>
               <h2 id="heading-alternatives" class="section-title"><%= alternatives.title || 'Alternatives & Similar Projects' %></h2>
             </div>
             <% if (alternatives.isIncomplete || alternatives.status === 'not_documented') { %>
@@ -869,7 +874,7 @@
         <section class="analysis-section" id="section-resources" aria-labelledby="heading-resources">
           <header class="section-header-row">
             <div class="section-title-wrap">
-              <span class="section-number">12</span>
+              <span class="section-number"><%= sectionNumMap['resources'] %></span>
               <h2 id="heading-resources" class="section-title"><%= resources.title || 'Official Resources' %></h2>
             </div>
           </header>

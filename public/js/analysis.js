@@ -121,7 +121,12 @@ async function hydrateAnalysis(recordId) {
         { key: 'resources', title: 'Official Resources', num: '12' },
       ];
 
-      const visibleKeys = sectionKeys.filter(({ key }) => isSectionVisible(key, item.analysis));
+      const visibleKeys = sectionKeys
+        .filter(({ key }) => isSectionVisible(key, item.analysis))
+        .map((sec, idx) => ({
+          ...sec,
+          num: String(idx + 1).padStart(2, '0'),
+        }));
 
       let docHtml = '';
       visibleKeys.forEach(({ key, title, num }) => {
