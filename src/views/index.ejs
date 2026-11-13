@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <main class="app-main">
+    <div class="container">
+      <div class="surface-card">
+        <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem; font-weight: 600;">GitEx Application Initialized</h1>
+        <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem;">
+          Monolithic Node.js MVC architecture ready for GITEX stories.
+        </p>
+
+        <div style="background-color: var(--color-surface-muted); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
+          <div style="font-size: 0.875rem; font-family: var(--font-mono); margin-bottom: 0.5rem;"><strong>System Status:</strong> Ready</div>
+          <div style="font-size: 0.875rem; color: var(--color-text-secondary);">
+            Check API status at <a href="/health" class="font-mono" style="color: var(--color-text-primary);">/health</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
