@@ -71,6 +71,19 @@ export const streamAnalysis = async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders?.();
 
+  // Send keepalive ping every 5s so connection never drops during LLM generation
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(': keepalive\n\n');
+    } catch {}
+  }, 5000);
+
+  const cleanup = () => {
+    clearInterval(heartbeat);
+  };
+
+  req.on('close', cleanup);
+
   const sendEvent = (event, data) => {
     res.write(`event: ${event}\n`);
     res.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -85,15 +98,17 @@ export const streamAnalysis = async (req, res) => {
 
     cacheRecord(record);
     sendEvent('complete', { record });
-    res.end();
+    cleanup();
+    setTimeout(() => res.end(), 200);
   } catch (err) {
     logger.error(`[SSE Analysis Error] ${err.message}`);
-    sendEvent('error', {
+    sendEvent('pipeline-error', {
       stage: PIPELINE_STAGES.FAILED,
       message: err.message || 'Analysis failed.',
       recoverable: true,
     });
-    res.end();
+    cleanup();
+    setTimeout(() => res.end(), 200);
   }
 };
 

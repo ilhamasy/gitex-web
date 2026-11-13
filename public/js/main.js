@@ -181,11 +181,12 @@
   }
 
   function showProgressError(errorMsg) {
+    const text = (typeof errorMsg === 'string' && errorMsg.trim()) ? errorMsg.trim() : 'An error occurred during analysis. Please try again.';
     if (progressErrorContainer && progressErrorText) {
-      progressErrorText.textContent = errorMsg || 'An unknown error occurred during analysis.';
+      progressErrorText.textContent = text;
       progressErrorContainer.classList.remove('hidden');
     }
-    updateStageUI('Failed', `Analysis failed: ${errorMsg}`);
+    updateStageUI('Failed', text);
   }
 
   if (btnProgressDismiss) {
@@ -214,6 +215,7 @@
 
     const streamUrl = `/api/analyze/stream?url=${encodeURIComponent(rawUrl)}`;
     let eventSource = null;
+    let isCompleted = false;
 
     try {
       eventSource = new EventSource(streamUrl);
@@ -228,6 +230,7 @@
       });
 
       eventSource.addEventListener('complete', (event) => {
+        isCompleted = true;
         try {
           const payload = JSON.parse(event.data);
           const record = payload.record;
@@ -248,8 +251,9 @@
         }
       });
 
-      eventSource.addEventListener('error', (event) => {
-        let msg = 'Failed to connect to analysis stream.';
+      // Custom pipeline error event from server
+      eventSource.addEventListener('pipeline-error', (event) => {
+        let msg = 'Analysis failed.';
         try {
           if (event.data) {
             const data = JSON.parse(event.data);
@@ -257,6 +261,13 @@
           }
         } catch {}
         showProgressError(msg);
+        eventSource.close();
+      });
+
+      // Native browser EventSource error (triggers on network disconnect / drop)
+      eventSource.addEventListener('error', () => {
+        if (isCompleted) return; // Ignore normal connection close after completion
+        showProgressError('Connection to analysis stream lost. Please check your network or try again.');
         eventSource.close();
       });
     } catch (err) {
