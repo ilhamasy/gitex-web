@@ -10,12 +10,11 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.equal(res.headers['content-type'].includes('text/html'), true);
   });
 
-  it('renders navbar with GitEx wordmark only (no dark/light button, no get started in navbar)', async () => {
+  it('renders navbar with GitEx wordmark and light/dark theme toggle matching detail analysis', async () => {
     const res = await request(app).get('/');
     assert.ok(res.text.includes('GitEx'));
     assert.ok(res.text.includes('Field Notebook'));
-    // Ensure navbar controls are removed as requested
-    assert.equal(res.text.includes('id="theme-toggle"'), false);
+    assert.ok(res.text.includes('id="theme-toggle"'));
     assert.equal(res.text.includes('landing-nav-cta'), false);
   });
 

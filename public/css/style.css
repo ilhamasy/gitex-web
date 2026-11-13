@@ -1946,15 +1946,18 @@ a {
   background: radial-gradient(circle at 50% 30%, rgba(248, 250, 252, 0.35) 0%, rgba(248, 250, 252, 0.8) 100%);
 }
 
+.landing-page .app-header,
 .landing-header {
-  background-color: rgba(14, 15, 17, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(32, 35, 31, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-border);
 }
 
+[data-theme="light"] .landing-page .app-header,
 [data-theme="light"] .landing-header {
-  background-color: rgba(248, 250, 252, 0.8);
+  background-color: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .landing-main {
