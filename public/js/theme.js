@@ -3,21 +3,27 @@
  * Ensures instant theme application before paint and seamless toggle on all views
  */
 (function () {
-  const STORAGE_KEY = 'gitex_theme';
+  const STORAGE_KEYS = ['gitex_theme', 'gitex.theme'];
 
   function getPreferredTheme() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'dark' || saved === 'light') return saved;
+      for (const key of STORAGE_KEYS) {
+        const saved = localStorage.getItem(key);
+        if (saved === 'dark' || saved === 'light') return saved;
+      }
     } catch (e) {}
     return 'dark'; // Default dark mode
   }
 
-  function applyTheme(theme) {
+  function applyTheme(theme, save = true) {
     document.documentElement.setAttribute('data-theme', theme);
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch (e) {}
+    if (save) {
+      try {
+        for (const key of STORAGE_KEYS) {
+          localStorage.setItem(key, theme);
+        }
+      } catch (e) {}
+    }
 
     const toggle = document.getElementById('theme-toggle');
     const icon = document.getElementById('theme-icon');
@@ -36,12 +42,15 @@
     }
   }
 
-  // 1. Immediately apply theme to avoid FOUC / flash of wrong theme
-  applyTheme(getPreferredTheme());
+  // 1. Immediately apply stored theme to DOM
+  const preferred = getPreferredTheme();
+  applyTheme(preferred, false);
 
   // 2. Attach click handler to theme-toggle button
   function setupThemeToggle() {
-    applyTheme(getPreferredTheme());
+    const currentTheme = getPreferredTheme();
+    applyTheme(currentTheme, false);
+
     const toggle = document.getElementById('theme-toggle');
     if (toggle && !toggle._hasThemeListener) {
       toggle._hasThemeListener = true;
@@ -49,7 +58,7 @@
         e.preventDefault();
         const current = document.documentElement.getAttribute('data-theme') || 'dark';
         const next = current === 'dark' ? 'light' : 'dark';
-        applyTheme(next);
+        applyTheme(next, true);
       });
     }
   }
@@ -60,4 +69,3 @@
     setupThemeToggle();
   }
 })();
-

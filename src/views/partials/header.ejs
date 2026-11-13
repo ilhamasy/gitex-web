@@ -9,6 +9,9 @@
         <span id="theme-icon" aria-hidden="true">☀️</span>
         <span id="theme-label">Light</span>
       </button>
+      <script>
+        (function(){try{var t=document.documentElement.getAttribute('data-theme')||localStorage.getItem('gitex_theme')||localStorage.getItem('gitex.theme');if(t==='light'){var i=document.getElementById('theme-icon'),l=document.getElementById('theme-label'),b=document.getElementById('theme-toggle');if(i)i.textContent='🌙';if(l)l.textContent='Dark';if(b)b.setAttribute('aria-label','Switch to dark theme');}}catch(e){}})();
+      </script>
     </div>
   </div>
 </header>
