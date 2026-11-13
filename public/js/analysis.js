@@ -158,6 +158,33 @@ async function hydrateAnalysis(recordId) {
   }
 }
 
+function formatItem(item) {
+  if (!item) return '';
+  if (typeof item === 'string') return escapeHtml(item.trim());
+  if (typeof item === 'object') {
+    const name = item.name || item.title || '';
+    const desc = item.description || item.purpose || item.distinction || '';
+    if (name && desc) return `<strong>${escapeHtml(name)}:</strong> ${escapeHtml(desc)}`;
+    return escapeHtml(name || desc || '');
+  }
+  return escapeHtml(String(item));
+}
+
+function hasContent(val) {
+  if (!val) return false;
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    return trimmed.length > 0 && trimmed !== 'Not documented' && trimmed !== 'Not documented.' && trimmed !== 'N/A' && trimmed !== '[object Object]';
+  }
+  if (Array.isArray(val)) {
+    return val.some(hasContent);
+  }
+  if (typeof val === 'object') {
+    return Object.values(val).some(hasContent);
+  }
+  return true;
+}
+
 /**
  * Helper to render individual section content during client-side hydration
  */
@@ -165,37 +192,61 @@ function renderHydratedSectionContent(key, sec, item) {
   let content = '';
 
   if (key === 'overview') {
-    if (sec.summary) content += `<p>${escapeHtml(sec.summary)}</p>`;
-    if (sec.problemSolved && sec.problemSolved !== 'Not documented') {
+    if (sec.summary && hasContent(sec.summary)) content += `<p>${escapeHtml(sec.summary)}</p>`;
+    if (sec.problemSolved && hasContent(sec.problemSolved)) {
       content += `<h3>Problem Solved</h3><p>${escapeHtml(sec.problemSolved)}</p>`;
     }
-    if (sec.mainGoal && sec.mainGoal !== 'Not documented') {
+    if (sec.mainGoal && hasContent(sec.mainGoal)) {
       content += `<h3>Main Goal</h3><p>${escapeHtml(sec.mainGoal)}</p>`;
     }
   } else if (key === 'purpose') {
-    if (sec.targetUsers?.length) {
-      content += `<h3>Target Users</h3><ul>${sec.targetUsers.map(u => `<li>${escapeHtml(u)}</li>`).join('')}</ul>`;
+    const validUsers = (sec.targetUsers || []).filter(hasContent);
+    if (validUsers.length) {
+      content += `<h3>Target Users</h3><ul>${validUsers.map(u => `<li>${formatItem(u)}</li>`).join('')}</ul>`;
     }
-    if (sec.capabilities?.length) {
-      content += `<h3>Core Capabilities</h3><ul>${sec.capabilities.map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul>`;
+    const validCaps = (sec.capabilities || []).filter(hasContent);
+    if (validCaps.length) {
+      content += `<h3>Core Capabilities</h3><ul>${validCaps.map(c => `<li>${formatItem(c)}</li>`).join('')}</ul>`;
+    }
+    const validScen = (sec.scenarios || []).filter(hasContent);
+    if (validScen.length) {
+      content += `<h3>Real-World Scenarios</h3><ul>${validScen.map(s => `<li>${formatItem(s)}</li>`).join('')}</ul>`;
     }
   } else if (key === 'features') {
-    if (sec.coreFeatures?.length) {
-      content += `<h3>Core Features</h3><ul>${sec.coreFeatures.map(f => `<li>${escapeHtml(f)}</li>`).join('')}</ul>`;
+    const validFeatures = (sec.coreFeatures || []).filter(hasContent);
+    if (validFeatures.length) {
+      content += `<h3>Core Features</h3><ul>${validFeatures.map(f => `<li>${formatItem(f)}</li>`).join('')}</ul>`;
+    }
+    const validUnique = (sec.uniqueCapabilities || []).filter(hasContent);
+    if (validUnique.length) {
+      content += `<h3>Distinct Capabilities</h3><ul>${validUnique.map(u => `<li>${formatItem(u)}</li>`).join('')}</ul>`;
     }
   } else if (key === 'howItWorks') {
-    if (sec.architecture) content += `<h3>Architecture</h3><p>${escapeHtml(sec.architecture)}</p>`;
-    if (sec.dataFlow) content += `<h3>Data Flow</h3><p>${escapeHtml(sec.dataFlow)}</p>`;
+    if (sec.architecture && hasContent(sec.architecture)) content += `<h3>Architecture</h3><p>${escapeHtml(sec.architecture)}</p>`;
+    const validComponents = (sec.components || []).filter(hasContent);
+    if (validComponents.length) {
+      content += `<h3>Key Components</h3><ul>${validComponents.map(c => `<li>${formatItem(c)}</li>`).join('')}</ul>`;
+    }
+    if (sec.dataFlow && hasContent(sec.dataFlow)) content += `<h3>Data Flow</h3><p>${escapeHtml(sec.dataFlow)}</p>`;
+  } else if (key === 'prerequisites') {
+    if (sec.runtime && hasContent(sec.runtime)) content += `<p><strong>Runtime:</strong> ${escapeHtml(sec.runtime)}</p>`;
+    const validLangs = (sec.languages || []).filter(hasContent);
+    if (validLangs.length) content += `<p><strong>Required Languages:</strong> ${validLangs.map(formatItem).join(', ')}</p>`;
+    const validTools = (sec.tools || []).filter(hasContent);
+    if (validTools.length) content += `<h3>Required Tools</h3><ul>${validTools.map(t => `<li>${formatItem(t)}</li>`).join('')}</ul>`;
+    const validSys = (sec.system || []).filter(hasContent);
+    if (validSys.length) content += `<h3>System Requirements</h3><ul>${validSys.map(s => `<li>${formatItem(s)}</li>`).join('')}</ul>`;
   } else if (key === 'installation') {
-    if (sec.steps?.length) {
-      sec.steps.forEach((st, idx) => {
+    const validSteps = (sec.steps || []).filter(hasContent);
+    if (validSteps.length) {
+      validSteps.forEach((st, idx) => {
         content += `
           <div class="install-step-item">
             <div class="install-step-header">
               <span class="install-step-num">${st.step || (idx + 1)}</span>
               <span class="install-step-title">${escapeHtml(st.description || 'Installation Step')}</span>
             </div>
-            ${st.command ? `
+            ${st.command && hasContent(st.command) ? `
               <div class="code-block-wrapper my-4 rounded border border-border-default bg-surface-canvas overflow-hidden">
                 <div class="code-block-header flex items-center justify-between px-3.5 py-1.5 border-b border-border-default bg-surface-subtle text-xs font-mono text-text-subtle">
                   <span class="code-block-lang uppercase font-medium text-[11px]">BASH</span>
@@ -206,17 +257,73 @@ function renderHydratedSectionContent(key, sec, item) {
                 <pre class="p-4 overflow-x-auto text-sm font-mono leading-relaxed"><code class="hljs">${escapeHtml(st.command)}</code></pre>
               </div>
             ` : ''}
+            ${st.verification && hasContent(st.verification) ? `<p class="text-xs text-text-secondary"><strong>Verification:</strong> ${escapeHtml(st.verification)}</p>` : ''}
           </div>
         `;
       });
     }
+    const validCaveats = (sec.caveats || []).filter(hasContent);
+    if (validCaveats.length) {
+      content += `<div class="callout-recommendation"><div class="callout-title">Setup Caveats & Recommendations</div><ul>${validCaveats.map(c => `<li>${formatItem(c)}</li>`).join('')}</ul></div>`;
+    }
+  } else if (key === 'configuration') {
+    const validConfigs = (sec.configFiles || []).filter(hasContent);
+    if (validConfigs.length) {
+      content += `<h3>Configuration Files</h3><ul>${validConfigs.map(cf => `<li><code>${escapeHtml(cf.path || cf.name || '')}</code>${cf.purpose || cf.description ? ': ' + escapeHtml(cf.purpose || cf.description) : ''}</li>`).join('')}</ul>`;
+    }
+    const validEnvs = (sec.environmentVariables || []).filter(hasContent);
+    if (validEnvs.length) {
+      content += `<h3>Environment Variables</h3><ul>${validEnvs.map(ev => `<li><code>${escapeHtml(ev.name)}</code>${ev.description ? ': ' + escapeHtml(ev.description) : ''}${ev.default ? ` <em>(default: <code>${escapeHtml(ev.default)}</code>)</em>` : ''}</li>`).join('')}</ul>`;
+    }
+    const validSecrets = (sec.secrets || []).filter(hasContent);
+    if (validSecrets.length) {
+      content += `<h3>Required Secrets & Tokens</h3><ul>${validSecrets.map(s => `<li><code>${formatItem(s)}</code></li>`).join('')}</ul>`;
+    }
+  } else if (key === 'usage') {
+    if (sec.quickStart && hasContent(sec.quickStart)) content += `<h3>Quick Start</h3><p>${escapeHtml(sec.quickStart)}</p>`;
+    const validCmds = (sec.commonCommands || []).filter(hasContent);
+    if (validCmds.length) {
+      content += `<h3>Common Commands</h3><ul>${validCmds.map(c => `<li>${c.description ? `<strong>${escapeHtml(c.description)}:</strong> ` : ''}${c.command ? `<code>${escapeHtml(c.command)}</code>` : ''}</li>`).join('')}</ul>`;
+    }
   } else if (key === 'techStack') {
-    if (sec.languages?.length) content += `<p><strong>Languages:</strong> ${escapeHtml(sec.languages.join(', '))}</p>`;
-    if (sec.frameworks?.length) content += `<p><strong>Frameworks:</strong> ${escapeHtml(sec.frameworks.join(', '))}</p>`;
+    const validLangs = (sec.languages || []).filter(hasContent);
+    if (validLangs.length) content += `<p><strong>Languages:</strong> ${validLangs.map(formatItem).join(', ')}</p>`;
+    const validFw = (sec.frameworks || []).filter(hasContent);
+    if (validFw.length) content += `<p><strong>Frameworks:</strong> ${validFw.map(formatItem).join(', ')}</p>`;
+    const validLibs = (sec.libraries || []).filter(hasContent);
+    if (validLibs.length) {
+      content += `<h3>Key Libraries & Dependencies</h3><ul>${validLibs.map(l => `<li><code>${escapeHtml(l.name || '')}</code>${l.purpose || l.description ? ': ' + escapeHtml(l.purpose || l.description) : ''}</li>`).join('')}</ul>`;
+    }
+    const validInfra = (sec.infrastructure || []).filter(hasContent);
+    if (validInfra.length) content += `<p><strong>Infrastructure / Tooling:</strong> ${validInfra.map(formatItem).join(', ')}</p>`;
+  } else if (key === 'limitations') {
+    const validLim = (sec.knownLimitations || []).filter(hasContent);
+    if (validLim.length) content += `<h3>Known Limitations</h3><ul>${validLim.map(l => `<li>${formatItem(l)}</li>`).join('')}</ul>`;
+    const validComp = (sec.compatibility || []).filter(hasContent);
+    if (validComp.length) content += `<h3>Compatibility Notes</h3><ul>${validComp.map(c => `<li>${formatItem(c)}</li>`).join('')}</ul>`;
+    const validSec = (sec.securityCaveats || []).filter(hasContent);
+    if (validSec.length) content += `<h3>Security Caveats</h3><ul>${validSec.map(s => `<li>${formatItem(s)}</li>`).join('')}</ul>`;
+    if (sec.productionReadiness && hasContent(sec.productionReadiness)) {
+      content += `<div class="callout-recommendation"><div class="callout-title">Production Readiness Assessment</div><p>${escapeHtml(sec.productionReadiness)}</p></div>`;
+    }
+  } else if (key === 'alternatives') {
+    const validAlts = (sec.comparableProjects || []).filter(hasContent);
+    if (validAlts.length) {
+      content += `<h3>Comparable Projects</h3><ul>${validAlts.map(p => `<li>${formatItem(p)}</li>`).join('')}</ul>`;
+    }
   } else if (key === 'resources') {
-    content += `<ul><li><strong>Repository:</strong> <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.url)}</a></li></ul>`;
-  } else {
-    content += `<p>${escapeHtml(JSON.stringify(sec))}</p>`;
+    content += `<ul><li><strong>Repository:</strong> <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.url)}</a></li>`;
+    if (sec.documentationUrl && hasContent(sec.documentationUrl)) {
+      content += `<li><strong>Documentation:</strong> <a href="${escapeHtml(sec.documentationUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(sec.documentationUrl)}</a></li>`;
+    }
+    if (sec.issueTrackerUrl && hasContent(sec.issueTrackerUrl)) {
+      content += `<li><strong>Issues:</strong> <a href="${escapeHtml(sec.issueTrackerUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(sec.issueTrackerUrl)}</a></li>`;
+    }
+    content += `</ul>`;
+    const validComm = (sec.communityLinks || []).filter(hasContent);
+    if (validComm.length) {
+      content += `<h3>Community Links</h3><ul>${validComm.map(c => `<li><a href="${escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(c.title || c.url)}</a></li>`).join('')}</ul>`;
+    }
   }
 
   // Render sources if available

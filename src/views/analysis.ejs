@@ -136,6 +136,35 @@
     <!-- Center Reading Column -->
     <article class="analysis-document-column" id="analysis-document">
       <% if (record && record.analysis) { %>
+        <%
+        function formatItem(item) {
+          if (!item) return '';
+          if (typeof item === 'string') return item.trim();
+          if (typeof item === 'object') {
+            const name = item.name || item.title || '';
+            const desc = item.description || item.purpose || item.distinction || '';
+            if (name && desc) return '<strong>' + name + ':</strong> ' + desc;
+            return name || desc || '';
+          }
+          return String(item);
+        }
+
+        function hasContent(val) {
+          if (!val) return false;
+          if (typeof val === 'string') {
+            const trimmed = val.trim();
+            return trimmed.length > 0 && trimmed !== 'Not documented' && trimmed !== 'Not documented.' && trimmed !== 'N/A' && trimmed !== '[object Object]';
+          }
+          if (Array.isArray(val)) {
+            return val.some(hasContent);
+          }
+          if (typeof val === 'object') {
+            return Object.values(val).some(hasContent);
+          }
+          return true;
+        }
+        %>
+
         <!-- 01. Repository Overview -->
         <% const overview = record.analysis.overview || {}; %>
         <section class="analysis-section" id="section-overview" aria-labelledby="heading-overview">
@@ -155,28 +184,30 @@
                 <span>Repository overview could not be verified from repository documentation.</span>
               </div>
             <% } %>
-            <div class="prose-block">
-              <%- markdownService.render(overview.summary || 'Not documented.') %>
-            </div>
+            <% if (overview.summary && hasContent(overview.summary)) { %>
+              <div class="prose-block">
+                <%- markdownService.render(overview.summary) %>
+              </div>
+            <% } %>
 
-            <% if (overview.problemSolved && overview.problemSolved !== 'Not documented') { %>
+            <% if (overview.problemSolved && hasContent(overview.problemSolved)) { %>
               <h3>Problem Solved</h3>
               <div class="prose-block">
                 <%- markdownService.render(overview.problemSolved) %>
               </div>
             <% } %>
 
-            <% if (overview.mainGoal && overview.mainGoal !== 'Not documented') { %>
+            <% if (overview.mainGoal && hasContent(overview.mainGoal)) { %>
               <h3>Main Goal</h3>
               <div class="prose-block">
                 <%- markdownService.render(overview.mainGoal) %>
               </div>
             <% } %>
 
-            <% if (overview.sources && overview.sources.length > 0) { %>
+            <% if (overview.sources && overview.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% overview.sources.forEach(src => { %>
+                <% overview.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -197,37 +228,46 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (purpose.targetUsers && purpose.targetUsers.length > 0) { %>
+            <% 
+              const validUsers = (purpose.targetUsers || []).filter(hasContent);
+              if (validUsers.length > 0) { 
+            %>
               <h3>Target Users</h3>
               <ul>
-                <% purpose.targetUsers.forEach(user => { %>
-                  <li><%= user %></li>
+                <% validUsers.forEach(user => { %>
+                  <li><%- formatItem(user) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (purpose.capabilities && purpose.capabilities.length > 0) { %>
+            <% 
+              const validCaps = (purpose.capabilities || []).filter(hasContent);
+              if (validCaps.length > 0) { 
+            %>
               <h3>Core Capabilities</h3>
               <ul>
-                <% purpose.capabilities.forEach(cap => { %>
-                  <li><%= cap %></li>
+                <% validCaps.forEach(cap => { %>
+                  <li><%- formatItem(cap) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (purpose.scenarios && purpose.scenarios.length > 0) { %>
+            <% 
+              const validScenarios = (purpose.scenarios || []).filter(hasContent);
+              if (validScenarios.length > 0) { 
+            %>
               <h3>Real-World Scenarios</h3>
               <ul>
-                <% purpose.scenarios.forEach(scen => { %>
-                  <li><%= scen %></li>
+                <% validScenarios.forEach(scen => { %>
+                  <li><%- formatItem(scen) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (purpose.sources && purpose.sources.length > 0) { %>
+            <% if (purpose.sources && purpose.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% purpose.sources.forEach(src => { %>
+                <% purpose.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -248,28 +288,34 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (features.coreFeatures && features.coreFeatures.length > 0) { %>
+            <% 
+              const validCoreFeatures = (features.coreFeatures || []).filter(hasContent);
+              if (validCoreFeatures.length > 0) { 
+            %>
               <h3>Core Features</h3>
               <ul>
-                <% features.coreFeatures.forEach(feat => { %>
-                  <li><%= feat %></li>
+                <% validCoreFeatures.forEach(feat => { %>
+                  <li><%- formatItem(feat) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (features.uniqueCapabilities && features.uniqueCapabilities.length > 0) { %>
+            <% 
+              const validUnique = (features.uniqueCapabilities || []).filter(hasContent);
+              if (validUnique.length > 0) { 
+            %>
               <h3>Distinct Capabilities</h3>
               <ul>
-                <% features.uniqueCapabilities.forEach(uc => { %>
-                  <li><%= uc %></li>
+                <% validUnique.forEach(uc => { %>
+                  <li><%- formatItem(uc) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (features.sources && features.sources.length > 0) { %>
+            <% if (features.sources && features.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% features.sources.forEach(src => { %>
+                <% features.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -290,19 +336,22 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (howItWorks.architecture && howItWorks.architecture !== 'Not documented') { %>
+            <% if (howItWorks.architecture && hasContent(howItWorks.architecture)) { %>
               <h3>Architecture</h3>
               <div class="prose-block">
                 <%- markdownService.render(howItWorks.architecture) %>
               </div>
             <% } %>
 
-            <% if (howItWorks.components && howItWorks.components.length > 0) { %>
+            <% 
+              const validComponents = (howItWorks.components || []).filter(hasContent);
+              if (validComponents.length > 0) { 
+            %>
               <h3>Key Components</h3>
               <ul>
-                <% howItWorks.components.forEach(comp => { %>
+                <% validComponents.forEach(comp => { %>
                   <li>
-                    <strong><%= comp.name %>:</strong> <%= comp.description %>
+                    <%- formatItem(comp) %>
                     <% if (comp.path) { %>
                       <%- markdownService.renderSourceBadge(comp.path, record.url) %>
                     <% } %>
@@ -311,17 +360,17 @@
               </ul>
             <% } %>
 
-            <% if (howItWorks.dataFlow && howItWorks.dataFlow !== 'Not documented') { %>
+            <% if (howItWorks.dataFlow && hasContent(howItWorks.dataFlow)) { %>
               <h3>Data Flow</h3>
               <div class="prose-block">
                 <%- markdownService.render(howItWorks.dataFlow) %>
               </div>
             <% } %>
 
-            <% if (howItWorks.sources && howItWorks.sources.length > 0) { %>
+            <% if (howItWorks.sources && howItWorks.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% howItWorks.sources.forEach(src => { %>
+                <% howItWorks.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -342,36 +391,45 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (prerequisites.runtime && prerequisites.runtime !== 'Not documented') { %>
+            <% if (prerequisites.runtime && hasContent(prerequisites.runtime)) { %>
               <p><strong>Runtime:</strong> <%= prerequisites.runtime %></p>
             <% } %>
 
-            <% if (prerequisites.languages && prerequisites.languages.length > 0) { %>
-              <p><strong>Required Languages:</strong> <%= prerequisites.languages.join(', ') %></p>
+            <% 
+              const validLangs = (prerequisites.languages || []).filter(hasContent);
+              if (validLangs.length > 0) { 
+            %>
+              <p><strong>Required Languages:</strong> <%= validLangs.map(formatItem).join(', ') %></p>
             <% } %>
 
-            <% if (prerequisites.tools && prerequisites.tools.length > 0) { %>
+            <% 
+              const validTools = (prerequisites.tools || []).filter(hasContent);
+              if (validTools.length > 0) { 
+            %>
               <h3>Required Tools</h3>
               <ul>
-                <% prerequisites.tools.forEach(tool => { %>
-                  <li><%= tool %></li>
+                <% validTools.forEach(tool => { %>
+                  <li><%- formatItem(tool) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (prerequisites.system && prerequisites.system.length > 0) { %>
+            <% 
+              const validSys = (prerequisites.system || []).filter(hasContent);
+              if (validSys.length > 0) { 
+            %>
               <h3>System Requirements</h3>
               <ul>
-                <% prerequisites.system.forEach(sys => { %>
-                  <li><%= sys %></li>
+                <% validSys.forEach(sys => { %>
+                  <li><%- formatItem(sys) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (prerequisites.sources && prerequisites.sources.length > 0) { %>
+            <% if (prerequisites.sources && prerequisites.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% prerequisites.sources.forEach(src => { %>
+                <% prerequisites.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -392,40 +450,44 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (installation.steps && installation.steps.length > 0) { %>
-              <% installation.steps.forEach((st, idx) => { %>
+            <% 
+              const validSteps = (installation.steps || []).filter(hasContent);
+              if (validSteps.length > 0) { 
+            %>
+              <% validSteps.forEach((st, idx) => { %>
                 <div class="install-step-item">
                   <div class="install-step-header">
                     <span class="install-step-num"><%= st.step || (idx + 1) %></span>
                     <span class="install-step-title"><%= st.description || 'Installation Step' %></span>
                   </div>
-                  <% if (st.command) { %>
+                  <% if (st.command && hasContent(st.command)) { %>
                     <%- markdownService.render('```bash\n' + st.command + '\n```') %>
                   <% } %>
-                  <% if (st.verification) { %>
+                  <% if (st.verification && hasContent(st.verification)) { %>
                     <p class="text-xs text-text-secondary"><strong>Verification:</strong> <%= st.verification %></p>
                   <% } %>
                 </div>
               <% }); %>
-            <% } else { %>
-              <p>No specific installation steps documented.</p>
             <% } %>
 
-            <% if (installation.caveats && installation.caveats.length > 0) { %>
+            <% 
+              const validCaveats = (installation.caveats || []).filter(hasContent);
+              if (validCaveats.length > 0) { 
+            %>
               <div class="callout-recommendation">
                 <div class="callout-title">Setup Caveats & Recommendations</div>
                 <ul>
-                  <% installation.caveats.forEach(cav => { %>
-                    <li><%= cav %></li>
+                  <% validCaveats.forEach(cav => { %>
+                    <li><%- formatItem(cav) %></li>
                   <% }); %>
                 </ul>
               </div>
             <% } %>
 
-            <% if (installation.sources && installation.sources.length > 0) { %>
+            <% if (installation.sources && installation.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% installation.sources.forEach(src => { %>
+                <% installation.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -446,43 +508,54 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (configuration.configFiles && configuration.configFiles.length > 0) { %>
+            <% 
+              const validConfigs = (configuration.configFiles || []).filter(hasContent);
+              if (validConfigs.length > 0) { 
+            %>
               <h3>Configuration Files</h3>
               <ul>
-                <% configuration.configFiles.forEach(cf => { %>
+                <% validConfigs.forEach(cf => { %>
                   <li>
-                    <code><%= cf.path %></code>: <%= cf.purpose %>
-                    <%- markdownService.renderSourceBadge(cf.path, record.url) %>
+                    <code><%= cf.path || cf.name || '' %></code><% if (cf.purpose || cf.description) { %>: <%= cf.purpose || cf.description %><% } %>
+                    <% if (cf.path) { %>
+                      <%- markdownService.renderSourceBadge(cf.path, record.url) %>
+                    <% } %>
                   </li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (configuration.environmentVariables && configuration.environmentVariables.length > 0) { %>
+            <% 
+              const validEnvs = (configuration.environmentVariables || []).filter(hasContent);
+              if (validEnvs.length > 0) { 
+            %>
               <h3>Environment Variables</h3>
               <ul>
-                <% configuration.environmentVariables.forEach(ev => { %>
+                <% validEnvs.forEach(ev => { %>
                   <li>
-                    <code><%= ev.name %></code>: <%= ev.description %>
+                    <code><%= ev.name %></code><% if (ev.description) { %>: <%= ev.description %><% } %>
                     <% if (ev.default) { %> <em>(default: <code><%= ev.default %></code>)</em><% } %>
                   </li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (configuration.secrets && configuration.secrets.length > 0) { %>
+            <% 
+              const validSecrets = (configuration.secrets || []).filter(hasContent);
+              if (validSecrets.length > 0) { 
+            %>
               <h3>Required Secrets & Tokens</h3>
               <ul>
-                <% configuration.secrets.forEach(sec => { %>
-                  <li><code><%= sec %></code></li>
+                <% validSecrets.forEach(sec => { %>
+                  <li><code><%- formatItem(sec) %></code></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (configuration.sources && configuration.sources.length > 0) { %>
+            <% if (configuration.sources && configuration.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% configuration.sources.forEach(src => { %>
+                <% configuration.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -503,37 +576,43 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (usage.quickStart && usage.quickStart !== 'Not documented') { %>
+            <% if (usage.quickStart && hasContent(usage.quickStart)) { %>
               <h3>Quick Start</h3>
               <div class="prose-block">
                 <%- markdownService.render(usage.quickStart) %>
               </div>
             <% } %>
 
-            <% if (usage.commonCommands && usage.commonCommands.length > 0) { %>
+            <% 
+              const validCommands = (usage.commonCommands || []).filter(hasContent);
+              if (validCommands.length > 0) { 
+            %>
               <h3>Common Commands</h3>
               <ul>
-                <% usage.commonCommands.forEach(cmd => { %>
+                <% validCommands.forEach(cmd => { %>
                   <li>
-                    <strong><%= cmd.description %>:</strong>
-                    <%- markdownService.render('```bash\n' + cmd.command + '\n```') %>
+                    <% if (cmd.description) { %><strong><%= cmd.description %>:</strong><% } %>
+                    <% if (cmd.command) { %><%- markdownService.render('```bash\n' + cmd.command + '\n```') %><% } %>
                   </li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (usage.codeExamples && usage.codeExamples.length > 0) { %>
+            <% 
+              const validExamples = (usage.codeExamples || []).filter(hasContent);
+              if (validExamples.length > 0) { 
+            %>
               <h3>Code Examples</h3>
-              <% usage.codeExamples.forEach(ex => { %>
-                <p><strong><%= ex.title %>:</strong></p>
-                <%- markdownService.render('```' + (ex.language || '') + '\n' + ex.code + '\n```') %>
+              <% validExamples.forEach(ex => { %>
+                <% if (ex.title) { %><p><strong><%= ex.title %>:</strong></p><% } %>
+                <% if (ex.code) { %><%- markdownService.render('```' + (ex.language || '') + '\n' + ex.code + '\n```') %><% } %>
               <% }); %>
             <% } %>
 
-            <% if (usage.sources && usage.sources.length > 0) { %>
+            <% if (usage.sources && usage.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% usage.sources.forEach(src => { %>
+                <% usage.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -554,33 +633,45 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (techStack.languages && techStack.languages.length > 0) { %>
-              <p><strong>Languages:</strong> <%= techStack.languages.join(', ') %></p>
+            <% 
+              const validLanguages = (techStack.languages || []).filter(hasContent);
+              if (validLanguages.length > 0) { 
+            %>
+              <p><strong>Languages:</strong> <%= validLanguages.map(formatItem).join(', ') %></p>
             <% } %>
 
-            <% if (techStack.frameworks && techStack.frameworks.length > 0) { %>
-              <p><strong>Frameworks:</strong> <%= techStack.frameworks.join(', ') %></p>
+            <% 
+              const validFrameworks = (techStack.frameworks || []).filter(hasContent);
+              if (validFrameworks.length > 0) { 
+            %>
+              <p><strong>Frameworks:</strong> <%= validFrameworks.map(formatItem).join(', ') %></p>
             <% } %>
 
-            <% if (techStack.libraries && techStack.libraries.length > 0) { %>
+            <% 
+              const validLibraries = (techStack.libraries || []).filter(hasContent);
+              if (validLibraries.length > 0) { 
+            %>
               <h3>Key Libraries & Dependencies</h3>
               <ul>
-                <% techStack.libraries.forEach(lib => { %>
+                <% validLibraries.forEach(lib => { %>
                   <li>
-                    <code><%= lib.name %></code><% if (lib.version) { %> (<%= lib.version %>)<% } %>: <%= lib.purpose %>
+                    <code><%= lib.name || '' %></code><% if (lib.version) { %> (<%= lib.version %>)<% } %><% if (lib.purpose || lib.description) { %>: <%= lib.purpose || lib.description %><% } %>
                   </li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (techStack.infrastructure && techStack.infrastructure.length > 0) { %>
-              <p><strong>Infrastructure / Tooling:</strong> <%= techStack.infrastructure.join(', ') %></p>
+            <% 
+              const validInfra = (techStack.infrastructure || []).filter(hasContent);
+              if (validInfra.length > 0) { 
+            %>
+              <p><strong>Infrastructure / Tooling:</strong> <%= validInfra.map(formatItem).join(', ') %></p>
             <% } %>
 
-            <% if (techStack.sources && techStack.sources.length > 0) { %>
+            <% if (techStack.sources && techStack.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% techStack.sources.forEach(src => { %>
+                <% techStack.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -601,44 +692,53 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (limitations.knownLimitations && limitations.knownLimitations.length > 0) { %>
+            <% 
+              const validLimitations = (limitations.knownLimitations || []).filter(hasContent);
+              if (validLimitations.length > 0) { 
+            %>
               <h3>Known Limitations</h3>
               <ul>
-                <% limitations.knownLimitations.forEach(lim => { %>
-                  <li><%= lim %></li>
+                <% validLimitations.forEach(lim => { %>
+                  <li><%- formatItem(lim) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (limitations.compatibility && limitations.compatibility.length > 0) { %>
+            <% 
+              const validCompatibility = (limitations.compatibility || []).filter(hasContent);
+              if (validCompatibility.length > 0) { 
+            %>
               <h3>Compatibility Notes</h3>
               <ul>
-                <% limitations.compatibility.forEach(comp => { %>
-                  <li><%= comp %></li>
+                <% validCompatibility.forEach(comp => { %>
+                  <li><%- formatItem(comp) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (limitations.securityCaveats && limitations.securityCaveats.length > 0) { %>
+            <% 
+              const validSecurity = (limitations.securityCaveats || []).filter(hasContent);
+              if (validSecurity.length > 0) { 
+            %>
               <h3>Security Caveats</h3>
               <ul>
-                <% limitations.securityCaveats.forEach(sec => { %>
-                  <li><%= sec %></li>
+                <% validSecurity.forEach(sec => { %>
+                  <li><%- formatItem(sec) %></li>
                 <% }); %>
               </ul>
             <% } %>
 
-            <% if (limitations.productionReadiness) { %>
+            <% if (limitations.productionReadiness && hasContent(limitations.productionReadiness)) { %>
               <div class="callout-recommendation">
                 <div class="callout-title">Production Readiness Assessment</div>
                 <p><%= limitations.productionReadiness %></p>
               </div>
             <% } %>
 
-            <% if (limitations.sources && limitations.sources.length > 0) { %>
+            <% if (limitations.sources && limitations.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% limitations.sources.forEach(src => { %>
+                <% limitations.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -659,23 +759,24 @@
             <% } %>
           </header>
           <div class="section-body">
-            <% if (alternatives.comparableProjects && alternatives.comparableProjects.length > 0) { %>
+            <% 
+              const validAlternatives = (alternatives.comparableProjects || []).filter(hasContent);
+              if (validAlternatives.length > 0) { 
+            %>
               <h3>Comparable Projects</h3>
               <ul>
-                <% alternatives.comparableProjects.forEach(proj => { %>
+                <% validAlternatives.forEach(proj => { %>
                   <li>
-                    <strong><%= proj.name %>:</strong> <%= proj.distinction %>
+                    <%- formatItem(proj) %>
                   </li>
                 <% }); %>
               </ul>
-            <% } else { %>
-              <p>No direct alternatives or similar projects specified in repository documentation.</p>
             <% } %>
 
-            <% if (alternatives.sources && alternatives.sources.length > 0) { %>
+            <% if (alternatives.sources && alternatives.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
                 <span class="sources-label">Sources:</span>
-                <% alternatives.sources.forEach(src => { %>
+                <% alternatives.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
               </div>
@@ -695,18 +796,21 @@
           <div class="section-body">
             <ul>
               <li><strong>Repository:</strong> <a href="<%= record.url %>" target="_blank" rel="noopener noreferrer"><%= record.url %></a></li>
-              <% if (resources.documentationUrl && resources.documentationUrl !== 'Not documented') { %>
+              <% if (resources.documentationUrl && hasContent(resources.documentationUrl)) { %>
                 <li><strong>Documentation:</strong> <a href="<%= resources.documentationUrl %>" target="_blank" rel="noopener noreferrer"><%= resources.documentationUrl %></a></li>
               <% } %>
-              <% if (resources.issueTrackerUrl && resources.issueTrackerUrl !== 'Not documented') { %>
+              <% if (resources.issueTrackerUrl && hasContent(resources.issueTrackerUrl)) { %>
                 <li><strong>Issues:</strong> <a href="<%= resources.issueTrackerUrl %>" target="_blank" rel="noopener noreferrer"><%= resources.issueTrackerUrl %></a></li>
               <% } %>
             </ul>
 
-            <% if (resources.communityLinks && resources.communityLinks.length > 0) { %>
+            <% 
+              const validCommunity = (resources.communityLinks || []).filter(hasContent);
+              if (validCommunity.length > 0) { 
+            %>
               <h3>Community Links</h3>
               <ul>
-                <% resources.communityLinks.forEach(comm => { %>
+                <% validCommunity.forEach(comm => { %>
                   <li><a href="<%= comm.url %>" target="_blank" rel="noopener noreferrer"><%= comm.title || comm.url %></a></li>
                 <% }); %>
               </ul>
