@@ -1,8 +1,13 @@
 /**
  * GitEx — Analysis Viewer Client Interactions (GITEX-011, GITEX-012, GITEX-013, GITEX-014)
  */
+import GitExHistory from './history.storage.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+if (typeof window !== 'undefined' && !window.GitExHistory) {
+  window.GitExHistory = GitExHistory;
+}
+
+async function initAnalysis() {
   let record = window.__GITEX_RECORD__;
   const recordId = window.__RECORD_ID__ || new URLSearchParams(window.location.search).get('id');
 
@@ -12,8 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
       window.GitExHistory.save(record);
     }
   } else if (!record && recordId) {
-    // Attempt client-side hydration from LocalStorage
-    record = hydrateFromLocalStorage(recordId);
+    // Attempt client-side hydration from LocalStorage or API
+    record = await hydrateAnalysis(recordId);
   }
 
   // Initialize interactive features
@@ -22,23 +27,60 @@ document.addEventListener('DOMContentLoaded', () => {
   initReanalyzeButton(record);
   initScrollSpy();
   initMobileToc();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAnalysis);
+} else {
+  initAnalysis();
+}
 
 /**
- * Hydrates document client-side if loaded from history
+ * Hydrates document client-side if loaded from history or server API
  */
-function hydrateFromLocalStorage(recordId) {
+async function hydrateAnalysis(recordId) {
   try {
-    const item = window.GitExHistory ? window.GitExHistory.getById(recordId) : null;
+    let item = window.GitExHistory ? window.GitExHistory.getById(recordId) : null;
+
+    if (!item) {
+      try {
+        const raw = localStorage.getItem('gitex_history');
+        if (raw) {
+          const list = JSON.parse(raw);
+          item = list.find((r) => r.id === recordId || r.url?.toLowerCase().includes(recordId.toLowerCase()));
+        }
+      } catch {}
+    }
+
+    // Attempt to fetch from server API if not found in LocalStorage
+    if (!item) {
+      try {
+        const res = await fetch(`/api/analysis/${encodeURIComponent(recordId)}`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            item = json.data;
+            if (window.GitExHistory) {
+              window.GitExHistory.save(item);
+            }
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('[GitEx Analysis] API fallback fetch failed:', fetchErr);
+      }
+    }
+
     if (!item) {
       const placeholder = document.getElementById('client-document-placeholder');
       if (placeholder) {
         placeholder.innerHTML = `
           <div class="section-incomplete-notice">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            <span>Analysis record '${escapeHtml(recordId)}' was not found in local history.</span>
+            <svg class="w-4 h-4 flex-shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span>Analysis record '${escapeHtml(recordId)}' was not found in cache or local history.</span>
           </div>
-          <p><a href="/" class="btn-primary" style="display:inline-block;margin-top:0.5rem;">Analyze a Repository</a></p>
+          <p style="margin-top:1rem;"><a href="/" class="btn-primary" style="display:inline-block;">Analyze a Repository</a></p>
         `;
       }
       return null;

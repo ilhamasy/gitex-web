@@ -1,4 +1,10 @@
 // GitEx Dashboard Shell Client (GITEX-002, 003, 011, 012)
+import GitExHistory from './history.storage.js';
+
+if (typeof window !== 'undefined' && !window.GitExHistory) {
+  window.GitExHistory = GitExHistory;
+}
+
 (function () {
   'use strict';
 

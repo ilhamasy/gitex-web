@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { PipelineService, PIPELINE_STAGES } from '../services/pipeline/pipeline.service.js';
 import { MarkdownService } from '../services/render/markdown.service.js';
 import { SECTION_KEYS, SECTION_TITLES } from '../models/analysis.schema.js';
@@ -6,6 +8,15 @@ import { logger } from '../utils/logger.js';
 // In-memory cache for recent analysis runs (id -> record)
 const analysisCache = new Map();
 const MAX_CACHE_SIZE = 50;
+const CACHE_DIR = path.resolve(process.cwd(), '.data', 'analyses');
+
+try {
+  if (!fs.existsSync(CACHE_DIR)) {
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+  }
+} catch (err) {
+  logger.warn(`[Cache] Could not initialize disk cache directory: ${err.message}`);
+}
 
 function cacheRecord(record) {
   if (!record || !record.id) return;
@@ -14,9 +25,32 @@ function cacheRecord(record) {
     analysisCache.delete(oldestKey);
   }
   analysisCache.set(record.id, record);
+
+  try {
+    const filePath = path.join(CACHE_DIR, `${record.id}.json`);
+    fs.writeFileSync(filePath, JSON.stringify(record), 'utf8');
+  } catch (err) {
+    logger.warn(`[Cache] Failed to persist analysis to disk: ${err.message}`);
+  }
 }
 
-export const getCachedRecord = (id) => analysisCache.get(id) || null;
+export const getCachedRecord = (id) => {
+  if (!id) return null;
+  if (analysisCache.has(id)) {
+    return analysisCache.get(id);
+  }
+  try {
+    const filePath = path.join(CACHE_DIR, `${id}.json`);
+    if (fs.existsSync(filePath)) {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      analysisCache.set(id, data);
+      return data;
+    }
+  } catch (err) {
+    logger.warn(`[Cache] Failed to read analysis from disk: ${err.message}`);
+  }
+  return null;
+};
 
 /**
  * Standard non-streaming repository analysis endpoint

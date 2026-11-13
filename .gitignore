@@ -24,3 +24,4 @@ coverage/
 # Temporary / Scratch files
 tmp/
 scratch/
+.data/
