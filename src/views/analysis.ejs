@@ -102,27 +102,112 @@
 
   <!-- Main Analysis Workspace -->
   <main class="container analysis-workspace-grid with-evidence" id="main-content">
+    <%
+    function formatItem(item) {
+      if (!item) return '';
+      if (typeof item === 'string') return item.trim();
+      if (typeof item === 'object') {
+        const name = item.name || item.title || '';
+        const desc = item.description || item.purpose || item.distinction || '';
+        if (name && desc) return '<strong>' + name + ':</strong> ' + desc;
+        return name || desc || '';
+      }
+      return String(item);
+    }
+
+    function hasContent(val) {
+      if (!val) return false;
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        return trimmed.length > 0 && trimmed !== 'Not documented' && trimmed !== 'Not documented.' && trimmed !== 'N/A' && trimmed !== '[object Object]';
+      }
+      if (Array.isArray(val)) {
+        return val.some(hasContent);
+      }
+      if (typeof val === 'object') {
+        return Object.values(val).some(hasContent);
+      }
+      return true;
+    }
+
+    function isSectionVisible(key, analysis) {
+      if (!analysis) return true;
+      const sec = analysis[key];
+      if (!sec) return false;
+
+      switch (key) {
+        case 'overview':
+          return hasContent(sec.summary) || hasContent(sec.problemSolved) || hasContent(sec.mainGoal);
+        case 'purpose':
+          return (sec.targetUsers || []).some(hasContent) ||
+                 (sec.capabilities || []).some(hasContent) ||
+                 (sec.scenarios || []).some(hasContent);
+        case 'features':
+          return (sec.coreFeatures || []).some(hasContent) ||
+                 (sec.uniqueCapabilities || []).some(hasContent);
+        case 'howItWorks':
+          return hasContent(sec.architecture) ||
+                 (sec.components || []).some(hasContent) ||
+                 hasContent(sec.dataFlow);
+        case 'prerequisites':
+          return hasContent(sec.runtime) ||
+                 (sec.languages || []).some(hasContent) ||
+                 (sec.tools || []).some(hasContent) ||
+                 (sec.system || []).some(hasContent);
+        case 'installation':
+          return (sec.steps || []).some(hasContent) ||
+                 (sec.caveats || []).some(hasContent);
+        case 'configuration':
+          return (sec.configFiles || []).some(hasContent) ||
+                 (sec.environmentVariables || []).some(hasContent) ||
+                 (sec.secrets || []).some(hasContent);
+        case 'usage':
+          return hasContent(sec.quickStart) ||
+                 (sec.commonCommands || []).some(hasContent) ||
+                 (sec.codeExamples || []).some(hasContent);
+        case 'techStack':
+          return (sec.languages || []).some(hasContent) ||
+                 (sec.frameworks || []).some(hasContent) ||
+                 (sec.libraries || []).some(hasContent) ||
+                 (sec.infrastructure || []).some(hasContent);
+        case 'limitations':
+          return (sec.knownLimitations || []).some(hasContent) ||
+                 (sec.compatibility || []).some(hasContent) ||
+                 (sec.securityCaveats || []).some(hasContent) ||
+                 hasContent(sec.productionReadiness);
+        case 'alternatives':
+          return (sec.comparableProjects || []).some(hasContent);
+        case 'resources':
+          return hasContent(sec.documentationUrl) ||
+                 hasContent(sec.issueTrackerUrl) ||
+                 (sec.communityLinks || []).some(hasContent);
+        default:
+          return Object.entries(sec).some(([k, v]) => k !== 'title' && k !== 'sources' && k !== 'isIncomplete' && k !== 'status' && hasContent(v));
+      }
+    }
+
+    const sectionsList = [
+      { key: 'overview', title: 'Repository Overview', num: '01' },
+      { key: 'purpose', title: 'Purpose & Use Cases', num: '02' },
+      { key: 'features', title: 'Key Features', num: '03' },
+      { key: 'howItWorks', title: 'How It Works', num: '04' },
+      { key: 'prerequisites', title: 'Prerequisites', num: '05' },
+      { key: 'installation', title: 'Installation Guide', num: '06' },
+      { key: 'configuration', title: 'Configuration', num: '07' },
+      { key: 'usage', title: 'Usage & Examples', num: '08' },
+      { key: 'techStack', title: 'Tech Stack', num: '09' },
+      { key: 'limitations', title: 'Limitations & Considerations', num: '10' },
+      { key: 'alternatives', title: 'Alternatives', num: '11' },
+      { key: 'resources', title: 'Official Resources', num: '12' },
+    ];
+
+    const visibleSections = record && record.analysis ? sectionsList.filter(s => isSectionVisible(s.key, record.analysis)) : sectionsList;
+    %>
     <!-- Left Navigation Rail (Table of Contents) -->
     <nav class="analysis-toc-rail" id="toc-rail" aria-label="Analysis Sections">
       <div class="toc-header">Table of Contents</div>
       <ol class="toc-list" id="toc-list">
-        <% 
-        const sectionsList = [
-          { key: 'overview', title: 'Repository Overview', num: '01' },
-          { key: 'purpose', title: 'Purpose & Use Cases', num: '02' },
-          { key: 'features', title: 'Key Features', num: '03' },
-          { key: 'howItWorks', title: 'How It Works', num: '04' },
-          { key: 'prerequisites', title: 'Prerequisites', num: '05' },
-          { key: 'installation', title: 'Installation Guide', num: '06' },
-          { key: 'configuration', title: 'Configuration', num: '07' },
-          { key: 'usage', title: 'Usage & Examples', num: '08' },
-          { key: 'techStack', title: 'Tech Stack', num: '09' },
-          { key: 'limitations', title: 'Limitations & Considerations', num: '10' },
-          { key: 'alternatives', title: 'Alternatives', num: '11' },
-          { key: 'resources', title: 'Official Resources', num: '12' },
-        ];
-        %>
-        <% sectionsList.forEach(sec => { %>
+        <% visibleSections.forEach(sec => { %>
           <li>
             <a href="#section-<%= sec.key %>" class="toc-link" data-section="<%= sec.key %>">
               <span class="toc-num"><%= sec.num %></span>
@@ -136,37 +221,10 @@
     <!-- Center Reading Column -->
     <article class="analysis-document-column" id="analysis-document">
       <% if (record && record.analysis) { %>
-        <%
-        function formatItem(item) {
-          if (!item) return '';
-          if (typeof item === 'string') return item.trim();
-          if (typeof item === 'object') {
-            const name = item.name || item.title || '';
-            const desc = item.description || item.purpose || item.distinction || '';
-            if (name && desc) return '<strong>' + name + ':</strong> ' + desc;
-            return name || desc || '';
-          }
-          return String(item);
-        }
-
-        function hasContent(val) {
-          if (!val) return false;
-          if (typeof val === 'string') {
-            const trimmed = val.trim();
-            return trimmed.length > 0 && trimmed !== 'Not documented' && trimmed !== 'Not documented.' && trimmed !== 'N/A' && trimmed !== '[object Object]';
-          }
-          if (Array.isArray(val)) {
-            return val.some(hasContent);
-          }
-          if (typeof val === 'object') {
-            return Object.values(val).some(hasContent);
-          }
-          return true;
-        }
-        %>
 
         <!-- 01. Repository Overview -->
         <% const overview = record.analysis.overview || {}; %>
+        <% if (isSectionVisible('overview', record.analysis)) { %>
         <section class="analysis-section" id="section-overview" aria-labelledby="heading-overview">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -214,9 +272,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 02. Purpose & Use Cases -->
         <% const purpose = record.analysis.purpose || {}; %>
+        <% if (isSectionVisible('purpose', record.analysis)) { %>
         <section class="analysis-section" id="section-purpose" aria-labelledby="heading-purpose">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -274,9 +334,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 03. Key Features -->
         <% const features = record.analysis.features || {}; %>
+        <% if (isSectionVisible('features', record.analysis)) { %>
         <section class="analysis-section" id="section-features" aria-labelledby="heading-features">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -322,9 +384,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 04. How It Works -->
         <% const howItWorks = record.analysis.howItWorks || {}; %>
+        <% if (isSectionVisible('howItWorks', record.analysis)) { %>
         <section class="analysis-section" id="section-howItWorks" aria-labelledby="heading-howItWorks">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -377,9 +441,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 05. Prerequisites -->
         <% const prerequisites = record.analysis.prerequisites || {}; %>
+        <% if (isSectionVisible('prerequisites', record.analysis)) { %>
         <section class="analysis-section" id="section-prerequisites" aria-labelledby="heading-prerequisites">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -436,9 +502,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 06. Installation Guide -->
         <% const installation = record.analysis.installation || {}; %>
+        <% if (isSectionVisible('installation', record.analysis)) { %>
         <section class="analysis-section" id="section-installation" aria-labelledby="heading-installation">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -494,9 +562,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 07. Configuration -->
         <% const configuration = record.analysis.configuration || {}; %>
+        <% if (isSectionVisible('configuration', record.analysis)) { %>
         <section class="analysis-section" id="section-configuration" aria-labelledby="heading-configuration">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -562,9 +632,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 08. Usage & Examples -->
         <% const usage = record.analysis.usage || {}; %>
+        <% if (isSectionVisible('usage', record.analysis)) { %>
         <section class="analysis-section" id="section-usage" aria-labelledby="heading-usage">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -619,9 +691,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 09. Tech Stack -->
         <% const techStack = record.analysis.techStack || {}; %>
+        <% if (isSectionVisible('techStack', record.analysis)) { %>
         <section class="analysis-section" id="section-techStack" aria-labelledby="heading-techStack">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -678,9 +752,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 10. Limitations & Considerations -->
         <% const limitations = record.analysis.limitations || {}; %>
+        <% if (isSectionVisible('limitations', record.analysis)) { %>
         <section class="analysis-section" id="section-limitations" aria-labelledby="heading-limitations">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -745,9 +821,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 11. Alternatives & Similar Projects -->
         <% const alternatives = record.analysis.alternatives || {}; %>
+        <% if (isSectionVisible('alternatives', record.analysis)) { %>
         <section class="analysis-section" id="section-alternatives" aria-labelledby="heading-alternatives">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -783,9 +861,11 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
         <!-- 12. Official Resources -->
         <% const resources = record.analysis.resources || {}; %>
+        <% if (isSectionVisible('resources', record.analysis)) { %>
         <section class="analysis-section" id="section-resources" aria-labelledby="heading-resources">
           <header class="section-header-row">
             <div class="section-title-wrap">
@@ -817,6 +897,7 @@
             <% } %>
           </div>
         </section>
+        <% } %>
 
       <% } else { %>
         <!-- Placeholder for dynamic client-side rendering -->

@@ -121,8 +121,10 @@ async function hydrateAnalysis(recordId) {
         { key: 'resources', title: 'Official Resources', num: '12' },
       ];
 
+      const visibleKeys = sectionKeys.filter(({ key }) => isSectionVisible(key, item.analysis));
+
       let docHtml = '';
-      sectionKeys.forEach(({ key, title, num }) => {
+      visibleKeys.forEach(({ key, title, num }) => {
         const sec = item.analysis[key] || {};
         const isNotDoc = sec.status === 'not_documented' || sec.isIncomplete;
 
@@ -138,7 +140,7 @@ async function hydrateAnalysis(recordId) {
             <div class="section-body">
               ${isNotDoc ? `
                 <div class="section-incomplete-notice">
-                  <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                  <svg class="w-4 h-4 flex-shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                   <span>This section was not documented or could not be verified from repository documentation.</span>
                 </div>
               ` : ''}
@@ -149,6 +151,19 @@ async function hydrateAnalysis(recordId) {
       });
 
       docContainer.innerHTML = docHtml;
+
+      // Update Table of Contents rail to match visible sections
+      const tocList = document.getElementById('toc-list');
+      if (tocList) {
+        tocList.innerHTML = visibleKeys.map(({ key, title, num }) => `
+          <li>
+            <a href="#section-${key}" class="toc-link" data-section="${key}">
+              <span class="toc-num">${num}</span>
+              <span class="toc-title">${escapeHtml(title)}</span>
+            </a>
+          </li>
+        `).join('');
+      }
     }
 
     return item;
@@ -183,6 +198,62 @@ function hasContent(val) {
     return Object.values(val).some(hasContent);
   }
   return true;
+}
+
+function isSectionVisible(key, analysis) {
+  if (!analysis) return true;
+  const sec = analysis[key];
+  if (!sec) return false;
+
+  switch (key) {
+    case 'overview':
+      return hasContent(sec.summary) || hasContent(sec.problemSolved) || hasContent(sec.mainGoal);
+    case 'purpose':
+      return (sec.targetUsers || []).some(hasContent) ||
+             (sec.capabilities || []).some(hasContent) ||
+             (sec.scenarios || []).some(hasContent);
+    case 'features':
+      return (sec.coreFeatures || []).some(hasContent) ||
+             (sec.uniqueCapabilities || []).some(hasContent);
+    case 'howItWorks':
+      return hasContent(sec.architecture) ||
+             (sec.components || []).some(hasContent) ||
+             hasContent(sec.dataFlow);
+    case 'prerequisites':
+      return hasContent(sec.runtime) ||
+             (sec.languages || []).some(hasContent) ||
+             (sec.tools || []).some(hasContent) ||
+             (sec.system || []).some(hasContent);
+    case 'installation':
+      return (sec.steps || []).some(hasContent) ||
+             (sec.caveats || []).some(hasContent);
+    case 'configuration':
+      return (sec.configFiles || []).some(hasContent) ||
+             (sec.environmentVariables || []).some(hasContent) ||
+             (sec.secrets || []).some(hasContent);
+    case 'usage':
+      return hasContent(sec.quickStart) ||
+             (sec.commonCommands || []).some(hasContent) ||
+             (sec.codeExamples || []).some(hasContent);
+    case 'techStack':
+      return (sec.languages || []).some(hasContent) ||
+             (sec.frameworks || []).some(hasContent) ||
+             (sec.libraries || []).some(hasContent) ||
+             (sec.infrastructure || []).some(hasContent);
+    case 'limitations':
+      return (sec.knownLimitations || []).some(hasContent) ||
+             (sec.compatibility || []).some(hasContent) ||
+             (sec.securityCaveats || []).some(hasContent) ||
+             hasContent(sec.productionReadiness);
+    case 'alternatives':
+      return (sec.comparableProjects || []).some(hasContent);
+    case 'resources':
+      return hasContent(sec.documentationUrl) ||
+             hasContent(sec.issueTrackerUrl) ||
+             (sec.communityLinks || []).some(hasContent);
+    default:
+      return Object.entries(sec).some(([k, v]) => k !== 'title' && k !== 'sources' && k !== 'isIncomplete' && k !== 'status' && hasContent(v));
+  }
 }
 
 /**
