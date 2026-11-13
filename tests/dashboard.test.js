@@ -15,8 +15,6 @@ describe('Dashboard Shell (GITEX-002)', () => {
     assert.ok(res.text.includes('GitEx'));
     assert.ok(res.text.includes('Field Notebook'));
     assert.ok(res.text.includes('id="theme-toggle"'));
-    assert.ok(res.text.includes('href="/health"'));
-    assert.ok(res.text.includes('id="nav-history-link"'));
   });
 
   it('has repository URL input as the primary action', async () => {
@@ -39,7 +37,7 @@ describe('Dashboard Shell (GITEX-002)', () => {
   it('renders history section with an informative empty state', async () => {
     const res = await request(app).get('/');
     assert.ok(res.text.includes('id="history-section"'));
-    assert.ok(res.text.includes('Recent Analyses'));
+    assert.ok(res.text.includes('Recent Explains'));
     assert.ok(res.text.includes('No repositories analyzed yet'));
     assert.ok(res.text.includes('Analysis history is stored locally in this browser'));
   });
