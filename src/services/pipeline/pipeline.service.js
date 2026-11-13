@@ -86,7 +86,7 @@ export class PipelineService {
       notify(PIPELINE_STAGES.ANALYZING, 'Analyzing architecture, dependencies, and operational workflows with Gemini...');
 
       // 5. Stage: Generating
-      notify(PIPELINE_STAGES.GENERATING, 'Validating schema and generating structured 12-section technical guide...');
+      notify(PIPELINE_STAGES.GENERATING, 'Validating schema and generating structured technical guide...');
       const generated = await AnalysisService.generateAnalysis(repoMeta, repomixBundle, {
         model: options.model,
       });

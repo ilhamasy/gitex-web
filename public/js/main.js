@@ -134,11 +134,37 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     }
   }
 
+  let currentActiveStage = 'Validating';
+
   function updateStageUI(activeStage, message) {
     if (stageCurrentMsg && message) {
       stageCurrentMsg.textContent = message;
     }
 
+    if (activeStage === 'Failed') {
+      const failIdx = STAGES_ORDER.indexOf(currentActiveStage);
+      STAGES_ORDER.forEach((stage, idx) => {
+        const el = document.getElementById(`stage-${stage.toLowerCase()}`);
+        if (!el) return;
+
+        el.classList.remove('pending', 'active', 'complete', 'failed');
+        const icon = el.querySelector('.stage-icon-circle');
+
+        if (idx === failIdx) {
+          el.classList.add('failed');
+          if (icon) icon.textContent = '✕';
+        } else if (idx < failIdx) {
+          el.classList.add('complete');
+          if (icon) icon.textContent = '✓';
+        } else {
+          el.classList.add('pending');
+          if (icon) icon.textContent = String(idx + 1);
+        }
+      });
+      return;
+    }
+
+    currentActiveStage = activeStage;
     const activeIdx = STAGES_ORDER.indexOf(activeStage);
 
     STAGES_ORDER.forEach((stage, idx) => {
@@ -148,23 +174,12 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       el.classList.remove('pending', 'active', 'complete', 'failed');
       const icon = el.querySelector('.stage-icon-circle');
 
-      if (activeStage === 'Failed') {
-        if (idx === activeIdx) {
-          el.classList.add('failed');
-          if (icon) icon.textContent = '✕';
-        } else if (idx < activeIdx) {
-          el.classList.add('complete');
-          if (icon) icon.textContent = '✓';
-        } else {
-          el.classList.add('pending');
-          if (icon) icon.textContent = String(idx + 1);
-        }
-      } else if (activeStage === 'Completed' || idx < activeIdx) {
+      if (activeStage === 'Completed' || idx < activeIdx) {
         el.classList.add('complete');
         if (icon) icon.textContent = '✓';
       } else if (idx === activeIdx) {
         el.classList.add('active');
-        if (icon) icon.textContent = '→';
+        if (icon) icon.textContent = '';
       } else {
         el.classList.add('pending');
         if (icon) icon.textContent = String(idx + 1);
