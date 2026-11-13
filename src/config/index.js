@@ -14,6 +14,11 @@ export const config = {
   gitlab: {
     token: process.env.GITLAB_TOKEN || '',
   },
+  ingestion: {
+    maxTreeEntries: parseInt(process.env.MAX_TREE_ENTRIES, 10) || 1000,
+    maxRelevantFiles: parseInt(process.env.MAX_RELEVANT_FILES, 10) || 50,
+    maxFileSizeBytes: parseInt(process.env.MAX_FILE_SIZE_BYTES, 10) || 100 * 1024, // 100KB
+  },
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV !== 'production',
 };

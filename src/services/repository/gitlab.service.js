@@ -5,6 +5,7 @@ import {
   RepositoryRateLimitError,
   RepositoryTimeoutError,
 } from './repository.errors.js';
+import { TreeFilterService } from './tree-filter.service.js';
 
 const GITLAB_API_BASE = 'https://gitlab.com/api/v4';
 const DEFAULT_TIMEOUT_MS = 10000;
@@ -116,7 +117,42 @@ export class GitLabService {
   }
 
   /**
-   * Fetch repository metadata, commit SHA, languages, and README
+   * Fetch repository tree from GitLab
+   */
+  static async fetchTree(fullName, revision = 'main', maxEntries = config.ingestion.maxTreeEntries) {
+    const encodedPath = encodeURIComponent(fullName);
+    const allItems = [];
+    let page = 1;
+    const perPage = 100;
+
+    try {
+      while (allItems.length < maxEntries) {
+        const res = await this.request(
+          `/projects/${encodedPath}/repository/tree?ref=${encodeURIComponent(revision)}&recursive=true&per_page=${perPage}&page=${page}`
+        );
+        const items = await res.json();
+        if (!Array.isArray(items) || items.length === 0) break;
+
+        allItems.push(...items);
+        if (items.length < perPage) break;
+        page++;
+      }
+
+      return {
+        tree: allItems,
+        truncated: allItems.length >= maxEntries,
+      };
+    } catch {
+      // Degrade gracefully without crashing if tree fails
+      return {
+        tree: [],
+        truncated: false,
+      };
+    }
+  }
+
+  /**
+   * Fetch repository metadata, commit SHA, languages, README, and tree
    */
   static async fetchRepositoryData(fullName) {
     const encodedPath = encodeURIComponent(fullName);
@@ -127,14 +163,24 @@ export class GitLabService {
 
     const defaultBranch = data.default_branch || 'main';
 
-    // 2. Concurrently fetch commit SHA, languages, and README
-    const [commitResult, languagesResult, readmeResult] = await Promise.allSettled([
-      // Latest commit SHA
-      this.request(`/projects/${encodedPath}/repository/commits?per_page=1&ref_name=${encodeURIComponent(defaultBranch)}`)
-        .then((r) => r.json())
-        .then((commits) => (Array.isArray(commits) && commits.length > 0 ? commits[0].id : null))
-        .catch(() => null),
+    // 2. Fetch commit SHA
+    let commitSha = null;
+    try {
+      const commitRes = await this.request(
+        `/projects/${encodedPath}/repository/commits?per_page=1&ref_name=${encodeURIComponent(defaultBranch)}`
+      );
+      const commits = await commitRes.json();
+      if (Array.isArray(commits) && commits.length > 0) {
+        commitSha = commits[0].id || null;
+      }
+    } catch {
+      commitSha = null;
+    }
 
+    const revision = commitSha || defaultBranch;
+
+    // 3. Concurrently fetch languages, README, and tree
+    const [languagesResult, readmeResult, treeResult] = await Promise.allSettled([
       // Languages breakdown
       this.request(`/projects/${encodedPath}/languages`)
         .then((r) => r.json())
@@ -142,13 +188,18 @@ export class GitLabService {
 
       // README
       this.fetchReadme(fullName, defaultBranch),
+
+      // Repository tree
+      this.fetchTree(fullName, revision),
     ]);
 
-    const commitSha = commitResult.status === 'fulfilled' ? commitResult.value : null;
     const languages = languagesResult.status === 'fulfilled' ? (languagesResult.value || {}) : {};
     const readme = readmeResult.status === 'fulfilled'
       ? readmeResult.value
       : { content: null, filename: null, byteSize: 0 };
+    const rawTree = treeResult.status === 'fulfilled'
+      ? treeResult.value
+      : { tree: [], truncated: false };
 
     // Determine primary language from highest percentage
     let primaryLanguage = null;
@@ -162,6 +213,9 @@ export class GitLabService {
 
     const owner = data.namespace?.path || data.namespace?.name || fullName.split('/')[0];
     const name = data.path || data.name || fullName.split('/').pop();
+
+    // 4. Process and categorize files using TreeFilterService
+    const filteredTree = TreeFilterService.filterAndSelect(rawTree.tree);
 
     return {
       provider: 'gitlab',
@@ -179,6 +233,14 @@ export class GitLabService {
       license: data.license?.key || data.license?.name || null,
       updatedAt: data.last_activity_at || null,
       readme,
+      tree: {
+        revision,
+        totalBlobs: filteredTree.totalBlobs,
+        totalTrees: filteredTree.totalTrees,
+        isTruncated: rawTree.truncated || filteredTree.isTruncated,
+        summary: filteredTree.summary,
+        relevantFiles: filteredTree.relevantFiles,
+      },
     };
   }
 }

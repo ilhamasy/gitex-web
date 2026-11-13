@@ -56,6 +56,17 @@ describe('GitLabService — GITEX-005', () => {
           text: async () => '# GitLab Runner\nOfficial GitLab CI runner',
         };
       }
+      if (urlStr.includes('/repository/tree')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [
+            { path: 'go.mod', type: 'blob', size: 800 },
+            { path: 'main.go', type: 'blob', size: 1500 },
+            { path: 'vendor/pkg/foo.go', type: 'blob', size: 500 },
+          ],
+        };
+      }
       return { ok: false, status: 404 };
     };
 
@@ -73,6 +84,8 @@ describe('GitLabService — GITEX-005', () => {
     assert.equal(data.license, 'mit');
     assert.equal(data.readme.filename, 'README.md');
     assert.ok(data.readme.content.includes('# GitLab Runner'));
+    assert.ok(data.tree.summary.manifests.includes('go.mod'));
+    assert.ok(data.tree.summary.entryPoints.includes('main.go'));
   });
 
   it('throws RepositoryNotFoundError on 404 project', async () => {
@@ -105,3 +118,4 @@ describe('GitLabService — GITEX-005', () => {
     );
   });
 });
+

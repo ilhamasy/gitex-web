@@ -57,6 +57,21 @@ describe('GitHubService — GITEX-005', () => {
           text: async () => '# Express\nFast web framework for Node.js',
         };
       }
+      if (urlStr.includes('/git/trees')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            sha: 'a1b2c3d4e5f67890',
+            truncated: false,
+            tree: [
+              { path: 'package.json', type: 'blob', size: 1200 },
+              { path: 'index.js', type: 'blob', size: 3000 },
+              { path: 'node_modules/foo.js', type: 'blob', size: 500 },
+            ],
+          }),
+        };
+      }
       return { ok: false, status: 404 };
     };
 
@@ -76,6 +91,9 @@ describe('GitHubService — GITEX-005', () => {
     assert.equal(data.readme.filename, 'README.md');
     assert.ok(data.readme.content.includes('# Express'));
     assert.ok(data.readme.byteSize > 0);
+    assert.equal(data.tree.revision, 'a1b2c3d4e5f67890');
+    assert.ok(data.tree.summary.manifests.includes('package.json'));
+    assert.ok(data.tree.summary.entryPoints.includes('index.js'));
   });
 
   it('handles repository without README gracefully', async () => {
@@ -145,3 +163,4 @@ describe('GitHubService — GITEX-005', () => {
     );
   });
 });
+

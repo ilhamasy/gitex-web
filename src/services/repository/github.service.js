@@ -5,6 +5,7 @@ import {
   RepositoryRateLimitError,
   RepositoryTimeoutError,
 } from './repository.errors.js';
+import { TreeFilterService } from './tree-filter.service.js';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const DEFAULT_TIMEOUT_MS = 10000;
@@ -99,7 +100,6 @@ export class GitHubService {
       };
     } catch (err) {
       if (err instanceof RepositoryNotFoundError) {
-        // Repository has no README
         return {
           content: null,
           filename: null,
@@ -111,7 +111,27 @@ export class GitHubService {
   }
 
   /**
-   * Fetch repository metadata, commit SHA, languages, and README
+   * Fetch repository directory tree using Git Trees API
+   */
+  static async fetchTree(owner, repo, treeSha) {
+    try {
+      const res = await this.request(`/repos/${owner}/${repo}/git/trees/${encodeURIComponent(treeSha)}?recursive=1`);
+      const data = await res.json();
+      return {
+        tree: Array.isArray(data.tree) ? data.tree : [],
+        truncated: Boolean(data.truncated),
+      };
+    } catch {
+      // Degrade gracefully without crashing if tree retrieval fails
+      return {
+        tree: [],
+        truncated: false,
+      };
+    }
+  }
+
+  /**
+   * Fetch repository metadata, commit SHA, languages, README, and structured tree
    */
   static async fetchRepositoryData(owner, repo) {
     // 1. Fetch primary repo info
@@ -120,14 +140,20 @@ export class GitHubService {
 
     const defaultBranch = data.default_branch || 'main';
 
-    // 2. Concurrently fetch commit SHA, languages breakdown, and README
-    const [commitShaResult, languagesResult, readmeResult] = await Promise.allSettled([
-      // Commit SHA for default branch
-      this.request(`/repos/${owner}/${repo}/commits/${defaultBranch}`)
-        .then((r) => r.json())
-        .then((commit) => commit.sha || null)
-        .catch(() => null),
+    // 2. Fetch commit SHA for default branch
+    let commitSha = null;
+    try {
+      const commitRes = await this.request(`/repos/${owner}/${repo}/commits/${encodeURIComponent(defaultBranch)}`);
+      const commitData = await commitRes.json();
+      commitSha = commitData.sha || null;
+    } catch {
+      commitSha = null;
+    }
 
+    const revision = commitSha || defaultBranch;
+
+    // 3. Concurrently fetch languages, README, and tree
+    const [languagesResult, readmeResult, treeResult] = await Promise.allSettled([
       // Language byte breakdown
       this.request(`/repos/${owner}/${repo}/languages`)
         .then((r) => r.json())
@@ -135,13 +161,21 @@ export class GitHubService {
 
       // README
       this.fetchReadme(owner, repo),
+
+      // Directory tree
+      this.fetchTree(owner, repo, revision),
     ]);
 
-    const commitSha = commitShaResult.status === 'fulfilled' ? commitShaResult.value : null;
     const languages = languagesResult.status === 'fulfilled' ? (languagesResult.value || {}) : {};
     const readme = readmeResult.status === 'fulfilled'
       ? readmeResult.value
       : { content: null, filename: null, byteSize: 0 };
+    const rawTree = treeResult.status === 'fulfilled'
+      ? treeResult.value
+      : { tree: [], truncated: false };
+
+    // 4. Process and categorize files using TreeFilterService
+    const filteredTree = TreeFilterService.filterAndSelect(rawTree.tree);
 
     return {
       provider: 'github',
@@ -159,6 +193,14 @@ export class GitHubService {
       license: data.license?.spdx_id || data.license?.name || null,
       updatedAt: data.updated_at || null,
       readme,
+      tree: {
+        revision,
+        totalBlobs: filteredTree.totalBlobs,
+        totalTrees: filteredTree.totalTrees,
+        isTruncated: rawTree.truncated || filteredTree.isTruncated,
+        summary: filteredTree.summary,
+        relevantFiles: filteredTree.relevantFiles,
+      },
     };
   }
 }
