@@ -33,3 +33,4 @@ describe('App & Error Handling', () => {
     assert.ok(res.text.includes('--color-canvas'));
   });
 });
+

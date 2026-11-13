@@ -7,3 +7,4 @@ router.get('/health', getHealth);
 router.get('/api/health', getHealth);
 
 export default router;
+

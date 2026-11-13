@@ -20,3 +20,4 @@ describe('Health Check Endpoints', () => {
     assert.equal(res.body.status, 'ok');
   });
 });
+

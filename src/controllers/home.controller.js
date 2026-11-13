@@ -10,3 +10,4 @@ export const getHome = (req, res) => {
 export default {
   getHome,
 };
+

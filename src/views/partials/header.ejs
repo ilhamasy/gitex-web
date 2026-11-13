@@ -1,12 +1,20 @@
 <header class="app-header">
   <div class="container header-inner">
-    <a href="/" class="logo">
+    <a href="/" class="brand" aria-label="GitEx Home">
       <span>GitEx</span>
-      <span class="badge">MVP</span>
+      <span class="brand-tag">Field Notebook</span>
     </a>
-    <nav class="nav-links">
-      <a href="/health" class="nav-link font-mono">/health</a>
-      <button id="theme-toggle" class="btn-theme" type="button" aria-label="Toggle theme">🌙 Dark</button>
-    </nav>
+    <div class="header-actions">
+      <a href="#history-section" class="nav-item" id="nav-history-link">
+        <span>History</span>
+      </a>
+      <a href="/health" class="nav-item font-mono" title="System Health">
+        <span>/health</span>
+      </a>
+      <button id="theme-toggle" class="btn-ghost" type="button" aria-label="Switch to dark theme">
+        <span id="theme-icon" aria-hidden="true">🌙</span>
+        <span id="theme-label">Dark</span>
+      </button>
+    </div>
   </div>
 </header>

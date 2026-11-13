@@ -3,27 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GitEx — Understand any repository without reading everything. A developer research workbench.">
   <title><%= title %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <%- include('partials/header') %>
 
-  <main class="app-main">
+  <main class="dashboard-main" id="main-content">
     <div class="container">
-      <div class="surface-card">
-        <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem; font-weight: 600;">GitEx Application Initialized</h1>
-        <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem;">
-          Monolithic Node.js MVC architecture ready for GITEX stories.
-        </p>
+      <!-- Launcher Section -->
+      <section class="launcher-section" aria-labelledby="launcher-heading">
+        <div class="launcher-header">
+          <h1 id="launcher-heading" class="launcher-title">Understand any repository without reading everything.</h1>
+          <p class="launcher-desc">
+            Submit a public GitHub or GitLab repository to generate a structured, evidence-backed 12-section technical guide.
+          </p>
+        </div>
 
-        <div style="background-color: var(--color-surface-muted); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
-          <div style="font-size: 0.875rem; font-family: var(--font-mono); margin-bottom: 0.5rem;"><strong>System Status:</strong> Ready</div>
-          <div style="font-size: 0.875rem; color: var(--color-text-secondary);">
-            Check API status at <a href="/health" class="font-mono" style="color: var(--color-text-primary);">/health</a>
+        <div class="url-panel">
+          <form id="repo-form" class="url-form" novalidate>
+            <div class="input-row">
+              <div class="input-container">
+                <label for="repo-url" class="visually-hidden" style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+                  Repository URL
+                </label>
+                <input
+                  type="url"
+                  id="repo-url"
+                  name="url"
+                  class="url-input"
+                  placeholder="https://github.com/owner/repository"
+                  autocomplete="off"
+                  spellcheck="false"
+                  required
+                  aria-describedby="url-hint validation-msg"
+                />
+                <span id="provider-badge" class="provider-detect-badge" aria-live="polite">PUBLIC REPO</span>
+              </div>
+              <button type="submit" id="btn-analyze" class="btn-primary">
+                <span>Analyze repository</span>
+              </button>
+            </div>
+
+            <div id="validation-msg" class="validation-message" role="alert" aria-live="assertive"></div>
+
+            <div class="meta-row">
+              <div class="provider-hints" id="url-hint">
+                <span class="provider-pill">
+                  <span class="provider-dot"></span> GitHub
+                </span>
+                <span class="provider-pill">
+                  <span class="provider-dot"></span> GitLab
+                </span>
+              </div>
+              <div class="example-hint">
+                <span>Example:</span>
+                <button
+                  type="button"
+                  id="btn-example-url"
+                  class="example-link"
+                  data-url="https://github.com/expressjs/express"
+                  aria-label="Use example repository expressjs/express"
+                >
+                  github.com/expressjs/express
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- History Section -->
+      <section id="history-section" class="history-section" aria-labelledby="history-heading">
+        <div class="section-head">
+          <h2 id="history-heading" class="section-title">
+            <span>Recent Analyses</span>
+            <span id="history-count" class="count-pill">0</span>
+          </h2>
+          <button id="btn-clear-history" class="btn-clear" type="button" style="display: none;">
+            Clear history
+          </button>
+        </div>
+
+        <!-- Dynamic History List / Empty State Container -->
+        <div id="history-container">
+          <div class="empty-history-card">
+            <div class="empty-icon" aria-hidden="true">📋</div>
+            <h3 class="empty-title">No repositories analyzed yet</h3>
+            <p class="empty-desc">
+              Enter a public repository URL above to generate an architecture breakdown, prerequisites, installation commands, and usage guide.
+            </p>
+            <div class="storage-notice">
+              <span aria-hidden="true">🔒</span>
+              <span>Analysis history is stored locally in this browser</span>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </main>
 
