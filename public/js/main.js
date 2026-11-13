@@ -296,36 +296,62 @@
   }
 
   // -------------------------------------------------------------
-  // Recent Analyses (LocalStorage)
+  // Recent Analyses (LocalStorage Engine via GitExHistory)
   // -------------------------------------------------------------
   const historyContainer = document.getElementById('history-container');
   const historyCountEl = document.getElementById('history-count');
   const clearHistoryBtn = document.getElementById('btn-clear-history');
 
   function getHistory() {
+    if (window.GitExHistory) {
+      return window.GitExHistory.getAll();
+    }
     try {
-      const raw = localStorage.getItem(STORAGE_KEYS.HISTORY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      console.warn('Failed to parse history from localStorage', e);
+      const raw = localStorage.getItem('gitex_history');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
       return [];
     }
   }
 
   function saveRecordToHistory(record) {
-    if (!record || !record.id) return;
-    let list = getHistory();
-    list = list.filter(item => item.id !== record.id && !(item.url === record.url && item.revision === record.revision));
-    list.unshift(record);
-    if (list.length > 25) list = list.slice(0, 25);
-    try {
-      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(list));
-    } catch (e) {
-      console.warn('Failed to save to localStorage', e);
+    if (window.GitExHistory) {
+      window.GitExHistory.save(record);
+    } else {
+      let list = getHistory();
+      list.unshift(record);
+      try {
+        localStorage.setItem('gitex_history', JSON.stringify(list));
+      } catch {}
     }
     renderHistory();
+  }
+
+  function deleteHistoryItem(id) {
+    if (window.GitExHistory) {
+      window.GitExHistory.delete(id);
+    } else {
+      let list = getHistory().filter(item => item.id !== id);
+      try {
+        localStorage.setItem('gitex_history', JSON.stringify(list));
+      } catch {}
+    }
+    renderHistory();
+  }
+
+  if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear your local analysis history?')) {
+        if (window.GitExHistory) {
+          window.GitExHistory.clear();
+        } else {
+          try {
+            localStorage.removeItem('gitex_history');
+          } catch {}
+        }
+        renderHistory();
+      }
+    });
   }
 
   function formatRelativeTime(isoString) {
@@ -423,25 +449,6 @@
         const id = btn.getAttribute('data-id');
         window.location.href = `/analysis/${encodeURIComponent(id)}`;
       });
-    });
-  }
-
-  function deleteHistoryItem(id) {
-    let items = getHistory().filter((item) => item.id !== id);
-    try {
-      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(items));
-    } catch {}
-    renderHistory();
-  }
-
-  if (clearHistoryBtn) {
-    clearHistoryBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to clear your local analysis history?')) {
-        try {
-          localStorage.removeItem(STORAGE_KEYS.HISTORY);
-        } catch {}
-        renderHistory();
-      }
     });
   }
 
