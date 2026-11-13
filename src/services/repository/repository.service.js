@@ -1,24 +1,15 @@
 import { validateRepositoryUrl } from '../../validators/url.validator.js';
+import { GitHubService } from './github.service.js';
+import { GitLabService } from './gitlab.service.js';
+import { RepositoryError, RepositoryNotFoundError } from './repository.errors.js';
 
 /**
- * Service for repository URL parsing, provider resolution, and validation.
+ * Orchestrator service for repository URL resolution, metadata fetching, and README retrieval.
  */
 export class RepositoryService {
   /**
    * Validate repository URL, enforce provider allowlisting and SSRF guards,
    * and return normalized repository identity.
-   *
-   * @param {string} inputUrl - Raw user input URL
-   * @returns {{
-   *   valid: boolean,
-   *   error?: string,
-   *   provider?: 'github' | 'gitlab',
-   *   owner?: string,
-   *   name?: string,
-   *   fullName?: string,
-   *   normalizedUrl?: string,
-   *   apiUrl?: string
-   * }}
    */
   static resolveRepository(inputUrl) {
     const result = validateRepositoryUrl(inputUrl);
@@ -30,12 +21,10 @@ export class RepositoryService {
       };
     }
 
-    // Determine canonical API endpoint without trusting client inputs
     let apiUrl = '';
     if (result.provider === 'github') {
       apiUrl = `https://api.github.com/repos/${result.fullName}`;
     } else if (result.provider === 'gitlab') {
-      // GitLab uses URL-encoded project path for its REST API
       const encodedPath = encodeURIComponent(result.fullName);
       apiUrl = `https://gitlab.com/api/v4/projects/${encodedPath}`;
     }
@@ -49,6 +38,52 @@ export class RepositoryService {
       normalizedUrl: result.normalizedUrl,
       apiUrl,
     };
+  }
+
+  /**
+   * Fetch repository metadata and README using the detected provider service.
+   *
+   * @param {string} inputUrl - Raw user repository URL
+   * @returns {Promise<{
+   *   provider: 'github' | 'gitlab',
+   *   owner: string,
+   *   name: string,
+   *   fullName: string,
+   *   url: string,
+   *   description: string | null,
+   *   defaultBranch: string,
+   *   commitSha: string | null,
+   *   language: string | null,
+   *   languages: Record<string, number>,
+   *   stars: number,
+   *   forks: number,
+   *   license: string | null,
+   *   updatedAt: string | null,
+   *   readme: {
+   *     content: string | null,
+   *     filename: string | null,
+   *     byteSize: number,
+   *   }
+   * }>}
+   */
+  static async fetchMetadataAndReadme(inputUrl) {
+    const resolved = this.resolveRepository(inputUrl);
+
+    if (!resolved.valid) {
+      throw new RepositoryError(resolved.error, { statusCode: 400 });
+    }
+
+    if (resolved.provider === 'github') {
+      return GitHubService.fetchRepositoryData(resolved.owner, resolved.name);
+    }
+
+    if (resolved.provider === 'gitlab') {
+      return GitLabService.fetchRepositoryData(resolved.fullName);
+    }
+
+    throw new RepositoryError(`Unsupported repository provider: ${resolved.provider}`, {
+      statusCode: 400,
+    });
   }
 }
 

@@ -29,6 +29,36 @@ export const validateUrl = (req, res) => {
   });
 };
 
+/**
+ * Controller to fetch repository metadata and README
+ */
+export const getRepositoryMetadata = async (req, res) => {
+  const { url } = req.body || {};
+
+  if (!url || typeof url !== 'string' || !url.trim()) {
+    return res.status(400).json({
+      success: false,
+      error: 'Repository URL is required.',
+    });
+  }
+
+  try {
+    const data = await RepositoryService.fetchMetadataAndReadme(url);
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      error: err.message,
+      provider: err.provider || null,
+    });
+  }
+};
+
 export default {
   validateUrl,
+  getRepositoryMetadata,
 };
