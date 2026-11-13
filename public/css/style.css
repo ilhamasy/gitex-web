@@ -378,16 +378,62 @@ a {
 .validation-message {
   font-size: 0.8125rem;
   display: none;
-  padding: 0.5rem 0.75rem;
+  padding: 0.625rem 0.875rem;
   border-radius: var(--radius-sm);
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+  animation: fadeIn 0.15s ease-in-out;
 }
 
 .validation-message.is-error {
   display: block;
-  background-color: rgba(181, 65, 59, 0.08);
+  background-color: rgba(181, 65, 59, 0.1);
   border: 1px solid var(--color-danger);
   color: var(--color-danger);
+}
+
+.validation-message.is-success {
+  display: block;
+  background-color: rgba(40, 122, 82, 0.1);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.url-input.is-invalid {
+  border-color: var(--color-danger);
+  background-color: rgba(181, 65, 59, 0.03);
+}
+
+.provider-detect-badge.is-github {
+  background-color: rgba(199, 243, 107, 0.15);
+  color: var(--color-text-primary);
+  border-color: var(--color-accent);
+}
+
+.provider-detect-badge.is-gitlab {
+  background-color: rgba(230, 177, 94, 0.15);
+  color: var(--color-text-primary);
+  border-color: var(--color-warning);
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(32, 35, 31, 0.25);
+  border-top-color: var(--color-accent-ink);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 0.35rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* History / Recent Analyses Section */

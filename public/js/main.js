@@ -46,22 +46,127 @@
   }
 
   // -------------------------------------------------------------
-  // Provider Detection Badge
+  // Provider Detection & URL Form Interaction
   // -------------------------------------------------------------
+  const repoForm = document.getElementById('repo-form');
   const urlInput = document.getElementById('repo-url');
   const providerBadge = document.getElementById('provider-badge');
+  const analyzeBtn = document.getElementById('btn-analyze');
+  const validationMsg = document.getElementById('validation-msg');
 
-  function detectProvider(val) {
-    const trimmed = (val || '').trim().toLowerCase();
-    if (!trimmed) return 'PUBLIC REPO';
-    if (trimmed.includes('github.com')) return 'GITHUB';
-    if (trimmed.includes('gitlab.com')) return 'GITLAB';
-    return 'REPO URL';
+  function updateBadge(provider) {
+    if (!providerBadge) return;
+    providerBadge.className = 'provider-detect-badge';
+    if (provider === 'github') {
+      providerBadge.textContent = 'GITHUB';
+      providerBadge.classList.add('is-github');
+    } else if (provider === 'gitlab') {
+      providerBadge.textContent = 'GITLAB';
+      providerBadge.classList.add('is-gitlab');
+    } else if (provider === 'invalid') {
+      providerBadge.textContent = 'UNSUPPORTED';
+    } else {
+      providerBadge.textContent = 'PUBLIC REPO';
+    }
   }
 
-  if (urlInput && providerBadge) {
+  function detectProviderPreview(val) {
+    const trimmed = (val || '').trim().toLowerCase();
+    if (!trimmed) return null;
+    if (trimmed.includes('github.com')) return 'github';
+    if (trimmed.includes('gitlab.com')) return 'gitlab';
+    return null;
+  }
+
+  function showValidationError(message) {
+    if (!validationMsg || !urlInput) return;
+    validationMsg.textContent = message;
+    validationMsg.className = 'validation-message is-error';
+    urlInput.classList.add('is-invalid');
+    urlInput.setAttribute('aria-invalid', 'true');
+  }
+
+  function showValidationSuccess(message) {
+    if (!validationMsg || !urlInput) return;
+    validationMsg.textContent = message;
+    validationMsg.className = 'validation-message is-success';
+    urlInput.classList.remove('is-invalid');
+    urlInput.removeAttribute('aria-invalid');
+  }
+
+  function clearValidation() {
+    if (!validationMsg || !urlInput) return;
+    validationMsg.textContent = '';
+    validationMsg.className = 'validation-message';
+    urlInput.classList.remove('is-invalid');
+    urlInput.removeAttribute('aria-invalid');
+  }
+
+  function setLoadingState(isLoading) {
+    if (!analyzeBtn || !urlInput) return;
+    if (isLoading) {
+      analyzeBtn.disabled = true;
+      urlInput.disabled = true;
+      analyzeBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Validating...</span>';
+    } else {
+      analyzeBtn.disabled = false;
+      urlInput.disabled = false;
+      analyzeBtn.innerHTML = '<span>Analyze repository</span>';
+    }
+  }
+
+  if (urlInput) {
     urlInput.addEventListener('input', () => {
-      providerBadge.textContent = detectProvider(urlInput.value);
+      clearValidation();
+      const detected = detectProviderPreview(urlInput.value);
+      updateBadge(detected);
+    });
+  }
+
+  if (repoForm) {
+    repoForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const rawUrl = (urlInput ? urlInput.value : '').trim();
+      if (!rawUrl) {
+        showValidationError('Please enter a repository URL.');
+        if (urlInput) urlInput.focus();
+        return;
+      }
+
+      setLoadingState(true);
+      clearValidation();
+
+      try {
+        const response = await fetch('/api/repository/validate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ url: rawUrl }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          // Input value remains visible and editable!
+          showValidationError(data.error || 'Failed to validate repository URL.');
+          updateBadge('invalid');
+          if (urlInput) urlInput.focus();
+          return;
+        }
+
+        // Successfully validated by server
+        const repo = data.data;
+        updateBadge(repo.provider);
+        showValidationSuccess(`✓ Valid ${repo.provider === 'github' ? 'GitHub' : 'GitLab'} repository: ${repo.fullName}`);
+      } catch (err) {
+        showValidationError('Network error while validating repository. Please try again.');
+        if (urlInput) urlInput.focus();
+      } finally {
+        setLoadingState(false);
+      }
     });
   }
 
