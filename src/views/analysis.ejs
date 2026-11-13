@@ -75,9 +75,9 @@
                 <span class="badge"><%= record.license %></span>
               <% } %>
               <% if (record.status === 'completed') { %>
-                <span class="badge badge-success">Completed (12/12)</span>
+                <span class="badge badge-success">Completed</span>
               <% } else if (record.status === 'partial') { %>
-                <span class="badge badge-amber">Partial (<%= 12 - (record.missingSections?.length || 0) %>/12)</span>
+                <span class="badge badge-amber">Partial</span>
               <% } else { %>
                 <span class="badge badge-danger">Incomplete</span>
               <% } %>
@@ -96,13 +96,30 @@
 
   <!-- Mobile Table of Contents Bar -->
   <div class="mobile-toc-bar">
-    <button type="button" id="btn-toggle-mobile-toc" class="btn-ghost text-xs" aria-expanded="false" aria-controls="toc-rail">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
-      </svg>
-      <span>Table of Contents (12 Sections)</span>
+    <button type="button" id="btn-toggle-mobile-toc" class="btn-toggle-mobile-toc" aria-expanded="false" aria-controls="toc-rail">
+      <span class="btn-toc-left">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+        </svg>
+        <span>Table of Contents</span>
+      </span>
+      <span class="btn-toc-chevron" aria-hidden="true">▼</span>
     </button>
   </div>
+  <script>
+    (function(){
+      var btn = document.getElementById('btn-toggle-mobile-toc');
+      if (btn) {
+        btn.addEventListener('click', function() {
+          var rail = document.getElementById('toc-rail');
+          if (!rail) return;
+          var isOpen = rail.classList.toggle('open');
+          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          document.body.style.overflow = isOpen ? 'hidden' : '';
+        });
+      }
+    })();
+  </script>
 
   <!-- Main Analysis Workspace -->
   <main class="container analysis-workspace-grid with-evidence" id="main-content">
@@ -944,7 +961,7 @@
         </div>
         <div class="evidence-stat-row">
           <span class="evidence-stat-label">Sections</span>
-          <span class="evidence-stat-val">12 Canonical</span>
+          <span class="evidence-stat-val"><%= visibleSections.length %> Sections</span>
         </div>
       </div>
     </aside>

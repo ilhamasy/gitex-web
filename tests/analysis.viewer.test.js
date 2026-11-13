@@ -151,7 +151,7 @@ describe('Analysis Viewer & Controller — GITEX-011 & GITEX-012', () => {
     assert.match(html, /GITHUB/);
     assert.match(html, /SHA:\s*e3b0c44/);
     assert.match(html, /JavaScript/);
-    assert.match(html, /Completed \(12\/12\)/);
+    assert.match(html, /Completed/);
 
     // Check TOC table of contents contains all 12 sections
     assert.match(html, /Table of Contents/);

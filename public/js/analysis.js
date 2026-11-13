@@ -7,27 +7,33 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   window.GitExHistory = GitExHistory;
 }
 
+function initInteractiveUI(record) {
+  try { initMobileToc(); } catch (e) { console.warn('[GitEx] initMobileToc error:', e); }
+  try { initTocNavigation(); } catch (e) { console.warn('[GitEx] initTocNavigation error:', e); }
+  try { initScrollSpy(); } catch (e) { console.warn('[GitEx] initScrollSpy error:', e); }
+  try { initCopyButtons(); } catch (e) { console.warn('[GitEx] initCopyButtons error:', e); }
+  try { initCopyMarkdownButton(record); } catch (e) { console.warn('[GitEx] initCopyMarkdown error:', e); }
+  try { initReanalyzeButton(record); } catch (e) { console.warn('[GitEx] initReanalyze error:', e); }
+}
+
 async function initAnalysis() {
   let record = window.__GITEX_RECORD__;
   const recordId = window.__RECORD_ID__ || new URLSearchParams(window.location.search).get('id');
 
-  // Save to LocalStorage if loaded freshly from server
-  if (record && record.id) {
-    if (window.GitExHistory) {
-      window.GitExHistory.save(record);
-    }
-  } else if (!record && recordId) {
-    // Attempt client-side hydration from LocalStorage or API
-    record = await hydrateAnalysis(recordId);
-  }
+  // 1. Immediately activate UI listeners
+  initInteractiveUI(record);
 
-  // Initialize interactive features
-  initCopyButtons();
-  initCopyMarkdownButton(record);
-  initReanalyzeButton(record);
-  initTocNavigation();
-  initScrollSpy();
-  initMobileToc();
+  // 2. Safely save to history or hydrate
+  try {
+    if (record && record.id && window.GitExHistory) {
+      window.GitExHistory.save(record);
+    } else if (!record && recordId) {
+      record = await hydrateAnalysis(recordId);
+      initInteractiveUI(record);
+    }
+  } catch (err) {
+    console.warn('[GitEx] History save or hydration notice:', err);
+  }
 }
 
 if (document.readyState === 'loading') {
@@ -100,7 +106,7 @@ async function hydrateAnalysis(recordId) {
         ${item.language ? `<span class="badge">${escapeHtml(item.language)}</span>` : ''}
         ${item.stars !== undefined ? `<span class="badge">★ ${item.stars}</span>` : ''}
         ${item.license ? `<span class="badge">${escapeHtml(item.license)}</span>` : ''}
-        <span class="badge ${item.status === 'completed' ? 'badge-success' : 'badge-amber'}">${item.status === 'completed' ? 'Completed (12/12)' : 'Partial'}</span>
+        <span class="badge ${item.status === 'completed' ? 'badge-success' : 'badge-amber'}">${item.status === 'completed' ? 'Completed' : 'Partial'}</span>
       `;
     }
 
