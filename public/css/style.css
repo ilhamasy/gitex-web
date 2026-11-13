@@ -64,6 +64,13 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
@@ -762,6 +769,10 @@ a {
   min-height: 100vh;
 }
 
+.analysis-page .app-header {
+  position: relative;
+}
+
 .analysis-page .container {
   max-width: 1264px;
 }
@@ -962,7 +973,7 @@ a {
   position: sticky;
   top: 6rem;
   height: fit-content;
-  max-height: calc(100vh - 8rem);
+  max-height: calc(100vh - 7rem);
   overflow-y: auto;
   padding-right: 0.5rem;
 }
@@ -1031,7 +1042,7 @@ a {
   border-radius: var(--radius-md);
   padding: 1.75rem;
   margin-bottom: 1.5rem;
-  scroll-margin-top: 7rem;
+  scroll-margin-top: 6.5rem;
 }
 
 .section-header-row {

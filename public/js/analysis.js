@@ -25,6 +25,7 @@ async function initAnalysis() {
   initCopyButtons();
   initCopyMarkdownButton(record);
   initReanalyzeButton(record);
+  initTocNavigation();
   initScrollSpy();
   initMobileToc();
 }
@@ -529,35 +530,159 @@ function initReanalyzeButton(record) {
   });
 }
 
+let isProgrammaticScroll = false;
+let programmaticScrollTimer = null;
+
 /**
- * Intersection Observer for Table of Contents scroll spy
+ * Activates a TOC link and deactivates others, keeping TOC in sync
+ */
+function setActiveTocLink(sectionKey) {
+  if (!sectionKey) return;
+  const tocLinks = document.querySelectorAll('.toc-link');
+  if (!tocLinks.length) return;
+
+  tocLinks.forEach(link => {
+    if (link.getAttribute('data-section') === sectionKey) {
+      if (!link.classList.contains('active')) {
+        link.classList.add('active');
+        link.setAttribute('aria-current', 'true');
+        // Keep active item in view if TOC rail is scrollable
+        const tocRail = document.getElementById('toc-rail');
+        if (tocRail && typeof link.scrollIntoView === 'function') {
+          link.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        }
+      }
+    } else {
+      link.classList.remove('active');
+      link.removeAttribute('aria-current');
+    }
+  });
+}
+
+/**
+ * Handles smooth scrolling and synchronized active state on TOC clicks
+ */
+function initTocNavigation() {
+  const tocRail = document.getElementById('toc-rail');
+  if (!tocRail) return;
+
+  // Use event delegation on tocRail to handle clicks cleanly even after dynamic hydration
+  tocRail.addEventListener('click', (e) => {
+    const link = e.target.closest('.toc-link');
+    if (!link) return;
+
+    e.preventDefault();
+    const sectionKey = link.getAttribute('data-section');
+    if (!sectionKey) return;
+
+    const targetEl = document.getElementById(`section-${sectionKey}`);
+    if (!targetEl) return;
+
+    // 1. Immediately highlight the clicked item in TOC
+    setActiveTocLink(sectionKey);
+
+    // 2. Lock scroll spy to prevent intermediate highlights during scrolling
+    isProgrammaticScroll = true;
+    clearTimeout(programmaticScrollTimer);
+
+    // 3. Scroll smoothly to target section
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // 4. Update browser URL hash cleanly without instant jump
+    if (window.history && window.history.pushState) {
+      window.history.pushState(null, '', `#section-${sectionKey}`);
+    }
+
+    // 5. Close mobile drawer if open
+    if (window.innerWidth <= 768) {
+      tocRail.classList.remove('open');
+      const toggleBtn = document.getElementById('btn-toggle-mobile-toc');
+      if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    // 6. Release scroll spy lock after scroll completes
+    programmaticScrollTimer = setTimeout(() => {
+      isProgrammaticScroll = false;
+      setActiveTocLink(sectionKey);
+    }, 700);
+  });
+}
+
+/**
+ * Scroll spy that keeps TOC synchronized with reading position
  */
 function initScrollSpy() {
-  const sections = document.querySelectorAll('.analysis-section');
-  const tocLinks = document.querySelectorAll('.toc-link');
+  function updateActive() {
+    if (isProgrammaticScroll) return;
 
-  if (!sections.length || !tocLinks.length) return;
+    const sections = Array.from(document.querySelectorAll('.analysis-section[id]'));
+    if (!sections.length) return;
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const id = entry.target.id;
-        const key = id.replace('section-', '');
-        
-        tocLinks.forEach(link => {
-          if (link.getAttribute('data-section') === key) {
-            link.classList.add('active');
-          } else {
-            link.classList.remove('active');
-          }
-        });
+    // 1. If at the top of the page, first section is active
+    if (window.scrollY < 80) {
+      const firstKey = sections[0].id.replace('section-', '');
+      setActiveTocLink(firstKey);
+      return;
+    }
+
+    // 2. If at or near the bottom of the page, last section is active
+    const scrollPos = window.innerHeight + window.scrollY;
+    const docHeight = document.documentElement.scrollHeight;
+    if (scrollPos >= docHeight - 60) {
+      const lastKey = sections[sections.length - 1].id.replace('section-', '');
+      setActiveTocLink(lastKey);
+      return;
+    }
+
+    // 3. Find section at reading threshold under sticky header
+    // The sticky header offset is roughly 90px; threshold around 120px
+    const threshold = 120;
+    let currentKey = sections[0].id.replace('section-', '');
+
+    for (let i = 0; i < sections.length; i++) {
+      const sec = sections[i];
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= threshold) {
+        currentKey = sec.id.replace('section-', '');
+      } else {
+        break;
       }
-    });
-  }, {
-    rootMargin: '-80px 0px -70% 0px',
-  });
+    }
 
-  sections.forEach(sec => observer.observe(sec));
+    setActiveTocLink(currentKey);
+  }
+
+  // Throttled scroll listener
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        updateActive();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+
+  // Handle initial hash on load if present
+  if (window.location.hash) {
+    const initialKey = window.location.hash.replace('#section-', '');
+    const targetEl = document.getElementById(`section-${initialKey}`);
+    if (targetEl) {
+      setActiveTocLink(initialKey);
+      setTimeout(() => {
+        isProgrammaticScroll = true;
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+          isProgrammaticScroll = false;
+          setActiveTocLink(initialKey);
+        }, 700);
+      }, 150);
+      return;
+    }
+  }
+
+  updateActive();
 }
 
 /**
@@ -573,15 +698,6 @@ function initMobileToc() {
     const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
     toggleBtn.setAttribute('aria-expanded', !isExpanded);
     tocRail.classList.toggle('open', !isExpanded);
-  });
-
-  tocRail.querySelectorAll('.toc-link').forEach(link => {
-    link.addEventListener('click', () => {
-      if (window.innerWidth <= 768) {
-        tocRail.classList.remove('open');
-        toggleBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
   });
 }
 
