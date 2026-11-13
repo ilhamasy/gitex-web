@@ -10,10 +10,13 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.equal(res.headers['content-type'].includes('text/html'), true);
   });
 
-  it('renders navbar with GitEx wordmark and theme toggle', async () => {
+  it('renders navbar with GitEx wordmark only (no dark/light button, no get started in navbar)', async () => {
     const res = await request(app).get('/');
     assert.ok(res.text.includes('GitEx'));
-    assert.ok(res.text.includes('id="theme-toggle"'));
+    assert.ok(res.text.includes('Field Notebook'));
+    // Ensure navbar controls are removed as requested
+    assert.equal(res.text.includes('id="theme-toggle"'), false);
+    assert.equal(res.text.includes('landing-nav-cta'), false);
   });
 
   it('renders hero with GitEx[plain], tagline, description, and Get Started CTA', async () => {
@@ -27,31 +30,12 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.ok(res.text.includes('Explore repositories. Understand technology. Build with confidence.'));
   });
 
-  it('renders How It Works section with linear workflow', async () => {
+  it('removes workflow, how it works, and footer sections as requested', async () => {
     const res = await request(app).get('/');
-    assert.ok(res.text.includes('How it works'));
-    assert.ok(res.text.includes('Paste repository → Analyze → Understand.'));
-    assert.ok(res.text.includes('Paste repository'));
-    assert.ok(res.text.includes('Analyze'));
-    assert.ok(res.text.includes('Understand'));
-  });
-
-  it('renders What You\'ll Get section with core sections', async () => {
-    const res = await request(app).get('/');
-    assert.ok(res.text.includes('What you\'ll get'));
-    assert.ok(res.text.includes('Overview'));
-    assert.ok(res.text.includes('Features'));
-    assert.ok(res.text.includes('Architecture'));
-    assert.ok(res.text.includes('Prerequisites'));
-    assert.ok(res.text.includes('Installation'));
-    assert.ok(res.text.includes('Usage'));
-  });
-
-  it('renders Supported Platforms section with GitHub and GitLab', async () => {
-    const res = await request(app).get('/');
-    assert.ok(res.text.includes('Supported platforms'));
-    assert.ok(res.text.includes('GitHub'));
-    assert.ok(res.text.includes('GitLab'));
+    assert.equal(res.text.includes('id="how-it-works"'), false);
+    assert.equal(res.text.includes('id="what-you-get"'), false);
+    assert.equal(res.text.includes('id="supported-platforms"'), false);
+    assert.equal(res.text.includes('app-footer'), false);
   });
 
   it('loads Three.js and Vanta.js NET scripts', async () => {

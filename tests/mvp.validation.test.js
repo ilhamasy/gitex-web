@@ -130,8 +130,8 @@ describe('MVP Security, Integration, & UX Validation — GITEX-015', () => {
   });
 
   describe('End-to-End Health & Navigation Routes', () => {
-    it('GET / returns 200 with dashboard shell and dark mode default', async () => {
-      const res = await request(app).get('/').expect(200);
+    it('GET /app returns 200 with dashboard shell and dark mode default', async () => {
+      const res = await request(app).get('/app').expect(200);
       assert.match(res.text, /data-theme="dark"/);
       assert.match(res.text, /Every Repository, Explained/);
       assert.match(res.text, /© 2026 Ilham Asyari\. All rights reserved\./);
