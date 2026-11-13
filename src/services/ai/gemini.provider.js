@@ -100,7 +100,7 @@ export class GeminiProvider extends AIProvider {
    * @returns {Promise<{ content: string, model: string, finishReason: string, raw: any }>}
    */
   async generate(prompt, options = {}) {
-    const modelToUse = options.model || this.model;
+    let modelToUse = options.model || this.model;
     const contents = [
       {
         role: 'user',
@@ -125,8 +125,20 @@ export class GeminiProvider extends AIProvider {
       }),
     };
 
-    const endpoint = `models/${modelToUse}:generateContent`;
-    const data = await this.request(endpoint, payload, options);
+    let data;
+    try {
+      const endpoint = `models/${modelToUse}:generateContent`;
+      data = await this.request(endpoint, payload, options);
+    } catch (err) {
+      // If Google API returns 404 saying requested model is unavailable to new users, gracefully fall back to latest Flash model
+      if (err.statusCode === 404 && (modelToUse.includes('2.5') || modelToUse.includes('2.0') || modelToUse.includes('1.5'))) {
+        modelToUse = 'gemini-3-flash-preview';
+        const fallbackEndpoint = `models/${modelToUse}:generateContent`;
+        data = await this.request(fallbackEndpoint, payload, options);
+      } else {
+        throw err;
+      }
+    }
 
     const candidate = data.candidates?.[0];
     if (!candidate) {
