@@ -163,6 +163,10 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     }
     if (progressErrorContainer) {
       progressErrorContainer.classList.add('hidden');
+      progressErrorContainer.style.display = 'none';
+    }
+    if (progressErrorText) {
+      progressErrorText.textContent = '';
     }
     updateStageUI('Validating', 'Validating repository URL...');
     progressModal.classList.remove('hidden');
@@ -171,6 +175,10 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   function hideProgressModal() {
     if (!progressModal) return;
     progressModal.classList.add('hidden');
+    if (progressErrorContainer) {
+      progressErrorContainer.classList.add('hidden');
+      progressErrorContainer.style.display = 'none';
+    }
   }
 
   function showProgressError(errorMsg) {
@@ -178,6 +186,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     if (progressErrorContainer && progressErrorText) {
       progressErrorText.textContent = text;
       progressErrorContainer.classList.remove('hidden');
+      progressErrorContainer.style.display = 'flex';
     }
     updateStageUI('Failed', text);
   }
@@ -241,6 +250,10 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       eventSource.addEventListener('complete', (event) => {
         isCompleted = true;
         try {
+          if (progressErrorContainer) {
+            progressErrorContainer.classList.add('hidden');
+            progressErrorContainer.style.display = 'none';
+          }
           const payload = JSON.parse(event.data);
           const record = payload.record;
           updateStageUI('Completed', 'Analysis complete! Redirecting...');
@@ -251,7 +264,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           // Redirect to analysis viewer after a brief pause
           setTimeout(() => {
             window.location.href = `/analysis/${encodeURIComponent(record.id)}`;
-          }, 600);
+          }, 400);
         } catch (e) {
           console.error('[GitEx] Complete event parse error:', e);
           showProgressError('Failed to process completed analysis record.');
