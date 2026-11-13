@@ -111,6 +111,17 @@ export class GitHubService {
   }
 
   /**
+   * Fetch raw content of a specific file from GitHub
+   */
+  static async fetchFileContent(owner, repo, filePath, ref) {
+    const query = ref ? `?ref=${encodeURIComponent(ref)}` : '';
+    const res = await this.request(`/repos/${owner}/${repo}/contents/${filePath}${query}`, {
+      headers: { Accept: 'application/vnd.github.v3.raw' },
+    });
+    return res.text();
+  }
+
+  /**
    * Fetch repository directory tree using Git Trees API
    */
   static async fetchTree(owner, repo, treeSha) {

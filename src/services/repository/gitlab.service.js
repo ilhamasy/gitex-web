@@ -117,6 +117,18 @@ export class GitLabService {
   }
 
   /**
+   * Fetch raw content of a specific file from GitLab
+   */
+  static async fetchFileContent(fullName, filePath, ref = 'main') {
+    const encodedPath = encodeURIComponent(fullName);
+    const encodedFile = encodeURIComponent(filePath);
+    const res = await this.request(
+      `/projects/${encodedPath}/repository/files/${encodedFile}/raw?ref=${encodeURIComponent(ref)}`
+    );
+    return res.text();
+  }
+
+  /**
    * Fetch repository tree from GitLab
    */
   static async fetchTree(fullName, revision = 'main', maxEntries = config.ingestion.maxTreeEntries) {
