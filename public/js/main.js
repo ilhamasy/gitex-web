@@ -14,44 +14,6 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   };
 
   // -------------------------------------------------------------
-  // Theme Management
-  // -------------------------------------------------------------
-  const themeToggle = document.getElementById('theme-toggle');
-  const themeIcon = document.getElementById('theme-icon');
-  const themeLabel = document.getElementById('theme-label');
-
-  function getPreferredTheme() {
-    const saved = localStorage.getItem(STORAGE_KEYS.THEME);
-    if (saved === 'dark' || saved === 'light') return saved;
-    return 'dark'; // Default is dark mode
-  }
-
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(STORAGE_KEYS.THEME, theme);
-    if (themeIcon && themeLabel && themeToggle) {
-      if (theme === 'dark') {
-        themeIcon.textContent = '☀️';
-        themeLabel.textContent = 'Light';
-        themeToggle.setAttribute('aria-label', 'Switch to light theme');
-      } else {
-        themeIcon.textContent = '🌙';
-        themeLabel.textContent = 'Dark';
-        themeToggle.setAttribute('aria-label', 'Switch to dark theme');
-      }
-    }
-  }
-
-  applyTheme(getPreferredTheme());
-
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') || 'dark';
-      applyTheme(current === 'dark' ? 'light' : 'dark');
-    });
-  }
-
-  // -------------------------------------------------------------
   // Provider Detection & URL Form Interaction
   // -------------------------------------------------------------
   const repoForm = document.getElementById('repo-form');
