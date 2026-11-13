@@ -133,7 +133,7 @@ describe('MVP Security, Integration, & UX Validation — GITEX-015', () => {
     it('GET / returns 200 with dashboard shell and dark mode default', async () => {
       const res = await request(app).get('/').expect(200);
       assert.match(res.text, /data-theme="dark"/);
-      assert.match(res.text, /Understand any repository without reading everything/);
+      assert.match(res.text, /From Repository to Clarity/);
       assert.match(res.text, /© 2026 Ilham Asyari\. All rights reserved\./);
     });
 

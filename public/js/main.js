@@ -58,6 +58,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   const urlInput = document.getElementById('repo-url');
   const providerBadge = document.getElementById('provider-badge');
   const analyzeBtn = document.getElementById('btn-analyze');
+  const pasteBtn = document.getElementById('btn-paste');
   const validationMsg = document.getElementById('validation-msg');
 
   // Progress modal elements
@@ -122,12 +123,14 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     if (!analyzeBtn || !urlInput) return;
     if (isLoading) {
       analyzeBtn.disabled = true;
+      if (pasteBtn) pasteBtn.disabled = true;
       urlInput.disabled = true;
-      analyzeBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Analyzing...</span>';
+      analyzeBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Explaining...</span>';
     } else {
       analyzeBtn.disabled = false;
+      if (pasteBtn) pasteBtn.disabled = false;
       urlInput.disabled = false;
-      analyzeBtn.innerHTML = '<span>Analyze repository</span>';
+      analyzeBtn.innerHTML = '<span>Explain repository</span>';
     }
   }
 
@@ -208,6 +211,22 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       clearValidation();
       const detected = detectProviderPreview(urlInput.value);
       updateBadge(detected);
+    });
+  }
+
+  if (pasteBtn && urlInput) {
+    pasteBtn.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && typeof text === 'string') {
+          urlInput.value = text.trim();
+          urlInput.focus();
+          urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      } catch (err) {
+        console.warn('[GitEx] Clipboard read denied or unsupported:', err);
+        urlInput.focus();
+      }
     });
   }
 

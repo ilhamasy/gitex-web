@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="GitEx — Understand any repository without reading everything. A developer research workbench.">
+  <meta name="description" content="GitEx — From Repository to Clarity. A developer research workbench.">
   <title><%= title %></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,9 +18,9 @@
       <!-- Launcher Section -->
       <section class="launcher-section" aria-labelledby="launcher-heading">
         <div class="launcher-header">
-          <h1 id="launcher-heading" class="launcher-title">Understand any repository without reading everything.</h1>
+          <h1 id="launcher-heading" class="launcher-title">From Repository to Clarity.</h1>
           <p class="launcher-desc">
-            Submit a public GitHub or GitLab repository to generate a structured, evidence-backed 12-section technical guide.
+            Understand what it does, how it works, and how to use it without digging through every file.
           </p>
         </div>
 
@@ -44,8 +44,13 @@
                 />
                 <span id="provider-badge" class="provider-detect-badge" aria-live="polite">PUBLIC REPO</span>
               </div>
+              <button type="button" id="btn-paste" class="btn-paste" title="Paste repository URL from clipboard" aria-label="Paste URL from clipboard">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h4m-4 4h4m-4-8h.01"></path>
+                </svg>
+              </button>
               <button type="submit" id="btn-analyze" class="btn-primary">
-                <span>Analyze repository</span>
+                <span>Explain repository</span>
               </button>
             </div>
 
