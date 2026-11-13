@@ -527,12 +527,19 @@
               const validSteps = (installation.steps || []).filter(hasContent);
               if (validSteps.length > 0) { 
             %>
-              <% validSteps.forEach((st, idx) => { %>
+              <% validSteps.forEach((st, idx) => { 
+                  const stepNum = st.step || st.stepNumber || (idx + 1);
+                  const stepTitle = st.title || st.name || st.description || ('Step ' + stepNum);
+                  const stepInstructions = st.instructions || (st.title && st.description ? st.description : '');
+              %>
                 <div class="install-step-item">
                   <div class="install-step-header">
-                    <span class="install-step-num"><%= st.step || (idx + 1) %></span>
-                    <span class="install-step-title"><%= st.description || 'Installation Step' %></span>
+                    <span class="install-step-num"><%= stepNum %></span>
+                    <span class="install-step-title"><%= stepTitle %></span>
                   </div>
+                  <% if (stepInstructions && hasContent(stepInstructions)) { %>
+                    <p class="text-sm text-text-secondary my-1.5"><%= stepInstructions %></p>
+                  <% } %>
                   <% if (st.command && hasContent(st.command)) { %>
                     <%- markdownService.render('```bash\n' + st.command + '\n```') %>
                   <% } %>

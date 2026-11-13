@@ -317,12 +317,17 @@ function renderHydratedSectionContent(key, sec, item) {
     const validSteps = (sec.steps || []).filter(hasContent);
     if (validSteps.length) {
       validSteps.forEach((st, idx) => {
+        const stepNum = st.step || st.stepNumber || (idx + 1);
+        const stepTitle = st.title || st.name || st.description || ('Step ' + stepNum);
+        const stepInstructions = st.instructions || (st.title && st.description ? st.description : '');
+
         content += `
           <div class="install-step-item">
             <div class="install-step-header">
-              <span class="install-step-num">${st.step || (idx + 1)}</span>
-              <span class="install-step-title">${escapeHtml(st.description || 'Installation Step')}</span>
+              <span class="install-step-num">${stepNum}</span>
+              <span class="install-step-title">${escapeHtml(stepTitle)}</span>
             </div>
+            ${stepInstructions && hasContent(stepInstructions) ? `<p class="text-sm text-text-secondary my-1.5">${escapeHtml(stepInstructions)}</p>` : ''}
             ${st.command && hasContent(st.command) ? `
               <div class="code-block-wrapper my-4 rounded border border-border-default bg-surface-canvas overflow-hidden">
                 <div class="code-block-header flex items-center justify-between px-3.5 py-1.5 border-b border-border-default bg-surface-subtle text-xs font-mono text-text-subtle">
