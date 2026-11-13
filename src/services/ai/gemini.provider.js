@@ -13,7 +13,7 @@ const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 export class GeminiProvider extends AIProvider {
   constructor(options = {}) {
     super('gemini');
-    this.apiKey = options.apiKey || config.gemini.apiKey;
+    this.apiKey = typeof options.apiKey === 'string' ? options.apiKey : (config.gemini?.apiKey || '');
     this.model = options.model || config.gemini.model || 'gemini-1.5-flash';
     this.timeoutMs = options.timeoutMs || config.gemini.timeoutMs || 60000;
   }
