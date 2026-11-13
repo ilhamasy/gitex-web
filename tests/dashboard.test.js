@@ -43,6 +43,12 @@ describe('Dashboard Shell (GITEX-002)', () => {
     assert.ok(res.text.includes('Analysis history is stored locally in this browser'));
   });
 
+  it('renders copyright on the left and subtitle on the right in footer', async () => {
+    const res = await request(app).get('/');
+    assert.ok(res.text.includes('© 2026 Ilham Asyari. All rights reserved.'));
+    assert.ok(res.text.includes('Understand any repository without reading everything.'));
+  });
+
   it('satisfies Anti-Slop criteria: no fake testimonials, metrics, or decorative grids', async () => {
     const res = await request(app).get('/');
     const lowercaseHtml = res.text.toLowerCase();

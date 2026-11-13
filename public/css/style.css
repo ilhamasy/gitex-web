@@ -588,6 +588,12 @@ a {
   gap: 1rem;
 }
 
+.footer-copyright {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
 .footer-credits {
   display: flex;
   align-items: center;
