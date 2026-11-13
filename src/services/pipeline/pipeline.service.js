@@ -65,15 +65,17 @@ export class PipelineService {
       let repomixBundle = null;
       try {
         const fileSelection = TreeFilterService.filterAndSelect(repoMeta.tree?.rawTree || repoMeta.tree || []);
-        const filesToPack = (fileSelection.relevantFiles || []).map(f => ({
-          path: f.path,
-          content: f.content || '',
-        }));
-
-        repomixBundle = await RepomixService.packFiles(filesToPack);
+        
+        repomixBundle = await RepomixService.bundleRepositoryFiles(
+          repoMeta.provider,
+          repoMeta,
+          fileSelection.relevantFiles || [],
+          repoMeta.commitSha || repoMeta.defaultBranch
+        );
       } catch (packErr) {
         logger.warn(`[Pipeline] Repomix bundling note: ${packErr.message}. Falling back to metadata-driven context.`);
         repomixBundle = {
+          packedContent: '',
           content: '',
           fileCount: 0,
           totalBytes: 0,

@@ -58,6 +58,14 @@ describe('PipelineService — GITEX-011 & GITEX-012', () => {
       summary: { manifests: ['package.json'], entryPoints: ['src/index.js'] },
     }));
 
+    mock.method(RepomixService, 'bundleRepositoryFiles', async () => ({
+      packedContent: '<repomix>packed code</repomix>',
+      totalFiles: 2,
+      byteSize: 1274,
+      style: 'xml',
+      sourcePaths: ['package.json', 'src/index.js'],
+    }));
+
     mock.method(RepomixService, 'packFiles', async () => ({
       packedContent: '<repomix>packed code</repomix>',
       totalFiles: 2,

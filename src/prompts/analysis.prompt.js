@@ -10,7 +10,11 @@ CRITICAL RULES:
 1. Grounding & Truthfulness: Base every claim exclusively on the provided repository facts, manifests, README, and source code.
 2. No Inventions: Never hallucinate commands, dependencies, versions, compatibility flags, or security claims.
 3. Explicit Absence: If any requested information is not documented or cannot be determined from the provided files, explicitly state "Not documented" or "Unable to verify". Do NOT guess or invent placeholders.
-4. Source Attribution: For every section, attach relevant source file paths or URLs in the "sources" array (e.g. ["package.json", "README.md", "src/index.js"]).
+4. Multi-File Source Attribution (DO NOT CITE ONLY README.md):
+   - You MUST inspect the provided codebase and cite actual source code files, configuration files, and manifests inspected from the repository (e.g. ["package.json", "src/index.js", "lib/app.ts", "Dockerfile", "tsconfig.json"]).
+   - NEVER list only "README.md" when code files, manifests, or configuration files are provided in the context.
+   - For architecture, components, features, and how it works: cite the specific source code files where they are implemented (e.g. "src/server.ts", "lib/router.js", "app.py").
+   - For prerequisites, configuration, and tech stack: cite the exact package manifests and config files (e.g. "package.json", "go.mod", "Cargo.toml", ".env.example", "Dockerfile").
 5. Voice & Tone: Sound like an expert technical teammate — direct, precise, objective. Zero generic AI marketing filler (e.g., no "Unlock the power", "Supercharge", "Cutting-edge").
 6. Distinguish Facts vs Inferences: Clearly delineate verified repository facts from reasonable inferences or architectural recommendations.
 7. Output Format: Return a single valid JSON object containing all 12 sections matching the specified schema keys.
@@ -73,6 +77,10 @@ ${readmeContent.slice(0, 15000)}
 
 === BUNDLED SOURCE CONTEXT (REPOMIX) ===
 ${packedSource.slice(0, 60000)}
+
+=== SOURCE CITATION REQUIREMENT ===
+Do NOT cite only "README.md" for your sources! GitEx actively inspects the codebase.
+For each section's "sources" array, cross-reference and cite the actual source code files, entry points, configuration files, and manifests found in the directory tree and Repomix bundle (e.g. ["package.json", "src/index.ts", "config/database.js", "README.md"]).
 
 === OUTPUT SCHEMA REQUIREMENT ===
 Respond ONLY with a JSON object containing EXACTLY these 12 top-level keys:
