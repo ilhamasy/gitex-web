@@ -158,7 +158,31 @@ describe('Analysis Template & Generator — GITEX-009', () => {
       assert.equal(cleaned, '{"overview":{}}');
     });
 
-    it('throws AIGenerationError when model outputs invalid JSON', async () => {
+    it('retries when first attempt is malformed and recovers on second attempt', async () => {
+      let callCount = 0;
+      const fullAnalysisJson = createEmptyAnalysis();
+      fullAnalysisJson.overview.summary = 'Recovered after retry';
+
+      const mockProvider = {
+        generate: async () => {
+          callCount++;
+          if (callCount === 1) {
+            return { content: 'Not valid JSON on first attempt!', model: 'gemini-1.5-flash' };
+          }
+          return { content: JSON.stringify(fullAnalysisJson), model: 'gemini-1.5-flash' };
+        },
+      };
+
+      const result = await AnalysisService.generateAnalysis({ fullName: 'test/repo' }, null, {
+        aiProvider: mockProvider,
+      });
+
+      assert.equal(callCount, 2);
+      assert.equal(result.status, 'completed');
+      assert.equal(result.analysis.overview.summary, 'Recovered after retry');
+    });
+
+    it('throws AIGenerationError when model outputs invalid JSON after retries', async () => {
       const mockProvider = {
         generate: async () => ({
           content: 'This is not valid JSON at all!',
@@ -177,3 +201,4 @@ describe('Analysis Template & Generator — GITEX-009', () => {
     });
   });
 });
+
