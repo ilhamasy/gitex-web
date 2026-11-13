@@ -92,6 +92,54 @@
           </div>
         </div>
       </section>
+
+      <!-- Analysis Progress Modal (GITEX-012) -->
+      <div id="progress-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="progress-title" aria-modal="true">
+        <div class="progress-card">
+          <div class="progress-header">
+            <h3 id="progress-title" class="progress-title">Analyzing Repository</h3>
+            <span id="progress-repo-badge" class="progress-repo-badge font-mono">owner/repo</span>
+          </div>
+
+          <!-- Named Stages Stepper -->
+          <ol class="stage-stepper" id="stage-stepper" aria-label="Analysis named stages">
+            <li class="stage-step-item pending" id="stage-validating" data-stage="Validating">
+              <span class="stage-icon-circle">1</span>
+              <span class="stage-name">Validating repository & provider</span>
+            </li>
+            <li class="stage-step-item pending" id="stage-fetching" data-stage="Fetching">
+              <span class="stage-icon-circle">2</span>
+              <span class="stage-name">Fetching metadata, tree & README</span>
+            </li>
+            <li class="stage-step-item pending" id="stage-processing" data-stage="Processing">
+              <span class="stage-icon-circle">3</span>
+              <span class="stage-name">Processing code context with Repomix</span>
+            </li>
+            <li class="stage-step-item pending" id="stage-analyzing" data-stage="Analyzing">
+              <span class="stage-icon-circle">4</span>
+              <span class="stage-name">Analyzing architecture & dependencies</span>
+            </li>
+            <li class="stage-step-item pending" id="stage-generating" data-stage="Generating">
+              <span class="stage-icon-circle">5</span>
+              <span class="stage-name">Generating 12-section technical guide</span>
+            </li>
+          </ol>
+
+          <!-- Current stage message -->
+          <div id="stage-current-message" class="stage-message-text" role="status" aria-live="polite">
+            Initializing analysis pipeline...
+          </div>
+
+          <!-- Error recovery container -->
+          <div id="progress-error-container" class="progress-error-box hidden" role="alert">
+            <div class="progress-error-title">Analysis Failed</div>
+            <div id="progress-error-text" class="progress-error-msg"></div>
+            <button type="button" id="btn-progress-dismiss" class="btn-secondary" style="margin-top: 0.5rem; align-self: flex-start;">
+              Dismiss & Retry
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 

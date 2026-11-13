@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GitEx — Repository Analysis Document">
+  <title><%= title %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="analysis-page">
+  <%- include('partials/header') %>
+
+  <!-- Top Analysis Identity Bar -->
+  <header class="analysis-header-bar" id="analysis-top">
+    <div class="container analysis-header-inner">
+      <div class="analysis-breadcrumb-row">
+        <a href="/" class="back-link">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+
+        <div class="header-meta-actions">
+          <button type="button" id="btn-copy-markdown" class="btn-ghost" title="Copy raw analysis markdown">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <span class="btn-text">Copy Markdown</span>
+          </button>
+          
+          <button type="button" id="btn-reanalyze" class="btn-secondary" title="Re-run analysis for this repository">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>Re-analyze</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="analysis-identity-row" id="analysis-identity-container">
+        <% if (record) { %>
+          <div class="repo-identity">
+            <h1 class="repo-title" id="repo-title"><%= record.fullName %></h1>
+            <div class="repo-meta-badges">
+              <span class="badge badge-citrus" id="provider-badge"><%= record.provider.toUpperCase() %></span>
+              <% if (record.revision && record.revision !== 'unknown') { %>
+                <span class="badge" title="Analyzed Commit SHA">
+                  SHA: <%= record.revision.substring(0, 7) %>
+                </span>
+              <% } %>
+              <% if (record.language) { %>
+                <span class="badge"><%= record.language %></span>
+              <% } %>
+              <% if (record.stars !== undefined && record.stars !== null) { %>
+                <span class="badge">★ <%= record.stars %></span>
+              <% } %>
+              <% if (record.license) { %>
+                <span class="badge"><%= record.license %></span>
+              <% } %>
+              <% if (record.status === 'completed') { %>
+                <span class="badge badge-success">Completed (12/12)</span>
+              <% } else if (record.status === 'partial') { %>
+                <span class="badge badge-amber">Partial (<%= 12 - (record.missingSections?.length || 0) %>/12)</span>
+              <% } else { %>
+                <span class="badge badge-danger">Incomplete</span>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="repo-actions">
+            <a href="<%= record.url %>" target="_blank" rel="noopener noreferrer" class="btn-ghost" title="Open repository in new tab">
+              <span>View on <%= record.provider === 'gitlab' ? 'GitLab' : 'GitHub' %></span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
+            </a>
+          </div>
+        <% } else { %>
+          <!-- Client-side hydration placeholder -->
+          <div class="repo-identity" id="client-hydration-header">
+            <h1 class="repo-title" id="repo-title">Loading repository analysis...</h1>
+            <div class="repo-meta-badges" id="dynamic-badges"></div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Table of Contents Bar -->
+  <div class="mobile-toc-bar">
+    <button type="button" id="btn-toggle-mobile-toc" class="btn-ghost text-xs" aria-expanded="false" aria-controls="toc-rail">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+      </svg>
+      <span>Table of Contents (12 Sections)</span>
+    </button>
+  </div>
+
+  <!-- Main Analysis Workspace -->
+  <main class="container analysis-workspace-grid with-evidence" id="main-content">
+    <!-- Left Navigation Rail (Table of Contents) -->
+    <nav class="analysis-toc-rail" id="toc-rail" aria-label="Analysis Sections">
+      <div class="toc-header">Table of Contents</div>
+      <ol class="toc-list" id="toc-list">
+        <% 
+        const sectionsList = [
+          { key: 'overview', title: 'Repository Overview', num: '01' },
+          { key: 'purpose', title: 'Purpose & Use Cases', num: '02' },
+          { key: 'features', title: 'Key Features', num: '03' },
+          { key: 'howItWorks', title: 'How It Works', num: '04' },
+          { key: 'prerequisites', title: 'Prerequisites', num: '05' },
+          { key: 'installation', title: 'Installation Guide', num: '06' },
+          { key: 'configuration', title: 'Configuration', num: '07' },
+          { key: 'usage', title: 'Usage & Examples', num: '08' },
+          { key: 'techStack', title: 'Tech Stack', num: '09' },
+          { key: 'limitations', title: 'Limitations & Considerations', num: '10' },
+          { key: 'alternatives', title: 'Alternatives', num: '11' },
+          { key: 'resources', title: 'Official Resources', num: '12' },
+        ];
+        %>
+        <% sectionsList.forEach(sec => { %>
+          <li>
+            <a href="#section-<%= sec.key %>" class="toc-link" data-section="<%= sec.key %>">
+              <span class="toc-num"><%= sec.num %></span>
+              <span class="toc-title"><%= sec.title %></span>
+            </a>
+          </li>
+        <% }); %>
+      </ol>
+    </nav>
+
+    <!-- Center Reading Column -->
+    <article class="analysis-document-column" id="analysis-document">
+      <% if (record && record.analysis) { %>
+        <!-- 01. Repository Overview -->
+        <% const overview = record.analysis.overview || {}; %>
+        <section class="analysis-section" id="section-overview" aria-labelledby="heading-overview">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">01</span>
+              <h2 id="heading-overview" class="section-title"><%= overview.title || 'Repository Overview' %></h2>
+            </div>
+            <% if (overview.isIncomplete || overview.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (overview.isIncomplete || overview.status === 'not_documented') { %>
+              <div class="section-incomplete-notice">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span>Repository overview could not be verified from repository documentation.</span>
+              </div>
+            <% } %>
+            <div class="prose-block">
+              <%- markdownService.render(overview.summary || 'Not documented.') %>
+            </div>
+
+            <% if (overview.problemSolved && overview.problemSolved !== 'Not documented') { %>
+              <h3>Problem Solved</h3>
+              <div class="prose-block">
+                <%- markdownService.render(overview.problemSolved) %>
+              </div>
+            <% } %>
+
+            <% if (overview.mainGoal && overview.mainGoal !== 'Not documented') { %>
+              <h3>Main Goal</h3>
+              <div class="prose-block">
+                <%- markdownService.render(overview.mainGoal) %>
+              </div>
+            <% } %>
+
+            <% if (overview.sources && overview.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% overview.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 02. Purpose & Use Cases -->
+        <% const purpose = record.analysis.purpose || {}; %>
+        <section class="analysis-section" id="section-purpose" aria-labelledby="heading-purpose">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">02</span>
+              <h2 id="heading-purpose" class="section-title"><%= purpose.title || 'Purpose & Use Cases' %></h2>
+            </div>
+            <% if (purpose.isIncomplete || purpose.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (purpose.targetUsers && purpose.targetUsers.length > 0) { %>
+              <h3>Target Users</h3>
+              <ul>
+                <% purpose.targetUsers.forEach(user => { %>
+                  <li><%= user %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (purpose.capabilities && purpose.capabilities.length > 0) { %>
+              <h3>Core Capabilities</h3>
+              <ul>
+                <% purpose.capabilities.forEach(cap => { %>
+                  <li><%= cap %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (purpose.scenarios && purpose.scenarios.length > 0) { %>
+              <h3>Real-World Scenarios</h3>
+              <ul>
+                <% purpose.scenarios.forEach(scen => { %>
+                  <li><%= scen %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (purpose.sources && purpose.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% purpose.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 03. Key Features -->
+        <% const features = record.analysis.features || {}; %>
+        <section class="analysis-section" id="section-features" aria-labelledby="heading-features">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">03</span>
+              <h2 id="heading-features" class="section-title"><%= features.title || 'Key Features' %></h2>
+            </div>
+            <% if (features.isIncomplete || features.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (features.coreFeatures && features.coreFeatures.length > 0) { %>
+              <h3>Core Features</h3>
+              <ul>
+                <% features.coreFeatures.forEach(feat => { %>
+                  <li><%= feat %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (features.uniqueCapabilities && features.uniqueCapabilities.length > 0) { %>
+              <h3>Distinct Capabilities</h3>
+              <ul>
+                <% features.uniqueCapabilities.forEach(uc => { %>
+                  <li><%= uc %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (features.sources && features.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% features.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 04. How It Works -->
+        <% const howItWorks = record.analysis.howItWorks || {}; %>
+        <section class="analysis-section" id="section-howItWorks" aria-labelledby="heading-howItWorks">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">04</span>
+              <h2 id="heading-howItWorks" class="section-title"><%= howItWorks.title || 'How It Works' %></h2>
+            </div>
+            <% if (howItWorks.isIncomplete || howItWorks.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (howItWorks.architecture && howItWorks.architecture !== 'Not documented') { %>
+              <h3>Architecture</h3>
+              <div class="prose-block">
+                <%- markdownService.render(howItWorks.architecture) %>
+              </div>
+            <% } %>
+
+            <% if (howItWorks.components && howItWorks.components.length > 0) { %>
+              <h3>Key Components</h3>
+              <ul>
+                <% howItWorks.components.forEach(comp => { %>
+                  <li>
+                    <strong><%= comp.name %>:</strong> <%= comp.description %>
+                    <% if (comp.path) { %>
+                      <%- markdownService.renderSourceBadge(comp.path, record.url) %>
+                    <% } %>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (howItWorks.dataFlow && howItWorks.dataFlow !== 'Not documented') { %>
+              <h3>Data Flow</h3>
+              <div class="prose-block">
+                <%- markdownService.render(howItWorks.dataFlow) %>
+              </div>
+            <% } %>
+
+            <% if (howItWorks.sources && howItWorks.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% howItWorks.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 05. Prerequisites -->
+        <% const prerequisites = record.analysis.prerequisites || {}; %>
+        <section class="analysis-section" id="section-prerequisites" aria-labelledby="heading-prerequisites">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">05</span>
+              <h2 id="heading-prerequisites" class="section-title"><%= prerequisites.title || 'Prerequisites' %></h2>
+            </div>
+            <% if (prerequisites.isIncomplete || prerequisites.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (prerequisites.runtime && prerequisites.runtime !== 'Not documented') { %>
+              <p><strong>Runtime:</strong> <%= prerequisites.runtime %></p>
+            <% } %>
+
+            <% if (prerequisites.languages && prerequisites.languages.length > 0) { %>
+              <p><strong>Required Languages:</strong> <%= prerequisites.languages.join(', ') %></p>
+            <% } %>
+
+            <% if (prerequisites.tools && prerequisites.tools.length > 0) { %>
+              <h3>Required Tools</h3>
+              <ul>
+                <% prerequisites.tools.forEach(tool => { %>
+                  <li><%= tool %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (prerequisites.system && prerequisites.system.length > 0) { %>
+              <h3>System Requirements</h3>
+              <ul>
+                <% prerequisites.system.forEach(sys => { %>
+                  <li><%= sys %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (prerequisites.sources && prerequisites.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% prerequisites.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 06. Installation Guide -->
+        <% const installation = record.analysis.installation || {}; %>
+        <section class="analysis-section" id="section-installation" aria-labelledby="heading-installation">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">06</span>
+              <h2 id="heading-installation" class="section-title"><%= installation.title || 'Installation Guide' %></h2>
+            </div>
+            <% if (installation.isIncomplete || installation.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (installation.steps && installation.steps.length > 0) { %>
+              <% installation.steps.forEach((st, idx) => { %>
+                <div class="install-step-item">
+                  <div class="install-step-header">
+                    <span class="install-step-num"><%= st.step || (idx + 1) %></span>
+                    <span class="install-step-title"><%= st.description || 'Installation Step' %></span>
+                  </div>
+                  <% if (st.command) { %>
+                    <%- markdownService.render('```bash\n' + st.command + '\n```') %>
+                  <% } %>
+                  <% if (st.verification) { %>
+                    <p class="text-xs text-text-secondary"><strong>Verification:</strong> <%= st.verification %></p>
+                  <% } %>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <p>No specific installation steps documented.</p>
+            <% } %>
+
+            <% if (installation.caveats && installation.caveats.length > 0) { %>
+              <div class="callout-recommendation">
+                <div class="callout-title">Setup Caveats & Recommendations</div>
+                <ul>
+                  <% installation.caveats.forEach(cav => { %>
+                    <li><%= cav %></li>
+                  <% }); %>
+                </ul>
+              </div>
+            <% } %>
+
+            <% if (installation.sources && installation.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% installation.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 07. Configuration -->
+        <% const configuration = record.analysis.configuration || {}; %>
+        <section class="analysis-section" id="section-configuration" aria-labelledby="heading-configuration">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">07</span>
+              <h2 id="heading-configuration" class="section-title"><%= configuration.title || 'Configuration' %></h2>
+            </div>
+            <% if (configuration.isIncomplete || configuration.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (configuration.configFiles && configuration.configFiles.length > 0) { %>
+              <h3>Configuration Files</h3>
+              <ul>
+                <% configuration.configFiles.forEach(cf => { %>
+                  <li>
+                    <code><%= cf.path %></code>: <%= cf.purpose %>
+                    <%- markdownService.renderSourceBadge(cf.path, record.url) %>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (configuration.environmentVariables && configuration.environmentVariables.length > 0) { %>
+              <h3>Environment Variables</h3>
+              <ul>
+                <% configuration.environmentVariables.forEach(ev => { %>
+                  <li>
+                    <code><%= ev.name %></code>: <%= ev.description %>
+                    <% if (ev.default) { %> <em>(default: <code><%= ev.default %></code>)</em><% } %>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (configuration.secrets && configuration.secrets.length > 0) { %>
+              <h3>Required Secrets & Tokens</h3>
+              <ul>
+                <% configuration.secrets.forEach(sec => { %>
+                  <li><code><%= sec %></code></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (configuration.sources && configuration.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% configuration.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 08. Usage & Examples -->
+        <% const usage = record.analysis.usage || {}; %>
+        <section class="analysis-section" id="section-usage" aria-labelledby="heading-usage">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">08</span>
+              <h2 id="heading-usage" class="section-title"><%= usage.title || 'Usage & Examples' %></h2>
+            </div>
+            <% if (usage.isIncomplete || usage.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (usage.quickStart && usage.quickStart !== 'Not documented') { %>
+              <h3>Quick Start</h3>
+              <div class="prose-block">
+                <%- markdownService.render(usage.quickStart) %>
+              </div>
+            <% } %>
+
+            <% if (usage.commonCommands && usage.commonCommands.length > 0) { %>
+              <h3>Common Commands</h3>
+              <ul>
+                <% usage.commonCommands.forEach(cmd => { %>
+                  <li>
+                    <strong><%= cmd.description %>:</strong>
+                    <%- markdownService.render('```bash\n' + cmd.command + '\n```') %>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (usage.codeExamples && usage.codeExamples.length > 0) { %>
+              <h3>Code Examples</h3>
+              <% usage.codeExamples.forEach(ex => { %>
+                <p><strong><%= ex.title %>:</strong></p>
+                <%- markdownService.render('```' + (ex.language || '') + '\n' + ex.code + '\n```') %>
+              <% }); %>
+            <% } %>
+
+            <% if (usage.sources && usage.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% usage.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 09. Tech Stack -->
+        <% const techStack = record.analysis.techStack || {}; %>
+        <section class="analysis-section" id="section-techStack" aria-labelledby="heading-techStack">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">09</span>
+              <h2 id="heading-techStack" class="section-title"><%= techStack.title || 'Tech Stack' %></h2>
+            </div>
+            <% if (techStack.isIncomplete || techStack.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (techStack.languages && techStack.languages.length > 0) { %>
+              <p><strong>Languages:</strong> <%= techStack.languages.join(', ') %></p>
+            <% } %>
+
+            <% if (techStack.frameworks && techStack.frameworks.length > 0) { %>
+              <p><strong>Frameworks:</strong> <%= techStack.frameworks.join(', ') %></p>
+            <% } %>
+
+            <% if (techStack.libraries && techStack.libraries.length > 0) { %>
+              <h3>Key Libraries & Dependencies</h3>
+              <ul>
+                <% techStack.libraries.forEach(lib => { %>
+                  <li>
+                    <code><%= lib.name %></code><% if (lib.version) { %> (<%= lib.version %>)<% } %>: <%= lib.purpose %>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (techStack.infrastructure && techStack.infrastructure.length > 0) { %>
+              <p><strong>Infrastructure / Tooling:</strong> <%= techStack.infrastructure.join(', ') %></p>
+            <% } %>
+
+            <% if (techStack.sources && techStack.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% techStack.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 10. Limitations & Considerations -->
+        <% const limitations = record.analysis.limitations || {}; %>
+        <section class="analysis-section" id="section-limitations" aria-labelledby="heading-limitations">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">10</span>
+              <h2 id="heading-limitations" class="section-title"><%= limitations.title || 'Limitations & Considerations' %></h2>
+            </div>
+            <% if (limitations.isIncomplete || limitations.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (limitations.knownLimitations && limitations.knownLimitations.length > 0) { %>
+              <h3>Known Limitations</h3>
+              <ul>
+                <% limitations.knownLimitations.forEach(lim => { %>
+                  <li><%= lim %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (limitations.compatibility && limitations.compatibility.length > 0) { %>
+              <h3>Compatibility Notes</h3>
+              <ul>
+                <% limitations.compatibility.forEach(comp => { %>
+                  <li><%= comp %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (limitations.securityCaveats && limitations.securityCaveats.length > 0) { %>
+              <h3>Security Caveats</h3>
+              <ul>
+                <% limitations.securityCaveats.forEach(sec => { %>
+                  <li><%= sec %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <% if (limitations.productionReadiness) { %>
+              <div class="callout-recommendation">
+                <div class="callout-title">Production Readiness Assessment</div>
+                <p><%= limitations.productionReadiness %></p>
+              </div>
+            <% } %>
+
+            <% if (limitations.sources && limitations.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% limitations.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 11. Alternatives & Similar Projects -->
+        <% const alternatives = record.analysis.alternatives || {}; %>
+        <section class="analysis-section" id="section-alternatives" aria-labelledby="heading-alternatives">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">11</span>
+              <h2 id="heading-alternatives" class="section-title"><%= alternatives.title || 'Alternatives & Similar Projects' %></h2>
+            </div>
+            <% if (alternatives.isIncomplete || alternatives.status === 'not_documented') { %>
+              <span class="badge badge-amber">Not documented</span>
+            <% } %>
+          </header>
+          <div class="section-body">
+            <% if (alternatives.comparableProjects && alternatives.comparableProjects.length > 0) { %>
+              <h3>Comparable Projects</h3>
+              <ul>
+                <% alternatives.comparableProjects.forEach(proj => { %>
+                  <li>
+                    <strong><%= proj.name %>:</strong> <%= proj.distinction %>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } else { %>
+              <p>No direct alternatives or similar projects specified in repository documentation.</p>
+            <% } %>
+
+            <% if (alternatives.sources && alternatives.sources.length > 0) { %>
+              <div class="section-sources-row">
+                <span class="sources-label">Sources:</span>
+                <% alternatives.sources.forEach(src => { %>
+                  <%- markdownService.renderSourceBadge(src, record.url) %>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- 12. Official Resources -->
+        <% const resources = record.analysis.resources || {}; %>
+        <section class="analysis-section" id="section-resources" aria-labelledby="heading-resources">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number">12</span>
+              <h2 id="heading-resources" class="section-title"><%= resources.title || 'Official Resources' %></h2>
+            </div>
+          </header>
+          <div class="section-body">
+            <ul>
+              <li><strong>Repository:</strong> <a href="<%= record.url %>" target="_blank" rel="noopener noreferrer"><%= record.url %></a></li>
+              <% if (resources.documentationUrl && resources.documentationUrl !== 'Not documented') { %>
+                <li><strong>Documentation:</strong> <a href="<%= resources.documentationUrl %>" target="_blank" rel="noopener noreferrer"><%= resources.documentationUrl %></a></li>
+              <% } %>
+              <% if (resources.issueTrackerUrl && resources.issueTrackerUrl !== 'Not documented') { %>
+                <li><strong>Issues:</strong> <a href="<%= resources.issueTrackerUrl %>" target="_blank" rel="noopener noreferrer"><%= resources.issueTrackerUrl %></a></li>
+              <% } %>
+            </ul>
+
+            <% if (resources.communityLinks && resources.communityLinks.length > 0) { %>
+              <h3>Community Links</h3>
+              <ul>
+                <% resources.communityLinks.forEach(comm => { %>
+                  <li><a href="<%= comm.url %>" target="_blank" rel="noopener noreferrer"><%= comm.title || comm.url %></a></li>
+                <% }); %>
+              </ul>
+            <% } %>
+          </div>
+        </section>
+
+      <% } else { %>
+        <!-- Placeholder for dynamic client-side rendering -->
+        <div id="client-document-placeholder" class="analysis-section">
+          <p>Loading analysis from history or cache...</p>
+        </div>
+      <% } %>
+    </article>
+
+    <!-- Right Side Evidence Rail (Desktop only) -->
+    <aside class="analysis-evidence-rail" aria-label="Analysis Evidence & Metadata">
+      <div class="evidence-card">
+        <div class="evidence-header">Analysis Metadata</div>
+        <div class="evidence-stat-row">
+          <span class="evidence-stat-label">Revision</span>
+          <span class="evidence-stat-val font-mono"><%= record?.revision ? record.revision.substring(0, 7) : '—' %></span>
+        </div>
+        <div class="evidence-stat-row">
+          <span class="evidence-stat-label">Completeness</span>
+          <span class="evidence-stat-val"><%= record?.score ?? 100 %>%</span>
+        </div>
+        <div class="evidence-stat-row">
+          <span class="evidence-stat-label">Analyzed</span>
+          <span class="evidence-stat-val text-xs"><%= record?.analyzedAt ? new Date(record.analyzedAt).toLocaleDateString() : 'Just now' %></span>
+        </div>
+        <div class="evidence-stat-row">
+          <span class="evidence-stat-label">Sections</span>
+          <span class="evidence-stat-val">12 Canonical</span>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="gitex-toast" class="gitex-toast" role="status" aria-live="polite">
+    <span id="toast-message">Copied!</span>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <!-- Pass server data safely to client script -->
+  <script>
+    window.__GITEX_RECORD__ = <%- record ? JSON.stringify(record) : 'null' %>;
+    window.__RECORD_ID__ = <%- recordId ? JSON.stringify(recordId) : 'null' %>;
+  </script>
+  <script src="/js/analysis.js"></script>
+</body>
+</html>
+

@@ -1,10 +1,10 @@
-// GitEx Dashboard Shell Client
+// GitEx Dashboard Shell Client (GITEX-002, 003, 011, 012)
 (function () {
   'use strict';
 
   const STORAGE_KEYS = {
     THEME: 'gitex.theme',
-    HISTORY: 'gitex.history',
+    HISTORY: 'gitex_history',
   };
 
   // -------------------------------------------------------------
@@ -40,7 +40,7 @@
 
   if (themeToggle) {
     themeToggle.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
       applyTheme(current === 'dark' ? 'light' : 'dark');
     });
   }
@@ -53,6 +53,16 @@
   const providerBadge = document.getElementById('provider-badge');
   const analyzeBtn = document.getElementById('btn-analyze');
   const validationMsg = document.getElementById('validation-msg');
+
+  // Progress modal elements
+  const progressModal = document.getElementById('progress-modal');
+  const progressRepoBadge = document.getElementById('progress-repo-badge');
+  const stageCurrentMsg = document.getElementById('stage-current-message');
+  const progressErrorContainer = document.getElementById('progress-error-container');
+  const progressErrorText = document.getElementById('progress-error-text');
+  const btnProgressDismiss = document.getElementById('btn-progress-dismiss');
+
+  const STAGES_ORDER = ['Validating', 'Fetching', 'Processing', 'Analyzing', 'Generating'];
 
   function updateBadge(provider) {
     if (!providerBadge) return;
@@ -107,12 +117,83 @@
     if (isLoading) {
       analyzeBtn.disabled = true;
       urlInput.disabled = true;
-      analyzeBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Validating...</span>';
+      analyzeBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span>Analyzing...</span>';
     } else {
       analyzeBtn.disabled = false;
       urlInput.disabled = false;
       analyzeBtn.innerHTML = '<span>Analyze repository</span>';
     }
+  }
+
+  function updateStageUI(activeStage, message) {
+    if (stageCurrentMsg && message) {
+      stageCurrentMsg.textContent = message;
+    }
+
+    const activeIdx = STAGES_ORDER.indexOf(activeStage);
+
+    STAGES_ORDER.forEach((stage, idx) => {
+      const el = document.getElementById(`stage-${stage.toLowerCase()}`);
+      if (!el) return;
+
+      el.classList.remove('pending', 'active', 'complete', 'failed');
+      const icon = el.querySelector('.stage-icon-circle');
+
+      if (activeStage === 'Failed') {
+        if (idx === activeIdx) {
+          el.classList.add('failed');
+          if (icon) icon.textContent = '✕';
+        } else if (idx < activeIdx) {
+          el.classList.add('complete');
+          if (icon) icon.textContent = '✓';
+        } else {
+          el.classList.add('pending');
+          if (icon) icon.textContent = String(idx + 1);
+        }
+      } else if (activeStage === 'Completed' || idx < activeIdx) {
+        el.classList.add('complete');
+        if (icon) icon.textContent = '✓';
+      } else if (idx === activeIdx) {
+        el.classList.add('active');
+        if (icon) icon.textContent = '→';
+      } else {
+        el.classList.add('pending');
+        if (icon) icon.textContent = String(idx + 1);
+      }
+    });
+  }
+
+  function showProgressModal(repoUrl) {
+    if (!progressModal) return;
+    if (progressRepoBadge) {
+      progressRepoBadge.textContent = repoUrl;
+    }
+    if (progressErrorContainer) {
+      progressErrorContainer.classList.add('hidden');
+    }
+    updateStageUI('Validating', 'Validating repository URL...');
+    progressModal.classList.remove('hidden');
+  }
+
+  function hideProgressModal() {
+    if (!progressModal) return;
+    progressModal.classList.add('hidden');
+  }
+
+  function showProgressError(errorMsg) {
+    if (progressErrorContainer && progressErrorText) {
+      progressErrorText.textContent = errorMsg || 'An unknown error occurred during analysis.';
+      progressErrorContainer.classList.remove('hidden');
+    }
+    updateStageUI('Failed', `Analysis failed: ${errorMsg}`);
+  }
+
+  if (btnProgressDismiss) {
+    btnProgressDismiss.addEventListener('click', () => {
+      hideProgressModal();
+      setLoadingState(false);
+      if (urlInput) urlInput.focus();
+    });
   }
 
   if (urlInput) {
@@ -121,6 +202,82 @@
       const detected = detectProviderPreview(urlInput.value);
       updateBadge(detected);
     });
+  }
+
+  /**
+   * Runs the full analysis pipeline using Server-Sent Events (SSE)
+   */
+  async function startAnalysis(rawUrl) {
+    showProgressModal(rawUrl);
+    setLoadingState(true);
+    clearValidation();
+
+    const streamUrl = `/api/analyze/stream?url=${encodeURIComponent(rawUrl)}`;
+    let eventSource = null;
+
+    try {
+      eventSource = new EventSource(streamUrl);
+
+      eventSource.addEventListener('stage', (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          updateStageUI(payload.stage, payload.message);
+        } catch (e) {
+          console.warn('[GitEx] Stage event parse error:', e);
+        }
+      });
+
+      eventSource.addEventListener('complete', (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          const record = payload.record;
+          updateStageUI('Completed', 'Analysis complete! Redirecting...');
+
+          // Save to local history
+          saveRecordToHistory(record);
+
+          // Redirect to analysis viewer after a brief pause
+          setTimeout(() => {
+            window.location.href = `/analysis/${encodeURIComponent(record.id)}`;
+          }, 600);
+        } catch (e) {
+          console.error('[GitEx] Complete event parse error:', e);
+          showProgressError('Failed to process completed analysis record.');
+        } finally {
+          eventSource.close();
+        }
+      });
+
+      eventSource.addEventListener('error', (event) => {
+        let msg = 'Failed to connect to analysis stream.';
+        try {
+          if (event.data) {
+            const data = JSON.parse(event.data);
+            msg = data.message || msg;
+          }
+        } catch {}
+        showProgressError(msg);
+        eventSource.close();
+      });
+    } catch (err) {
+      // Fallback to standard POST endpoint
+      console.warn('[GitEx] SSE not available or failed, falling back to POST /api/analyze:', err);
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: rawUrl }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Analysis failed.');
+        }
+        saveRecordToHistory(data.data);
+        window.location.href = `/analysis/${encodeURIComponent(data.data.id)}`;
+      } catch (postErr) {
+        showProgressError(postErr.message);
+      }
+    }
   }
 
   if (repoForm) {
@@ -134,42 +291,9 @@
         return;
       }
 
-      setLoadingState(true);
-      clearValidation();
-
-      try {
-        const response = await fetch('/api/repository/validate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({ url: rawUrl }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          // Input value remains visible and editable!
-          showValidationError(data.error || 'Failed to validate repository URL.');
-          updateBadge('invalid');
-          if (urlInput) urlInput.focus();
-          return;
-        }
-
-        // Successfully validated by server
-        const repo = data.data;
-        updateBadge(repo.provider);
-        showValidationSuccess(`✓ Valid ${repo.provider === 'github' ? 'GitHub' : 'GitLab'} repository: ${repo.fullName}`);
-      } catch (err) {
-        showValidationError('Network error while validating repository. Please try again.');
-        if (urlInput) urlInput.focus();
-      } finally {
-        setLoadingState(false);
-      }
+      await startAnalysis(rawUrl);
     });
   }
-
 
   // -------------------------------------------------------------
   // Recent Analyses (LocalStorage)
@@ -190,12 +314,18 @@
     }
   }
 
-  function saveHistory(historyList) {
+  function saveRecordToHistory(record) {
+    if (!record || !record.id) return;
+    let list = getHistory();
+    list = list.filter(item => item.id !== record.id && !(item.url === record.url && item.revision === record.revision));
+    list.unshift(record);
+    if (list.length > 25) list = list.slice(0, 25);
     try {
-      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(historyList));
+      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(list));
     } catch (e) {
-      console.warn('Failed to save history to localStorage', e);
+      console.warn('Failed to save to localStorage', e);
     }
+    renderHistory();
   }
 
   function formatRelativeTime(isoString) {
@@ -245,10 +375,9 @@
     }
 
     const listHtml = items.map((item) => {
-      const repo = item.repository || {};
-      const fullName = repo.fullName || repo.name || 'Unknown Repository';
-      const provider = repo.provider || 'git';
-      const language = repo.language || 'Unknown';
+      const fullName = item.fullName || (item.owner && item.name ? `${item.owner}/${item.name}` : item.name) || 'Repository';
+      const provider = item.provider || 'git';
+      const language = item.language || 'Unknown';
       const timeStr = formatRelativeTime(item.analyzedAt);
 
       return `
@@ -262,6 +391,7 @@
               <span>•</span>
               <span>${escapeHtml(language)}</span>
               ${timeStr ? `<span>•</span><span>${escapeHtml(timeStr)}</span>` : ''}
+              ${item.status === 'partial' ? '<span>•</span><span class="badge badge-amber" style="padding:0 4px;font-size:10px;">Partial</span>' : ''}
             </div>
           </div>
           <div class="history-actions">
@@ -297,15 +427,19 @@
   }
 
   function deleteHistoryItem(id) {
-    const items = getHistory().filter((item) => item.id !== id);
-    saveHistory(items);
+    let items = getHistory().filter((item) => item.id !== id);
+    try {
+      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(items));
+    } catch {}
     renderHistory();
   }
 
   if (clearHistoryBtn) {
     clearHistoryBtn.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear your local analysis history?')) {
-        saveHistory([]);
+        try {
+          localStorage.removeItem(STORAGE_KEYS.HISTORY);
+        } catch {}
         renderHistory();
       }
     });
@@ -321,6 +455,18 @@
       .replace(/'/g, '&#039;');
   }
 
-  // Initial render
+  // Handle ?url=...&reanalyze=true from viewer
+  const urlParams = new URLSearchParams(window.location.search);
+  const reanalyzeUrl = urlParams.get('url');
+  if (reanalyzeUrl && urlInput) {
+    urlInput.value = reanalyzeUrl;
+    const detected = detectProviderPreview(reanalyzeUrl);
+    updateBadge(detected);
+    if (urlParams.get('reanalyze') === 'true') {
+      startAnalysis(reanalyzeUrl);
+    }
+  }
+
+  // Initial render of history
   renderHistory();
 })();

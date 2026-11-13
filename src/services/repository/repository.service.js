@@ -85,6 +85,34 @@ export class RepositoryService {
       statusCode: 400,
     });
   }
+
+  /**
+   * Fetch recursive directory tree using the detected provider service.
+   *
+   * @param {string} inputUrl - Raw user repository URL
+   * @param {object} [options]
+   * @param {string} [options.ref] - Branch or commit SHA
+   * @returns {Promise<{ tree: Array<object>, truncated: boolean }>}
+   */
+  static async fetchTree(inputUrl, options = {}) {
+    const resolved = this.resolveRepository(inputUrl);
+
+    if (!resolved.valid) {
+      throw new RepositoryError(resolved.error, { statusCode: 400 });
+    }
+
+    if (resolved.provider === 'github') {
+      return GitHubService.fetchTree(resolved.owner, resolved.name, options.ref || 'HEAD');
+    }
+
+    if (resolved.provider === 'gitlab') {
+      return GitLabService.fetchTree(resolved.fullName, options.ref || 'HEAD');
+    }
+
+    throw new RepositoryError(`Unsupported repository provider: ${resolved.provider}`, {
+      statusCode: 400,
+    });
+  }
 }
 
 export default RepositoryService;
