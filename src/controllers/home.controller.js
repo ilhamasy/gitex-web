@@ -3,7 +3,7 @@
  */
 export const getHome = (req, res) => {
   res.render('index', {
-    title: 'GitEx — From Repository to Clarity',
+    title: 'GitEx — Every Repository, Explained.',
   });
 };
 

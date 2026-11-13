@@ -208,7 +208,7 @@ describe('Analysis Viewer & Controller — GITEX-011 & GITEX-012', () => {
 
     // Check footer copyright on left, tagline on right
     assert.match(html, /© 2026 Ilham Asyari\. All rights reserved\./);
-    assert.match(html, /From Repository to Clarity\./);
+    assert.match(html, /Every Repository, Explained\./);
   });
 
   it('GET /api/analysis/:id returns JSON data for cached record', async () => {

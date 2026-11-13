@@ -47,7 +47,7 @@ describe('Dashboard Shell (GITEX-002)', () => {
   it('renders copyright on the left and subtitle on the right in footer', async () => {
     const res = await request(app).get('/');
     assert.ok(res.text.includes('© 2026 Ilham Asyari. All rights reserved.'));
-    assert.ok(res.text.includes('From Repository to Clarity.'));
+    assert.ok(res.text.includes('Every Repository, Explained.'));
   });
 
   it('satisfies Anti-Slop criteria: no fake testimonials, metrics, or decorative grids', async () => {
