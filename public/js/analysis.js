@@ -605,7 +605,9 @@ function initTocNavigation() {
     }
 
     // 5. Close mobile drawer if open
-    if (window.innerWidth <= 768) {
+    if (typeof window.toggleGitExMobileToc === 'function') {
+      window.toggleGitExMobileToc(false);
+    } else if (window.innerWidth <= 768) {
       tocRail.classList.remove('open');
       const toggleBtn = document.getElementById('btn-toggle-mobile-toc');
       if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
@@ -698,42 +700,21 @@ function initScrollSpy() {
 }
 
 /**
- * Mobile Table of Contents drawer toggle
+ * Mobile Table of Contents drawer toggle (keyboard shortcuts & fallback)
  */
 function initMobileToc() {
-  const toggleBtn = document.getElementById('btn-toggle-mobile-toc');
-  const closeBtn = document.getElementById('btn-close-mobile-toc');
   const tocRail = document.getElementById('toc-rail');
-
   if (!tocRail) return;
 
-  function closeToc() {
-    tocRail.classList.remove('open');
-    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
-    document.body.style.overflow = '';
-  }
-
-  function openToc() {
-    tocRail.classList.add('open');
-    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
-    document.body.style.overflow = 'hidden';
-  }
-
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      const isOpen = tocRail.classList.contains('open');
-      if (isOpen) closeToc();
-      else openToc();
-    });
-  }
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeToc);
-  }
-
+  // Escape key closes mobile TOC
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && tocRail.classList.contains('open')) {
-      closeToc();
+      if (typeof window.toggleGitExMobileToc === 'function') {
+        window.toggleGitExMobileToc(false);
+      } else {
+        tocRail.classList.remove('open');
+        document.body.style.overflow = '';
+      }
     }
   });
 }

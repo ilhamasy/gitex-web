@@ -1515,6 +1515,10 @@ a {
 }
 
 @media (max-width: 768px) {
+  .analysis-header-bar {
+    position: static;
+  }
+
   .mobile-toc-bar {
     display: flex;
     align-items: center;
@@ -1525,6 +1529,10 @@ a {
 
   .btn-close-mobile-toc {
     display: inline-flex;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .analysis-toc-rail {

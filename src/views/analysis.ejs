@@ -96,7 +96,7 @@
 
   <!-- Mobile Table of Contents Bar -->
   <div class="mobile-toc-bar">
-    <button type="button" id="btn-toggle-mobile-toc" class="btn-toggle-mobile-toc" aria-expanded="false" aria-controls="toc-rail">
+    <button type="button" id="btn-toggle-mobile-toc" class="btn-toggle-mobile-toc" aria-expanded="false" aria-controls="toc-rail" onclick="window.toggleGitExMobileToc()">
       <span class="btn-toc-left">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
@@ -107,18 +107,21 @@
     </button>
   </div>
   <script>
-    (function(){
+    window.toggleGitExMobileToc = function(force) {
+      var rail = document.getElementById('toc-rail');
       var btn = document.getElementById('btn-toggle-mobile-toc');
-      if (btn) {
-        btn.addEventListener('click', function() {
-          var rail = document.getElementById('toc-rail');
-          if (!rail) return;
-          var isOpen = rail.classList.toggle('open');
-          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-          document.body.style.overflow = isOpen ? 'hidden' : '';
-        });
+      if (!rail) return;
+      var shouldOpen = typeof force === 'boolean' ? force : !rail.classList.contains('open');
+      if (shouldOpen) {
+        rail.classList.add('open');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      } else {
+        rail.classList.remove('open');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
       }
-    })();
+    };
   </script>
 
   <!-- Main Analysis Workspace -->
@@ -233,7 +236,7 @@
     <nav class="analysis-toc-rail" id="toc-rail" aria-label="Analysis Sections">
       <div class="toc-header">
         <span>Table of Contents</span>
-        <button type="button" id="btn-close-mobile-toc" class="btn-close-mobile-toc" aria-label="Close table of contents">✕</button>
+        <button type="button" id="btn-close-mobile-toc" class="btn-close-mobile-toc" aria-label="Close table of contents" onclick="window.toggleGitExMobileToc(false)">✕</button>
       </div>
       <ol class="toc-list" id="toc-list">
         <% visibleSections.forEach(sec => { %>
