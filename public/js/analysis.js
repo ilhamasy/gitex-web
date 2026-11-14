@@ -17,6 +17,9 @@ function initInteractiveUI(record) {
 }
 
 async function initAnalysis() {
+  document.body.classList.remove('mobile-toc-open');
+  document.body.style.overflow = '';
+
   let record = window.__GITEX_RECORD__;
   const recordId = window.__RECORD_ID__ || new URLSearchParams(window.location.search).get('id');
 
@@ -557,10 +560,16 @@ function setActiveTocLink(sectionKey) {
       if (!link.classList.contains('active')) {
         link.classList.add('active');
         link.setAttribute('aria-current', 'true');
-        // Keep active item in view if TOC rail is scrollable
+        // Safely adjust internal TOC rail scroll without moving the window viewport
         const tocRail = document.getElementById('toc-rail');
-        if (tocRail && typeof link.scrollIntoView === 'function') {
-          link.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        if (tocRail && tocRail.scrollHeight > tocRail.clientHeight && !tocRail.classList.contains('open')) {
+          const railRect = tocRail.getBoundingClientRect();
+          const linkRect = link.getBoundingClientRect();
+          if (linkRect.bottom > railRect.bottom) {
+            tocRail.scrollTop += (linkRect.bottom - railRect.bottom + 12);
+          } else if (linkRect.top < railRect.top) {
+            tocRail.scrollTop -= (railRect.top - linkRect.top + 12);
+          }
         }
       }
     } else {
@@ -596,22 +605,30 @@ function initTocNavigation() {
     isProgrammaticScroll = true;
     clearTimeout(programmaticScrollTimer);
 
-    // 3. Scroll smoothly to target section
-    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    // 4. Update browser URL hash cleanly without instant jump
-    if (window.history && window.history.pushState) {
-      window.history.pushState(null, '', `#section-${sectionKey}`);
-    }
-
-    // 5. Close mobile drawer if open
+    // 3. Close mobile drawer FIRST so body is completely unlocked before scrolling
     if (typeof window.toggleGitExMobileToc === 'function') {
       window.toggleGitExMobileToc(false);
-    } else if (window.innerWidth <= 768) {
+    } else {
       tocRail.classList.remove('open');
       const toggleBtn = document.getElementById('btn-toggle-mobile-toc');
       if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('mobile-toc-open');
       document.body.style.overflow = '';
+    }
+
+    // 4. Scroll smoothly to target section with sticky header offset
+    const headerOffset = 90;
+    const elementPosition = targetEl.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+    window.scrollTo({
+      top: Math.max(0, offsetPosition),
+      behavior: 'smooth'
+    });
+
+    // 5. Update browser URL hash cleanly without instant jump
+    if (window.history && window.history.pushState) {
+      window.history.pushState(null, '', `#section-${sectionKey}`);
     }
 
     // 6. Release scroll spy lock after scroll completes

@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=gitex-v4">
+  <link rel="stylesheet" href="/css/style.css?v=gitex-v5">
   <script src="/js/theme.js"></script>
 </head>
 <body class="analysis-page">
@@ -115,10 +115,11 @@
       if (shouldOpen) {
         rail.classList.add('open');
         if (btn) btn.setAttribute('aria-expanded', 'true');
-        document.body.style.overflow = 'hidden';
+        document.body.classList.add('mobile-toc-open');
       } else {
         rail.classList.remove('open');
         if (btn) btn.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('mobile-toc-open');
         document.body.style.overflow = '';
       }
     };
