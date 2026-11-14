@@ -5,6 +5,7 @@
       <span class="brand-tag">Field Notebook</span>
     </a>
     <div class="header-actions">
+      <% if (typeof showLanguageSwitcher !== 'undefined' ? showLanguageSwitcher : (typeof page === 'undefined' || page !== 'app')) { %>
       <!-- Language Switcher in Main Navbar -->
       <div class="lang-switch-group nav-lang-switch" role="group" aria-label="Language selection">
         <button type="button" id="nav-btn-lang-en" class="lang-btn <%= (typeof currentLang === 'undefined' || !currentLang || currentLang === 'en') ? 'active' : '' %>" aria-pressed="<%= (typeof currentLang === 'undefined' || !currentLang || currentLang === 'en') ? 'true' : 'false' %>" title="English" onclick="if(window.switchLanguage){window.switchLanguage('en',true);}">
@@ -16,6 +17,7 @@
           <span class="lang-label">ID</span>
         </button>
       </div>
+      <% } %>
 
       <button id="theme-toggle" class="btn-ghost" type="button" aria-label="Switch to light theme">
         <span id="theme-icon" aria-hidden="true">☀️</span>

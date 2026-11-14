@@ -23,6 +23,8 @@ export const getHome = (req, res) => {
 export const getApp = (req, res) => {
   res.render('index', {
     title: 'GitEx — Understand any repository',
+    showLanguageSwitcher: false,
+    page: 'app',
   });
 };
 

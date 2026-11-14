@@ -10,11 +10,14 @@ describe('Dashboard Shell (GITEX-002)', () => {
     assert.equal(res.headers['content-type'].includes('text/html'), true);
   });
 
-  it('contains GitEx branding and compact navigation', async () => {
+  it('contains GitEx branding and compact navigation without language switcher on dashboard', async () => {
     const res = await request(app).get('/app');
     assert.ok(res.text.includes('GitEx'));
     assert.ok(res.text.includes('Field Notebook'));
     assert.ok(res.text.includes('id="theme-toggle"'));
+    assert.equal(res.text.includes('class="lang-switch-group nav-lang-switch"'), false);
+    assert.equal(res.text.includes('id="nav-btn-lang-en"'), false);
+    assert.equal(res.text.includes('id="nav-btn-lang-id"'), false);
   });
 
   it('has repository URL input as the primary action', async () => {

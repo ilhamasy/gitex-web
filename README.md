@@ -237,6 +237,10 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
   - Server Translation Service: `src/services/ai/translation.service.js` memanfaatkan instruksi sistem ketat untuk Gemini AI serta fallback engine berakurasi tinggi saat offline / terkena limit kuota.
   - Invalidation Cache Translasi Lama: Backend otomatis mendeteksi dan memperbarui rekaman translasi usang yang sebelumnya hanya memuat terjemahan judul.
 
+### 11. Penghapusan Tombol Mode Bahasa pada Halaman Dashboard (/app)
+- **Tampilan Bersih & Terfokus di Dashboard:** Menghapus tombol pemilih bahasa bendera Inggris dan Indonesia khusus pada halaman dashboard (`/app`). Header dashboard menjadi lebih terfokus pada aksi utama analisis repositori tanpa gangguan kontrol bahasa yang belum relevan sebelum analisis selesai.
+- **Pengaturan Kondisional Navbar:** Komponen `partials/header.ejs` kini mendukung parameter `showLanguageSwitcher` (diset `false` pada `src/views/index.ejs` dan `home.controller.js`), sementara tombol alih bahasa tetap aktif pada halaman Beranda (`/`) dan halaman Detail Analisis (`/analysis/:id`).
+
 ---
 
 ## Documentation
