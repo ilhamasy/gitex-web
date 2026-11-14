@@ -106,11 +106,13 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   let currentActiveStage = 'Validating';
 
   function updateStageUI(activeStage, message) {
-    if (stageCurrentMsg && message) {
-      stageCurrentMsg.textContent = message;
-    }
-
     if (activeStage === 'Failed') {
+      if (stageCurrentMsg) {
+        stageCurrentMsg.classList.add('hidden');
+        stageCurrentMsg.style.display = 'none';
+        stageCurrentMsg.textContent = '';
+      }
+
       const failIdx = STAGES_ORDER.indexOf(currentActiveStage);
       STAGES_ORDER.forEach((stage, idx) => {
         const el = document.getElementById(`stage-${stage.toLowerCase()}`);
@@ -131,6 +133,12 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         }
       });
       return;
+    }
+
+    if (stageCurrentMsg && message) {
+      stageCurrentMsg.classList.remove('hidden');
+      stageCurrentMsg.style.display = 'block';
+      stageCurrentMsg.textContent = message;
     }
 
     currentActiveStage = activeStage;
@@ -161,6 +169,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     if (progressRepoBadge) {
       progressRepoBadge.textContent = repoUrl;
     }
+    if (stageCurrentMsg) {
+      stageCurrentMsg.classList.remove('hidden');
+      stageCurrentMsg.style.display = 'block';
+      stageCurrentMsg.textContent = 'Validating repository URL...';
+    }
     if (progressErrorContainer) {
       progressErrorContainer.classList.add('hidden');
       progressErrorContainer.style.display = 'none';
@@ -183,6 +196,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
 
   function showProgressError(errorMsg) {
     const text = (typeof errorMsg === 'string' && errorMsg.trim()) ? errorMsg.trim() : 'An error occurred during analysis. Please try again.';
+    if (stageCurrentMsg) {
+      stageCurrentMsg.classList.add('hidden');
+      stageCurrentMsg.style.display = 'none';
+      stageCurrentMsg.textContent = '';
+    }
     if (progressErrorContainer && progressErrorText) {
       progressErrorText.textContent = text;
       progressErrorContainer.classList.remove('hidden');

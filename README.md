@@ -206,6 +206,10 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 - **Harmonisasi Padding Mobile:** Mengatur padding `.container`, `.analysis-workspace-grid`, dan `.analysis-section` secara proporsional dan seimbang di sisi kiri dan kanan pada resolusi mobile (`max-width: 768px` dan `max-width: 480px`), menjamin padding simetris dan rapi.
 - **Cache Invalidation:** Parameter versi stylesheet diperbarui ke `?v=gitex-v7`.
 
+### 8. Eliminasi Duplikasi Pesan Error pada Modal Progres Analisis
+- **Penyebab Duplikasi Pesan:** Saat analisis gagal (misalnya karena API key melebihi batas kuota / 429 Quota Exceeded), pesan error sebelumnya dimasukkan ke elemen status proses berjalan (`#stage-current-message` dengan border hijau) sekaligus dimasukkan ke kartu error bawah (`#progress-error-container` bertajuk "Analysis Failed"), menyebabkan teks penjelasan kuota yang panjang muncul dua kali secara berulang.
+- **Tampilan Tunggal & Bersih:** Saat pipeline berstatus `Failed`, elemen status berjalan (`#stage-current-message`) otomatis disembunyikan, sehingga pesan error hanya ditampilkan satu kali secara jelas dan rapi di dalam kotak merah **Analysis Failed** di bagian bawah bersama tombol **Dismiss & Retry**.
+
 ---
 
 ## Documentation
