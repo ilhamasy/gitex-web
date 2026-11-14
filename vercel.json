@@ -8,8 +8,13 @@
   ],
   "functions": {
     "api/index.js": {
+      "includeFiles": [
+        "src/views/**",
+        "public/**"
+      ],
       "maxDuration": 60,
       "memory": 1024
     }
   }
 }
+

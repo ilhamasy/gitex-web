@@ -1,21 +1,28 @@
 import app from './app.js';
 import config from './config/index.js';
 
-const server = app.listen(config.port, () => {
-  console.log(`GitEx server running in ${config.env} mode on http://localhost:${config.port}`);
-});
+let server = null;
 
-// Graceful shutdown
-const shutdown = (signal) => {
-  console.log(`Received ${signal}. Shutting down gracefully...`);
-  server.close(() => {
-    console.log('HTTP server closed.');
-    process.exit(0);
+// Only bind to local port when not running in Vercel serverless environment
+if (!process.env.VERCEL) {
+  server = app.listen(config.port, () => {
+    console.log(`GitEx server running in ${config.env} mode on http://localhost:${config.port}`);
   });
-};
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+  const shutdown = (signal) => {
+    console.log(`Received ${signal}. Shutting down gracefully...`);
+    if (server) {
+      server.close(() => {
+        console.log('HTTP server closed.');
+        process.exit(0);
+      });
+    }
+  };
 
-export default server;
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+}
+
+export { server };
+export default app;
 
