@@ -9,7 +9,9 @@ import { logger } from '../utils/logger.js';
 // In-memory cache for recent analysis runs (id -> record)
 const analysisCache = new Map();
 const MAX_CACHE_SIZE = 50;
-const CACHE_DIR = path.resolve(process.cwd(), '.data', 'analyses');
+const CACHE_DIR = process.env.VERCEL
+  ? path.resolve('/tmp', 'gitex-analyses')
+  : path.resolve(process.cwd(), '.data', 'analyses');
 
 try {
   if (!fs.existsSync(CACHE_DIR)) {

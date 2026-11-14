@@ -11,8 +11,9 @@ import { RepositoryError } from './repository.errors.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Locate the local repomix binary
+// Locate the local repomix binary and cjs script for serverless compatibility
 const REPOMIX_BIN = path.resolve(__dirname, '../../../node_modules/.bin/repomix');
+const REPOMIX_CJS = path.resolve(__dirname, '../../../node_modules/repomix/bin/repomix.cjs');
 
 const DEFAULT_TIMEOUT_MS = 15000; // 15 seconds
 const DEFAULT_MAX_BUFFER = 2 * 1024 * 1024; // 2MB max output
@@ -88,7 +89,7 @@ export class RepomixService {
         };
       }
 
-      // 3. Controlled process invocation
+      // 3. Controlled process invocation (with serverless fallback)
       const args = [
         tempDir,
         '--stdout',
@@ -97,41 +98,63 @@ export class RepomixService {
         '--no-security-check',
       ];
 
-      const stdout = await new Promise((resolve, reject) => {
-        execFile(
-          REPOMIX_BIN,
-          args,
-          {
-            timeout: timeoutMs,
-            maxBuffer,
-            env: { ...process.env, CI: 'true' },
-          },
-          (err, output, stderr) => {
-            if (err) {
-              if (err.killed || err.signal === 'SIGTERM') {
-                return reject(
-                  new RepomixError(`Repomix process timed out after ${timeoutMs / 1000}s.`, {
-                    statusCode: 504,
-                  })
-                );
+      const binToExec = fs.existsSync(REPOMIX_BIN)
+        ? REPOMIX_BIN
+        : (fs.existsSync(REPOMIX_CJS) ? process.execPath : null);
+      const binArgs = binToExec === process.execPath ? [REPOMIX_CJS, ...args] : args;
+
+      let stdout = '';
+      if (!binToExec) {
+        // In-memory packaging fallback for serverless environments where binaries are unavailable
+        stdout = this.inMemoryPackXml(files);
+      } else {
+        try {
+          stdout = await new Promise((resolve, reject) => {
+            execFile(
+              binToExec,
+              binArgs,
+              {
+                timeout: timeoutMs,
+                maxBuffer,
+                env: { ...process.env, CI: 'true' },
+              },
+              (err, output, stderr) => {
+                if (err) {
+                  if (err.killed || err.signal === 'SIGTERM') {
+                    return reject(
+                      new RepomixError(`Repomix process timed out after ${timeoutMs / 1000}s.`, {
+                        statusCode: 504,
+                      })
+                    );
+                  }
+                  if (err.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') {
+                    return reject(
+                      new RepomixError('Repomix output exceeded size limit (2MB).', {
+                        statusCode: 413,
+                      })
+                    );
+                  }
+                  // Fall back gracefully to in-memory packing if process execution fails in serverless sandbox
+                  if (err.code === 'ENOENT' || err.code === 'EACCES') {
+                    return resolve(this.inMemoryPackXml(files));
+                  }
+                  return reject(
+                    new RepomixError(`Repomix execution failed: ${err.message}`, {
+                      details: stderr || err.message,
+                    })
+                  );
+                }
+                resolve(output);
               }
-              if (err.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') {
-                return reject(
-                  new RepomixError('Repomix output exceeded size limit (2MB).', {
-                    statusCode: 413,
-                  })
-                );
-              }
-              return reject(
-                new RepomixError(`Repomix execution failed: ${err.message}`, {
-                  details: stderr || err.message,
-                })
-              );
-            }
-            resolve(output);
+            );
+          });
+        } catch (execErr) {
+          if (execErr instanceof RepomixError && (execErr.statusCode === 504 || execErr.statusCode === 413)) {
+            throw execErr;
           }
-        );
-      });
+          stdout = this.inMemoryPackXml(files);
+        }
+      }
 
       return {
         packedContent: stdout,
@@ -148,6 +171,22 @@ export class RepomixService {
         console.warn(`[RepomixService] Failed to clean up temp dir: ${cleanupErr.message}`);
       }
     }
+  }
+
+  /**
+   * Fast in-memory XML pack fallback for serverless runtimes.
+   */
+  static inMemoryPackXml(files) {
+    let out = 'This file is a merged representation of the entire repository.\n\n<file_summary>\n';
+    files.forEach((f) => {
+      out += `  <file path="${f.path}"/>\n`;
+    });
+    out += '</file_summary>\n\n<repository_files>\n';
+    files.forEach((f) => {
+      out += `<file path="${f.path}">\n${f.content || ''}\n</file>\n\n`;
+    });
+    out += '</repository_files>\n';
+    return out;
   }
 
   /**
