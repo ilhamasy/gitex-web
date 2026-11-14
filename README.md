@@ -208,7 +208,7 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 
 ### 8. Eliminasi Duplikasi Pesan Error pada Modal Progres Analisis
 - **Penyebab Duplikasi Pesan:** Saat analisis gagal (misalnya karena API key melebihi batas kuota / 429 Quota Exceeded), pesan error sebelumnya dimasukkan ke elemen status proses berjalan (`#stage-current-message` dengan border hijau) sekaligus dimasukkan ke kartu error bawah (`#progress-error-container` bertajuk "Analysis Failed"), menyebabkan teks penjelasan kuota yang panjang muncul dua kali secara berulang.
-- **Tampilan Tunggal & Bersih:** Saat pipeline berstatus `Failed`, elemen status berjalan (`#stage-current-message`) otomatis disembunyikan, sehingga pesan error hanya ditampilkan satu kali secara jelas dan rapi di dalam kotak merah **Analysis Failed** di bagian bawah bersama tombol **Dismiss & Retry**.
+- **Tampilan Tunggal & Bersih:** Saat pipeline berstatus `Failed`, elemen status berjalan (`#stage-current-message`) otomatis disembunyikan baik via script maupun rule CSS (`.progress-card:has(...)`), sehingga pesan error hanya ditampilkan satu kali secara jelas dan rapi di dalam kotak merah **Analysis Failed** di bagian bawah bersama tombol **Dismiss & Retry**.
 
 ### 9. Penjagaan Batas Harian Analisis (Daily Limit 5 Hit/Hari) & Pop-up Peringatan
 - **Batas 5 Analisis per Hari:** Diterapkan penjagaan batas pemakaian harian maksimum **5 kali hit analisis repositori per hari** per sesi browser menggunakan `localStorage` (`gitex_daily_quota` berbasis tanggal `YYYY-MM-DD`).
@@ -218,6 +218,24 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
   - Lencana Kuota: Menampilkan indikator status kuota `5 / 5 Kuota Terpakai`.
   - Tombol Tutup: Tombol interaktif *"Mengerti"* / *"Understood"* serta dukungan penutupan modal via klik backdrop.
 - **Dukungan Bilingual (ID & EN):** Teks pada pop-up otomatis menyesuaikan preferensi bahasa aktif pengguna (Bahasa Indonesia atau English).
+
+### 10. Penerjemahan Konten Menyeluruh ke Bahasa Indonesia & Preservasi Nama Fitur/Menu Teknis
+- **Penerjemahan Konten Penuh (Bukan Hanya Judul):** Menjawab kebutuhan bahwa saat tombol bendera Indonesia (`🇮🇩 ID`) diklik, seluruh konten penjelasan dan narasi teknis diterjemahkan secara menyeluruh:
+  - Ringkasan (`summary`), Masalah yang Diatasi (`problemSolved`), dan Tujuan Utama (`mainGoal`).
+  - Target pengguna (`targetUsers`), kapabilitas teknis (`capabilities`), dan skenario dunia nyata (`scenarios`).
+  - Arsitektur (`architecture`), aliran data (`dataFlow`), serta tujuan komponen (`purpose`/`description`).
+  - Panduan instalasi (instruksi langkah dan perintah verifikasi).
+  - Catatan konfigurasi (`setupNotes`), variabel lingkungan (`description`), dan file konfigurasi (`purpose`).
+  - Batasan teknis (`limitations`), pertimbangan kompatibilitas, keamanan, kesiapan produksi, dan perbandingan proyek alternatif.
+- **Preservasi Nama Fitur, Menu, Paket & Entitas Teknis (Anti-Slop Translation Rule):**
+  - Istilah nama fitur, menu, nama komponen sistem, dan paket teknis (seperti `Settings Manager`, `Pointer System`, `CLI Installer`, `Contrast MCP Server`, `Pre-flight`, `Hero Builder`, `Theme Dealer`, `Delivery Gate`, `Sloplint`, `Fifty Material Themes`, `Tiered Quality Gates`, dll.) **tidak diterjemahkan secara sembrono**, melainkan tetap dipertahankan dalam nama bahasa Inggris aslinya.
+  - Yang diterjemahkan hanyalah penjelasan dan fungsi dari fitur tersebut (contoh: `Settings Manager: Menangani preferensi global untuk mode penggunaan (during/after/ask) melalui file konfigurasi JSON`).
+  - Cuplikan kode, perintah CLI (`npx antislop-ai`, `npm install`), nama file (`CLAUDE.md`, `AGENTS.md`, `design.md`, `package.json`), path direktori, framework (`Node.js`, `Express`, `Fastify`), dan URL tetap utuh 100%.
+- **Arsitektur Translasi Klien & Server Sinkron:**
+  - `public/js/translation.helper.js`: Mesin translasi teknis terpusat dengan proteksi token dan pemetaan leksikal komprehensif.
+  - Client-side Instant Fallback: `generateClientFallbackIndonesian()` di `public/js/analysis.js` menerjemahkan seluruh bagian dokumen secara instan di browser tanpa lag jaringan.
+  - Server Translation Service: `src/services/ai/translation.service.js` memanfaatkan instruksi sistem ketat untuk Gemini AI serta fallback engine berakurasi tinggi saat offline / terkena limit kuota.
+  - Invalidation Cache Translasi Lama: Backend otomatis mendeteksi dan memperbarui rekaman translasi usang yang sebelumnya hanya memuat terjemahan judul.
 
 ---
 

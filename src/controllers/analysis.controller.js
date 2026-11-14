@@ -171,6 +171,13 @@ export const streamAnalysis = async (req, res) => {
  * Renders the Analysis Viewer page or serves JSON
  * GET /analysis/:id or GET /analysis
  */
+function isStaleTitleOnlyTranslation(record, targetLang) {
+  if (targetLang !== 'id' || !record) return false;
+  const originalSummary = record.analysis?.overview?.summary;
+  const translatedSummary = record.translations?.id?.overview?.summary;
+  return Boolean(originalSummary && translatedSummary && originalSummary === translatedSummary);
+}
+
 export const renderAnalysis = (req, res) => {
   const id = req.params.id || req.query.id;
   const isApi = req.path.startsWith('/api') || req.headers.accept?.includes('application/json');
@@ -195,7 +202,8 @@ export const renderAnalysis = (req, res) => {
 
   let displayRecord = record;
   if (record && record.analysis && currentLang === 'id') {
-    const translatedAnalysis = (record.translations && record.translations.id)
+    const isStale = isStaleTitleOnlyTranslation(record, 'id');
+    const translatedAnalysis = (record.translations && record.translations.id && !isStale)
       ? record.translations.id
       : TranslationService.fallbackTranslate(record.analysis, 'id');
     displayRecord = {
@@ -243,7 +251,8 @@ export const translateAnalysis = async (req, res) => {
     });
   }
 
-  if (record.translations && record.translations[targetLang]) {
+  const isStale = isStaleTitleOnlyTranslation(record, targetLang);
+  if (record.translations && record.translations[targetLang] && !isStale && req.query.fresh !== 'true') {
     return res.status(200).json({
       success: true,
       lang: targetLang,

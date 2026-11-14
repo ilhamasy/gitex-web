@@ -2186,6 +2186,12 @@ pre code {
   border-left: 3px solid var(--color-accent);
 }
 
+/* Guard: hide stage message when error container is active or when hidden class is present */
+.progress-card:has(#progress-error-container:not(.hidden):not([style*="display: none"])) #stage-current-message,
+#stage-current-message.hidden {
+  display: none !important;
+}
+
 .btn-secondary {
   display: inline-flex;
   align-items: center;

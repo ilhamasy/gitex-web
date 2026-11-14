@@ -119,7 +119,7 @@ export class PipelineService {
       notify(PIPELINE_STAGES.COMPLETED, `Analysis completed (${record.status}). Score: ${record.score}%.`);
       return record;
     } catch (err) {
-      notify(PIPELINE_STAGES.FAILED, `Analysis failed: ${err.message}`);
+      notify(PIPELINE_STAGES.FAILED, 'Analysis failed');
       throw err;
     }
   }

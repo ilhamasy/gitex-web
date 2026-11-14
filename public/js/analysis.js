@@ -2,6 +2,7 @@
  * GitEx — Analysis Viewer Client Interactions (GITEX-011, GITEX-012, GITEX-013, GITEX-014)
  */
 import GitExHistory from './history.storage.js';
+import { translateAnalysisToIndonesian } from './translation.helper.js';
 
 if (typeof window !== 'undefined' && !window.GitExHistory) {
   window.GitExHistory = GitExHistory;
@@ -417,31 +418,7 @@ function updateStaticLabels(lang, item, sectionCount) {
  */
 function generateClientFallbackIndonesian(analysis) {
   if (!analysis || typeof analysis !== 'object') return analysis;
-  try {
-    const copy = JSON.parse(JSON.stringify(analysis));
-    const titlesId = window.__SECTION_TITLES_ID__ || {
-      overview: 'Ringkasan Repositori',
-      purpose: 'Tujuan & Skenario Penggunaan',
-      features: 'Fitur Utama',
-      howItWorks: 'Cara Kerja',
-      prerequisites: 'Prasyarat',
-      installation: 'Panduan Instalasi',
-      configuration: 'Konfigurasi',
-      usage: 'Penggunaan & Contoh',
-      techStack: 'Tumpukan Teknologi',
-      limitations: 'Batasan & Pertimbangan',
-      alternatives: 'Alternatif & Proyek Sejenis',
-      resources: 'Sumber Daya Resmi',
-    };
-    Object.keys(titlesId).forEach((k) => {
-      if (copy[k]) {
-        copy[k].title = titlesId[k];
-      }
-    });
-    return copy;
-  } catch (e) {
-    return analysis;
-  }
+  return translateAnalysisToIndonesian(analysis);
 }
 
 /**

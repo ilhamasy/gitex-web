@@ -191,4 +191,67 @@ describe('Language Support & Translation Service (EN / ID)', () => {
     assert.match(html, /Ringkasan Repositori/);
     assert.match(html, /Panduan Instalasi/);
   });
+
+  it('preserves feature/component names (Settings Manager, Pointer System, CLI Installer) while translating explanations', () => {
+    const complexAnalysis = {
+      overview: {
+        title: 'Repository Overview',
+        summary: 'Anti Slop is a specialized rulebook and CLI tool designed for AI coding agents to filter out generic, low-quality AI-generated content, including UI designs, text, and code patterns.',
+        problemSolved: "Addresses the issue of 'AI slop'—generic, hallucinated, or overly hyped outputs (like 'Next-Gen AI' pills or fake terminal latency) that AI agents often produce by default.",
+        mainGoal: 'To act as a technical filter that enforces high-quality, human-centric standards in AI-assisted development without prescribing specific styles.',
+      },
+      howItWorks: {
+        title: 'How It Works',
+        architecture: "The project functions as a CLI-based distribution system that installs Markdown-based 'skills' into hidden configuration directories of various AI agents.",
+        components: [
+          { name: 'CLI Installer', purpose: 'Detects installed agents and copies skill folders to appropriate paths.' },
+          { name: 'Pointer System', purpose: 'Injects Markdown blocks into project entry files (e.g., CLAUDE.md, AGENTS.md) to reference the installed rules.' },
+          { name: 'Settings Manager', purpose: 'Handles global preferences for usage modes (during/after/ask) via a JSON configuration file.' },
+          { name: 'Contrast MCP', purpose: 'A Python-based tool for accessibility verification.' },
+        ],
+      },
+      installation: {
+        title: 'Installation Guide',
+        steps: [
+          {
+            stepNumber: 1,
+            title: 'Run Installer',
+            command: 'npx antislop-ai',
+            instructions: 'Execute the interactive installer which will prompt for skill selection and agent targets.',
+            verification: 'The CLI will print a summary of written skills and updated pointer files.',
+          },
+        ],
+      },
+    };
+
+    const translated = TranslationService.fallbackTranslate(complexAnalysis, 'id');
+
+    // Section titles translated
+    assert.equal(translated.overview.title, 'Ringkasan Repositori');
+    assert.equal(translated.howItWorks.title, 'Cara Kerja');
+    assert.equal(translated.installation.title, 'Panduan Instalasi');
+
+    // Content translated
+    assert.match(translated.overview.summary, /Anti Slop adalah rulebook dan CLI tool khusus/i);
+    assert.match(translated.overview.problemSolved, /Mengatasi masalah 'AI slop'/i);
+    assert.match(translated.overview.mainGoal, /Berfungsi sebagai filter teknis/i);
+
+    // Component names preserved 100% intact
+    const comps = translated.howItWorks.components;
+    assert.equal(comps[0].name, 'CLI Installer');
+    assert.equal(comps[1].name, 'Pointer System');
+    assert.equal(comps[2].name, 'Settings Manager');
+    assert.equal(comps[3].name, 'Contrast MCP');
+
+    // Component purposes translated to natural Indonesian
+    assert.match(comps[0].purpose, /Mendeteksi agent yang terpasang/i);
+    assert.match(comps[1].purpose, /Menyuntikkan blok Markdown ke file entri proyek/i);
+    assert.match(comps[2].purpose, /Menangani preferensi global/i);
+    assert.match(comps[3].purpose, /Alat berbasis Python untuk verifikasi aksesibilitas/i);
+
+    // Command preserved, instructions & verification translated
+    assert.equal(translated.installation.steps[0].command, 'npx antislop-ai');
+    assert.match(translated.installation.steps[0].instructions, /Jalankan installer interaktif/i);
+    assert.match(translated.installation.steps[0].verification, /CLI akan mencetak ringkasan/i);
+  });
 });
