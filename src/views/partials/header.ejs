@@ -5,20 +5,6 @@
       <span class="brand-tag">Field Notebook</span>
     </a>
     <div class="header-actions">
-      <% if (typeof showLanguageSwitcher !== 'undefined' ? showLanguageSwitcher : (typeof page === 'undefined' || page !== 'app')) { %>
-      <!-- Language Switcher in Main Navbar -->
-      <div class="lang-switch-group nav-lang-switch" role="group" aria-label="Language selection">
-        <button type="button" id="nav-btn-lang-en" class="lang-btn <%= (typeof currentLang === 'undefined' || !currentLang || currentLang === 'en') ? 'active' : '' %>" aria-pressed="<%= (typeof currentLang === 'undefined' || !currentLang || currentLang === 'en') ? 'true' : 'false' %>" title="English" onclick="if(window.switchLanguage){window.switchLanguage('en',true);}">
-          <span class="flag-icon" aria-hidden="true">🇬🇧</span>
-          <span class="lang-label">EN</span>
-        </button>
-        <button type="button" id="nav-btn-lang-id" class="lang-btn <%= (typeof currentLang !== 'undefined' && currentLang === 'id') ? 'active' : '' %>" aria-pressed="<%= (typeof currentLang !== 'undefined' && currentLang === 'id') ? 'true' : 'false' %>" title="Bahasa Indonesia" onclick="if(window.switchLanguage){window.switchLanguage('id',true);}">
-          <span class="flag-icon" aria-hidden="true">🇮🇩</span>
-          <span class="lang-label">ID</span>
-        </button>
-      </div>
-      <% } %>
-
       <button id="theme-toggle" class="btn-ghost" type="button" aria-label="Switch to light theme">
         <span id="theme-icon" aria-hidden="true">☀️</span>
         <span id="theme-label">Light</span>
@@ -33,45 +19,8 @@
               if (l) l.textContent = 'Dark';
               if (b) b.setAttribute('aria-label', 'Switch to dark theme');
             }
-            var savedLang = localStorage.getItem('gitex_lang') || new URLSearchParams(window.location.search).get('lang') || '<%= typeof currentLang !== "undefined" ? currentLang : "en" %>';
-            var isId = (savedLang === 'id');
-            var btnEn = document.getElementById('nav-btn-lang-en');
-            var btnId = document.getElementById('nav-btn-lang-id');
-            if (btnEn && btnId) {
-              btnEn.classList.toggle('active', !isId);
-              btnEn.setAttribute('aria-pressed', !isId ? 'true' : 'false');
-              btnId.classList.toggle('active', isId);
-              btnId.setAttribute('aria-pressed', isId ? 'true' : 'false');
-            }
           } catch(e) {}
         })();
-
-        window.switchLanguage = window.switchLanguage || function(targetLang) {
-          try {
-            localStorage.setItem('gitex_lang', targetLang);
-            var isId = (targetLang === 'id');
-            ['nav-btn-lang-en', 'btn-lang-en'].forEach(function(id) {
-              var el = document.getElementById(id);
-              if (el) {
-                el.classList.toggle('active', !isId);
-                el.setAttribute('aria-pressed', !isId ? 'true' : 'false');
-              }
-            });
-            ['nav-btn-lang-id', 'btn-lang-id'].forEach(function(id) {
-              var el = document.getElementById(id);
-              if (el) {
-                el.classList.toggle('active', isId);
-                el.setAttribute('aria-pressed', isId ? 'true' : 'false');
-              }
-            });
-            if (window.location.pathname.startsWith('/analysis/')) {
-              var url = new URL(window.location.href);
-              if (isId) url.searchParams.set('lang', 'id');
-              else url.searchParams.delete('lang');
-              window.location.href = url.toString();
-            }
-          } catch(e) {}
-        };
       </script>
     </div>
   </div>

@@ -274,6 +274,10 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 - **Penyebab:** Pada rilis `sanitize-html@2.18.2`, dependensi internalnya mengadopsi `htmlparser2@12.0.0` (pure ESM) yang menyebabkan error fatal `[ERR_REQUIRE_ESM]: require() of ES Module htmlparser2 from sanitize-html not supported` saat dieksekusi di runtime Node.js Vercel serverless.
 - **Solusi:** Mengunci versi dependensi ke `sanitize-html: "2.14.0"` yang menggunakan `htmlparser2@8` CommonJS yang stabil dan kompatibel penuh dengan seluruh runtime Node serverless tanpa konflik modul.
 
+### 15. Pembersihan Tombol Bahasa pada Navbar Utama (Homepage & Detail Analysis)
+- **Penghapusan dari Navbar Utama (`.app-header`):** Menghapus tombol bahasa (`🇬🇧 EN` / `🇮🇩 ID`) dari navbar atas di halaman Beranda (`/`) dan halaman Detail Analisis (`/analysis/:id`), sehingga navbar atas tetap konsisten, bersih, dan hanya memuat wordmark GitEx serta toggle tema Light/Dark.
+- **Konsolidasi Kontrol Bahasa pada Toolbar Analisis:** Kontrol bahasa kini terfokus secara eksklusif dan intuitif pada toolbar subheader dokumen analisis (`.analysis-header-bar`), tepat di mana dokumen dioperasikan oleh pengguna tanpa duplikasi kontrol yang redundan.
+
 ---
 
 ## Documentation

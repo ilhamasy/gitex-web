@@ -40,6 +40,41 @@
               <span class="lang-label">ID</span>
             </button>
           </div>
+          <script>
+            (function(){
+              try {
+                var savedLang = localStorage.getItem('gitex_lang') || new URLSearchParams(window.location.search).get('lang') || '<%= typeof currentLang !== "undefined" ? currentLang : "en" %>';
+                var isId = (savedLang === 'id');
+                var btnEn = document.getElementById('btn-lang-en');
+                var btnId = document.getElementById('btn-lang-id');
+                if (btnEn && btnId) {
+                  btnEn.classList.toggle('active', !isId);
+                  btnEn.setAttribute('aria-pressed', !isId ? 'true' : 'false');
+                  btnId.classList.toggle('active', isId);
+                  btnId.setAttribute('aria-pressed', isId ? 'true' : 'false');
+                }
+              } catch(e) {}
+            })();
+
+            window.switchLanguage = window.switchLanguage || function(targetLang) {
+              try {
+                localStorage.setItem('gitex_lang', targetLang);
+                var isId = (targetLang === 'id');
+                var btnEn = document.getElementById('btn-lang-en');
+                var btnId = document.getElementById('btn-lang-id');
+                if (btnEn && btnId) {
+                  btnEn.classList.toggle('active', !isId);
+                  btnEn.setAttribute('aria-pressed', !isId ? 'true' : 'false');
+                  btnId.classList.toggle('active', isId);
+                  btnId.setAttribute('aria-pressed', isId ? 'true' : 'false');
+                }
+                var url = new URL(window.location.href);
+                if (isId) url.searchParams.set('lang', 'id');
+                else url.searchParams.delete('lang');
+                window.location.href = url.toString();
+              } catch(e) {}
+            };
+          </script>
 
           <% if (record) { %>
             <a href="<%= record.url %>" target="_blank" rel="noopener noreferrer" class="appbar-btn" id="link-repo-provider" title="Open repository in new tab">

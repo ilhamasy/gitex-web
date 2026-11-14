@@ -16,6 +16,8 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.ok(res.text.includes('Field Notebook'));
     assert.ok(res.text.includes('id="theme-toggle"'));
     assert.equal(res.text.includes('landing-nav-cta'), false);
+    assert.equal(res.text.includes('id="nav-btn-lang-en"'), false);
+    assert.equal(res.text.includes('id="nav-btn-lang-id"'), false);
   });
 
   it('renders hero with GitEx[plain], tagline, description, and Get Started CTA', async () => {
