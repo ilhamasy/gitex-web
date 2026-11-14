@@ -29,12 +29,24 @@
         </a>
 
         <div class="header-meta-actions">
+          <!-- Language Switcher (EN default / ID) -->
+          <div class="lang-switch-group" role="group" aria-label="Language selection">
+            <button type="button" id="btn-lang-en" class="lang-btn <%= (!currentLang || currentLang === 'en') ? 'active' : '' %>" aria-pressed="<%= (!currentLang || currentLang === 'en') ? 'true' : 'false' %>" title="English">
+              <span class="flag-icon" aria-hidden="true">🇬🇧</span>
+              <span class="lang-label">EN</span>
+            </button>
+            <button type="button" id="btn-lang-id" class="lang-btn <%= currentLang === 'id' ? 'active' : '' %>" aria-pressed="<%= currentLang === 'id' ? 'true' : 'false' %>" title="Bahasa Indonesia">
+              <span class="flag-icon" aria-hidden="true">🇮🇩</span>
+              <span class="lang-label">ID</span>
+            </button>
+          </div>
+
           <% if (record) { %>
-            <a href="<%= record.url %>" target="_blank" rel="noopener noreferrer" class="appbar-btn" title="Open repository in new tab">
+            <a href="<%= record.url %>" target="_blank" rel="noopener noreferrer" class="appbar-btn" id="link-repo-provider" title="Open repository in new tab">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
               </svg>
-              <span>View on <%= record.provider === 'gitlab' ? 'GitLab' : 'GitHub' %></span>
+              <span class="btn-text">View on <%= record.provider === 'gitlab' ? 'GitLab' : 'GitHub' %></span>
             </a>
           <% } %>
 
@@ -49,7 +61,7 @@
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
-            <span>Re-analyze</span>
+            <span class="btn-text">Re-analyze</span>
           </button>
         </div>
       </div>
@@ -128,6 +140,11 @@
   <!-- Main Analysis Workspace -->
   <main class="container analysis-workspace-grid with-evidence" id="main-content">
     <%
+    function toArr(v) {
+      if (!v) return [];
+      return Array.isArray(v) ? v : [v];
+    }
+
     function formatItem(item) {
       if (!item) return '';
       if (typeof item === 'string') return item.trim();
@@ -196,12 +213,13 @@
                  (sec.libraries || []).some(hasContent) ||
                  (sec.infrastructure || []).some(hasContent);
         case 'limitations':
-          return (sec.knownLimitations || []).some(hasContent) ||
-                 (sec.compatibility || []).some(hasContent) ||
-                 (sec.securityCaveats || []).some(hasContent) ||
+          return toArr(sec.knownLimitations || sec.documentedLimitations).some(hasContent) ||
+                 toArr(sec.compatibility || sec.compatibilityNotes).some(hasContent) ||
+                 toArr(sec.securityCaveats || sec.securityNotes).some(hasContent) ||
                  hasContent(sec.productionReadiness);
         case 'alternatives':
-          return (sec.comparableProjects || []).some(hasContent);
+          return toArr(sec.comparableProjects || sec.similarProjects).some(hasContent) ||
+                 hasContent(sec.distinctions);
         case 'resources':
           return hasContent(sec.documentationUrl) ||
                  hasContent(sec.issueTrackerUrl) ||
@@ -229,6 +247,9 @@
     const rawVisible = record && record.analysis ? sectionsList.filter(s => isSectionVisible(s.key, record.analysis)) : sectionsList;
     const visibleSections = rawVisible.map((sec, idx) => ({
       ...sec,
+      title: (typeof currentLang !== 'undefined' && currentLang === 'id' && typeof sectionTitlesId !== 'undefined' && sectionTitlesId[sec.key])
+        ? sectionTitlesId[sec.key]
+        : ((typeof sectionTitles !== 'undefined' && sectionTitles[sec.key]) || sec.title),
       num: String(idx + 1).padStart(2, '0'),
     }));
     const sectionNumMap = Object.fromEntries(visibleSections.map(s => [s.key, s.num]));
@@ -809,7 +830,7 @@
           </header>
           <div class="section-body">
             <% 
-              const validLimitations = (limitations.knownLimitations || []).filter(hasContent);
+              const validLimitations = toArr(limitations.knownLimitations || limitations.documentedLimitations).filter(hasContent);
               if (validLimitations.length > 0) { 
             %>
               <h3>Known Limitations</h3>
@@ -821,7 +842,7 @@
             <% } %>
 
             <% 
-              const validCompatibility = (limitations.compatibility || []).filter(hasContent);
+              const validCompatibility = toArr(limitations.compatibility || limitations.compatibilityNotes).filter(hasContent);
               if (validCompatibility.length > 0) { 
             %>
               <h3>Compatibility Notes</h3>
@@ -833,7 +854,7 @@
             <% } %>
 
             <% 
-              const validSecurity = (limitations.securityCaveats || []).filter(hasContent);
+              const validSecurity = toArr(limitations.securityCaveats || limitations.securityNotes).filter(hasContent);
               if (validSecurity.length > 0) { 
             %>
               <h3>Security Caveats</h3>
@@ -878,7 +899,7 @@
           </header>
           <div class="section-body">
             <% 
-              const validAlternatives = (alternatives.comparableProjects || []).filter(hasContent);
+              const validAlternatives = toArr(alternatives.comparableProjects || alternatives.similarProjects).filter(hasContent);
               if (validAlternatives.length > 0) { 
             %>
               <h3>Comparable Projects</h3>
@@ -980,7 +1001,11 @@
   <!-- Pass server data safely to client script -->
   <script>
     window.__GITEX_RECORD__ = <%- record ? JSON.stringify(record) : 'null' %>;
+    window.__ORIGINAL_RECORD__ = <%- (typeof originalRecord !== 'undefined' && originalRecord) ? JSON.stringify(originalRecord) : (record ? JSON.stringify(record) : 'null') %>;
     window.__RECORD_ID__ = <%- recordId ? JSON.stringify(recordId) : 'null' %>;
+    window.__CURRENT_LANG__ = '<%= typeof currentLang !== "undefined" ? currentLang : "en" %>';
+    window.__SECTION_TITLES_EN__ = <%- JSON.stringify(typeof sectionTitlesEn !== 'undefined' ? sectionTitlesEn : {}) %>;
+    window.__SECTION_TITLES_ID__ = <%- JSON.stringify(typeof sectionTitlesId !== 'undefined' ? sectionTitlesId : {}) %>;
   </script>
   <script type="module" src="/js/analysis.js"></script>
 </body>

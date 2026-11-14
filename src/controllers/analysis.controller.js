@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { PipelineService, PIPELINE_STAGES } from '../services/pipeline/pipeline.service.js';
 import { MarkdownService } from '../services/render/markdown.service.js';
-import { SECTION_KEYS, SECTION_TITLES } from '../models/analysis.schema.js';
+import { SECTION_KEYS, SECTION_TITLES, SECTION_TITLES_ID } from '../models/analysis.schema.js';
+import { TranslationService } from '../services/ai/translation.service.js';
 import { logger } from '../utils/logger.js';
 
 // In-memory cache for recent analysis runs (id -> record)
@@ -18,7 +19,7 @@ try {
   logger.warn(`[Cache] Could not initialize disk cache directory: ${err.message}`);
 }
 
-function cacheRecord(record) {
+export function cacheRecord(record) {
   if (!record || !record.id) return;
   if (analysisCache.size >= MAX_CACHE_SIZE) {
     const oldestKey = analysisCache.keys().next().value;
@@ -169,21 +170,95 @@ export const renderAnalysis = (req, res) => {
     });
   }
 
+  const lang = (req.query.lang || 'en').toLowerCase();
+  const currentLang = (lang === 'id') ? 'id' : 'en';
+
+  let displayRecord = record;
+  if (record && record.analysis && currentLang === 'id') {
+    const translatedAnalysis = (record.translations && record.translations.id)
+      ? record.translations.id
+      : TranslationService.fallbackTranslate(record.analysis, 'id');
+    displayRecord = {
+      ...record,
+      analysis: translatedAnalysis,
+    };
+  }
+
   // Render view
   res.render('analysis', {
     title: record ? `${record.fullName} — GitEx Analysis` : 'Repository Analysis — GitEx',
-    record,
+    record: displayRecord,
+    originalRecord: record,
     recordId: id || null,
+    currentLang,
     sectionKeys: SECTION_KEYS,
-    sectionTitles: SECTION_TITLES,
+    sectionTitles: currentLang === 'id' ? SECTION_TITLES_ID : SECTION_TITLES,
+    sectionTitlesEn: SECTION_TITLES,
+    sectionTitlesId: SECTION_TITLES_ID,
     markdownService: MarkdownService,
   });
+};
+
+/**
+ * Translates an analysis record to the target language (e.g. 'id')
+ * GET /api/analysis/:id/translate?lang=id
+ */
+export const translateAnalysis = async (req, res) => {
+  const id = req.params.id || req.query.id;
+  const targetLang = (req.query.lang || 'id').toLowerCase();
+
+  const record = getCachedRecord(id);
+  if (!record || !record.analysis) {
+    return res.status(404).json({
+      success: false,
+      error: 'Analysis record not found.',
+    });
+  }
+
+  if (targetLang === 'en') {
+    return res.status(200).json({
+      success: true,
+      lang: 'en',
+      analysis: record.analysis,
+    });
+  }
+
+  if (record.translations && record.translations[targetLang]) {
+    return res.status(200).json({
+      success: true,
+      lang: targetLang,
+      analysis: record.translations[targetLang],
+    });
+  }
+
+  try {
+    const translated = await TranslationService.translate(record.analysis, targetLang);
+    if (!record.translations) record.translations = {};
+    record.translations[targetLang] = translated;
+    cacheRecord(record);
+
+    return res.status(200).json({
+      success: true,
+      lang: targetLang,
+      analysis: translated,
+    });
+  } catch (err) {
+    logger.warn(`[Translate Analysis] Translation error: ${err.message}`);
+    const fallback = TranslationService.fallbackTranslate(record.analysis, targetLang);
+    return res.status(200).json({
+      success: true,
+      lang: targetLang,
+      analysis: fallback,
+      fallback: true,
+    });
+  }
 };
 
 export default {
   analyzeRepository,
   streamAnalysis,
   renderAnalysis,
+  translateAnalysis,
   getCachedRecord,
 };
 

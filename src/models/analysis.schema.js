@@ -33,6 +33,21 @@ export const SECTION_TITLES = {
   resources: 'Official Resources',
 };
 
+export const SECTION_TITLES_ID = {
+  overview: 'Ringkasan Repositori',
+  purpose: 'Tujuan & Skenario Penggunaan',
+  features: 'Fitur Utama',
+  howItWorks: 'Cara Kerja',
+  prerequisites: 'Prasyarat',
+  installation: 'Panduan Instalasi',
+  configuration: 'Konfigurasi',
+  usage: 'Penggunaan & Contoh',
+  techStack: 'Tumpukan Teknologi',
+  limitations: 'Batasan & Pertimbangan',
+  alternatives: 'Alternatif & Proyek Sejenis',
+  resources: 'Sumber Daya Resmi',
+};
+
 /**
  * Creates a clean default fallback object for an analysis section.
  */

@@ -927,6 +927,66 @@ a {
   border-color: var(--color-accent);
 }
 
+/* Language Switcher Group */
+.lang-switch-group {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  padding: 2px;
+  gap: 2px;
+  height: 30px;
+}
+
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 24px;
+  padding: 0 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.lang-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-muted);
+}
+
+.lang-btn.active {
+  background: var(--color-surface-muted);
+  color: var(--color-accent);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .lang-btn.active {
+  background: var(--color-border);
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.lang-btn .flag-icon {
+  font-size: 0.875rem;
+  line-height: 1;
+  display: inline-block;
+}
+
+.lang-btn .lang-label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
 .analysis-identity-row {
   display: flex;
   align-items: center;
@@ -1634,6 +1694,18 @@ a {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+  }
+
+  .header-meta-actions .lang-switch-group {
+    height: 38px;
+    padding: 3px;
+    flex: 0 0 auto;
+  }
+
+  .header-meta-actions .lang-btn {
+    height: 30px;
+    padding: 0 0.625rem;
+    font-size: 0.8125rem;
   }
 
   .header-meta-actions .appbar-btn {
