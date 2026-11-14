@@ -413,6 +413,38 @@ function updateStaticLabels(lang, item, sectionCount) {
 }
 
 /**
+ * Helper to generate instant client-side fallback translation
+ */
+function generateClientFallbackIndonesian(analysis) {
+  if (!analysis || typeof analysis !== 'object') return analysis;
+  try {
+    const copy = JSON.parse(JSON.stringify(analysis));
+    const titlesId = window.__SECTION_TITLES_ID__ || {
+      overview: 'Ringkasan Repositori',
+      purpose: 'Tujuan & Skenario Penggunaan',
+      features: 'Fitur Utama',
+      howItWorks: 'Cara Kerja',
+      prerequisites: 'Prasyarat',
+      installation: 'Panduan Instalasi',
+      configuration: 'Konfigurasi',
+      usage: 'Penggunaan & Contoh',
+      techStack: 'Tumpukan Teknologi',
+      limitations: 'Batasan & Pertimbangan',
+      alternatives: 'Alternatif & Proyek Sejenis',
+      resources: 'Sumber Daya Resmi',
+    };
+    Object.keys(titlesId).forEach((k) => {
+      if (copy[k]) {
+        copy[k].title = titlesId[k];
+      }
+    });
+    return copy;
+  } catch (e) {
+    return analysis;
+  }
+}
+
+/**
  * Switches analysis language between 'en' and 'id'
  */
 async function switchLanguage(targetLang, showNotification = true) {
@@ -420,19 +452,33 @@ async function switchLanguage(targetLang, showNotification = true) {
 
   const btnEn = document.getElementById('btn-lang-en');
   const btnId = document.getElementById('btn-lang-id');
+  const navBtnEn = document.getElementById('nav-btn-lang-en');
+  const navBtnId = document.getElementById('nav-btn-lang-id');
 
-  if (btnEn) {
-    btnEn.classList.toggle('active', targetLang === 'en');
-    btnEn.setAttribute('aria-pressed', targetLang === 'en' ? 'true' : 'false');
-  }
-  if (btnId) {
-    btnId.classList.toggle('active', targetLang === 'id');
-    btnId.setAttribute('aria-pressed', targetLang === 'id' ? 'true' : 'false');
-  }
+  const isEn = (targetLang === 'en');
+  [btnEn, navBtnEn].forEach((btn) => {
+    if (btn) {
+      btn.classList.toggle('active', isEn);
+      btn.setAttribute('aria-pressed', isEn ? 'true' : 'false');
+    }
+  });
+  [btnId, navBtnId].forEach((btn) => {
+    if (btn) {
+      btn.classList.toggle('active', !isEn);
+      btn.setAttribute('aria-pressed', !isEn ? 'true' : 'false');
+    }
+  });
 
   currentLang = targetLang;
   try {
     localStorage.setItem('gitex_lang', targetLang);
+  } catch {}
+
+  try {
+    const url = new URL(window.location.href);
+    if (targetLang === 'id') url.searchParams.set('lang', 'id');
+    else url.searchParams.delete('lang');
+    window.history.replaceState({}, '', url.toString());
   } catch {}
 
   const t = I18N[targetLang];
@@ -447,16 +493,27 @@ async function switchLanguage(targetLang, showNotification = true) {
   }
 
   // Target is Indonesian ('id')
+  // 1. Instant render if cached
   if (currentRecord?.translations?.id) {
     renderDocument(currentRecord.translations.id, currentRecord, 'id');
     if (showNotification) showToast(t.langSwitched);
     return;
   }
 
-  const recordId = currentRecord?.id || window.__RECORD_ID__ || new URLSearchParams(window.location.search).get('id');
+  // 2. Instant client-side fallback render for immediate zero-lag response
+  const baseAnalysis = originalAnalysis || currentRecord?.analysis;
+  if (baseAnalysis) {
+    const fallbackId = generateClientFallbackIndonesian(baseAnalysis);
+    renderDocument(fallbackId, currentRecord, 'id');
+    if (showNotification) showToast(t.langSwitched);
+  }
+
+  // 3. Asynchronously fetch full translation from server in background
+  const pathParts = window.location.pathname.split('/');
+  const pathId = pathParts[1] === 'analysis' ? pathParts[2] : null;
+  const recordId = currentRecord?.id || window.__RECORD_ID__ || pathId || new URLSearchParams(window.location.search).get('id');
 
   if (recordId) {
-    if (showNotification) showToast(t.loadingTranslation);
     try {
       const res = await fetch(`/api/analysis/${encodeURIComponent(recordId)}/translate?lang=id`);
       if (res.ok) {
@@ -466,22 +523,20 @@ async function switchLanguage(targetLang, showNotification = true) {
           if (!currentRecord.translations) currentRecord.translations = {};
           currentRecord.translations.id = json.analysis;
 
-          renderDocument(json.analysis, currentRecord, 'id');
-          if (showNotification) showToast(t.langSwitched);
-          return;
+          if (currentLang === 'id') {
+            renderDocument(json.analysis, currentRecord, 'id');
+          }
         }
       }
     } catch (err) {
       console.warn('[GitEx Translation] Fetch failed:', err);
     }
   }
+}
 
-  // Fallback if network call is unavailable
-  const fallbackAnalysis = originalAnalysis || currentRecord?.analysis;
-  if (fallbackAnalysis) {
-    renderDocument(fallbackAnalysis, currentRecord, 'id');
-    if (showNotification) showToast(t.langSwitched);
-  }
+// Expose globally so inline onclick always works immediately
+if (typeof window !== 'undefined') {
+  window.switchLanguage = switchLanguage;
 }
 
 /**
@@ -490,20 +545,23 @@ async function switchLanguage(targetLang, showNotification = true) {
 function initLanguageSwitcher(record) {
   const btnEn = document.getElementById('btn-lang-en');
   const btnId = document.getElementById('btn-lang-id');
+  const navBtnEn = document.getElementById('nav-btn-lang-en');
+  const navBtnId = document.getElementById('nav-btn-lang-id');
 
-  if (btnEn) {
-    btnEn.addEventListener('click', (e) => {
-      e.preventDefault();
-      switchLanguage('en', true);
-    });
-  }
+  const bindBtn = (btn, lang) => {
+    if (btn && !btn._hasLangListener) {
+      btn._hasLangListener = true;
+      btn.onclick = (e) => {
+        e.preventDefault();
+        switchLanguage(lang, true);
+      };
+    }
+  };
 
-  if (btnId) {
-    btnId.addEventListener('click', (e) => {
-      e.preventDefault();
-      switchLanguage('id', true);
-    });
-  }
+  bindBtn(btnEn, 'en');
+  bindBtn(btnId, 'id');
+  bindBtn(navBtnEn, 'en');
+  bindBtn(navBtnId, 'id');
 }
 
 function formatItem(item) {

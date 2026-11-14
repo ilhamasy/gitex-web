@@ -167,9 +167,12 @@ Test coverage includes:
 
 Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 
-### 1. Multi-Language Support (English 🇬🇧 & Bahasa Indonesia 🇮🇩)
-- **Language Switcher Bar:** Menambahkan dua tombol bendera (`🇬🇧 EN` default dan `🇮🇩 ID`) di navbar halaman detail analisis (`/analysis/:id`).
-- **Dynamic Content Translation:** Saat memilih bendera Indonesia, seluruh 12 judul seksi, penjelasan naratif, daftar kemampuan, batasan, rekomendasi, dan label antarmuka pengguna (TOC, navigasi dasbor, tombol salin markdown, dsb.) otomatis beralih ke Bahasa Indonesia secara rapi tanpa merusak struktur dokumen atau blok kode bash/URL/commit SHA.
+### 1. Multi-Language Support (English 🇬🇧 & Bahasa Indonesia 🇮🇩) & Perbaikan Tombol Bahasa
+- **Penempatan Ganda di Navbar & Toolbar:** Menambahkan dua tombol bendera (`🇬🇧 EN` default dan `🇮🇩 ID`) baik di navbar utama (`.app-header` bersebelahan dengan toggle tema `☀️ Light / 🌙 Dark`) maupun di toolbar subheader dokumen analisis (`.analysis-header-bar`). Posisi ini memastikan tombol bahasa selalu terlihat jelas, tidak terhalang, dan langsung dapat diakses baik pada desktop maupun mobile viewport.
+- **Responsivitas Klik Instan (Zero-Lag & Non-Blocking):** Saat user mengklik bendera Indonesia (`🇮🇩 ID`), status aktif tombol, URL query parameter (`?lang=id`), dan `localStorage` langsung diperbarui secara instan. Dokumen langsung dialihkan ke Bahasa Indonesia menggunakan mesin penerjemahan klien seketika (0ms delay) tanpa menunggu pemanggilan jaringan AI yang lambat atau terkena rate limit, sementara penerjemahan AI backend tetap disinkronkan di latar belakang.
+- **Pencegahan Masalah Klik (Pointer Events & Event Delegation):** Menambahkan `pointer-events: none` pada elemen teks/emoji anak tombol, menyematkan inline `onclick` langsung pada tombol, serta menyediakan fallback global `window.switchLanguage` di navbar sebelum modul JavaScript selesai di-hydrate, memastikan tombol bahasa dijamin 100% responsif saat diklik.
+- **Dynamic Content Translation:** Seluruh 12 judul seksi dokumen (Ringkasan Repositori, Tujuan & Skenario Penggunaan, Fitur Utama, Cara Kerja, dsb.), tabel daftar isi (TOC), ringkasan naratif, penjelasan arsitektur, dan label tombol UI otomatis beralih rapi ke Bahasa Indonesia tanpa merusak struktur dokumen atau blok kode bash.
+- **Cache Invalidation:** Parameter aset diperbarui ke `?v=gitex-v6` untuk mencegah browser menahan cache CSS/HTML lama.
 - **Persistent Preference:** Preferensi bahasa pengguna tersimpan di `localStorage` dan otomatis diterapkan saat membuka kembali halaman.
 - **Backend Translation Engine:** Endpoint `GET /api/analysis/:id/translate?lang=id` menggunakan `TranslationService` yang didukung Gemini AI dengan kamus istilah teknis offline sebagai fallback andal.
 
