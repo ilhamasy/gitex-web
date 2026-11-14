@@ -200,5 +200,30 @@ describe('LocalStorage History Engine — GITEX-013 & GITEX-014', () => {
     assert.ok(all.some(r => r.id === 'rec-6'));
     assert.ok(!all.some(r => r.id === 'rec-1'));
   });
+
+  it('delete(idOrUrl) and deleteByUrl(url) removes records by id or matching repository URL', () => {
+    GitExHistory.save({
+      ...sampleRecord,
+      id: 'rec-to-delete-1',
+      url: 'https://github.com/owner/target-repo',
+    });
+    GitExHistory.save({
+      ...sampleRecord,
+      id: 'rec-to-delete-2',
+      url: 'https://github.com/owner/keep-repo',
+    });
+
+    assert.equal(GitExHistory.getAll().length, 2);
+
+    // Delete by URL
+    GitExHistory.deleteByUrl('https://github.com/owner/target-repo');
+    const remaining = GitExHistory.getAll();
+    assert.equal(remaining.length, 1);
+    assert.equal(remaining[0].id, 'rec-to-delete-2');
+
+    // Delete by ID
+    GitExHistory.delete('rec-to-delete-2');
+    assert.equal(GitExHistory.getAll().length, 0);
+  });
 });
 

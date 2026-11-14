@@ -213,11 +213,18 @@ export const GitExHistory = {
     return cleanRecord;
   },
 
-  delete(id) {
+  delete(idOrUrl) {
     const storage = this.getStorage();
-    if (!storage || !id) return false;
+    if (!storage || !idOrUrl) return false;
 
-    const list = this.getAll().filter((item) => item.id !== id);
+    const target = String(idOrUrl).trim().toLowerCase();
+    const list = this.getAll().filter((item) => {
+      if (item.id === idOrUrl) return false;
+      if (item.url && item.url.trim().toLowerCase() === target) return false;
+      if (item.fullName && item.fullName.trim().toLowerCase() === target) return false;
+      return true;
+    });
+
     try {
       storage.setItem(STORAGE_KEY, JSON.stringify(list));
       return true;
@@ -225,6 +232,10 @@ export const GitExHistory = {
       console.warn('[GitEx History] Failed to save updated history after deletion:', err);
       return false;
     }
+  },
+
+  deleteByUrl(url) {
+    return this.delete(url);
   },
 
   clear() {

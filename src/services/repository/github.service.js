@@ -28,6 +28,8 @@ export class GitHubService {
     const requestHeaders = {
       'User-Agent': 'GitEx-Repository-Analyzer',
       'Accept': 'application/vnd.github.v3+json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
       ...headers,
     };
 
@@ -37,6 +39,7 @@ export class GitHubService {
 
     try {
       const response = await fetch(url, {
+        cache: 'no-store',
         ...fetchOptions,
         headers: requestHeaders,
         signal: controller.signal,

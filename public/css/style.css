@@ -54,7 +54,9 @@
 }
 
 /* Reset & Base Setup */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -89,14 +91,21 @@ body.mobile-toc-open {
 }
 
 /* Typography Scale */
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   color: var(--color-text-primary);
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.015em;
 }
 
-code, kbd, samp, pre, .font-mono {
+code,
+kbd,
+samp,
+pre,
+.font-mono {
   font-family: var(--font-mono);
 }
 
@@ -463,8 +472,15 @@ a {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-3px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .url-input.is-invalid {
@@ -496,7 +512,9 @@ a {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* History / Recent Analyses Section */
@@ -927,6 +945,18 @@ a {
   border-color: var(--color-accent);
 }
 
+.appbar-btn.btn-delete-analysis {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.appbar-btn.btn-delete-analysis:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
 /* Language Switcher Group */
 .lang-switch-group {
   display: inline-flex;
@@ -1213,7 +1243,8 @@ a {
   margin-bottom: 0.875rem;
 }
 
-.section-body ul, .section-body ol {
+.section-body ul,
+.section-body ol {
   padding-left: 1.25rem;
   margin-bottom: 1rem;
 }
@@ -1425,13 +1456,33 @@ a {
 }
 
 /* Sizing Utilities */
-.w-3 { width: 0.75rem !important; }
-.h-3 { height: 0.75rem !important; }
-.w-3\.5 { width: 0.875rem !important; }
-.h-3\.5 { height: 0.875rem !important; }
-.w-4 { width: 1rem !important; }
-.h-4 { height: 1rem !important; }
-.flex-shrink-0 { flex-shrink: 0 !important; }
+.w-3 {
+  width: 0.75rem !important;
+}
+
+.h-3 {
+  height: 0.75rem !important;
+}
+
+.w-3\.5 {
+  width: 0.875rem !important;
+}
+
+.h-3\.5 {
+  height: 0.875rem !important;
+}
+
+.w-4 {
+  width: 1rem !important;
+}
+
+.h-4 {
+  height: 1rem !important;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0 !important;
+}
 
 /* Numbered Installation Steps */
 .install-step-item {
@@ -1869,8 +1920,13 @@ a {
 }
 
 @keyframes stage-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .stage-step-item.complete .stage-icon-circle {
@@ -2166,4 +2222,3 @@ a {
     justify-content: center;
   }
 }
-

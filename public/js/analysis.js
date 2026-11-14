@@ -13,6 +13,7 @@ const I18N = {
     viewOn: (p) => `View on ${p}`,
     copyMarkdown: 'Copy Markdown',
     reanalyze: 'Re-analyze',
+    deleteAnalysis: 'Delete',
     tableOfContents: 'Table of Contents',
     notDocumented: 'Not documented',
     incompleteNotice: 'This section was not documented or could not be verified from repository documentation.',
@@ -66,6 +67,7 @@ const I18N = {
     viewOn: (p) => `Lihat di ${p}`,
     copyMarkdown: 'Salin Markdown',
     reanalyze: 'Analisis Ulang',
+    deleteAnalysis: 'Hapus',
     tableOfContents: 'Daftar Isi',
     notDocumented: 'Tidak terdokumentasi',
     incompleteNotice: 'Bagian ini tidak terdokumentasi atau tidak dapat diverifikasi dari dokumentasi repositori.',
@@ -143,6 +145,7 @@ function initInteractiveUI(record) {
   try { initCopyButtons(); } catch (e) { console.warn('[GitEx] initCopyButtons error:', e); }
   try { initCopyMarkdownButton(); } catch (e) { console.warn('[GitEx] initCopyMarkdown error:', e); }
   try { initReanalyzeButton(record); } catch (e) { console.warn('[GitEx] initReanalyze error:', e); }
+  try { initDeleteButton(record); } catch (e) { console.warn('[GitEx] initDeleteButton error:', e); }
 }
 
 async function initAnalysis() {
@@ -371,6 +374,13 @@ function updateStaticLabels(lang, item, sectionCount) {
   if (reanalyzeBtn) {
     const textSpan = reanalyzeBtn.querySelector('.btn-text') || reanalyzeBtn.querySelector('span');
     if (textSpan) textSpan.textContent = t.reanalyze;
+  }
+
+  // Delete
+  const deleteBtn = document.getElementById('btn-delete-analysis');
+  if (deleteBtn) {
+    const textSpan = deleteBtn.querySelector('.btn-text') || deleteBtn.querySelector('span');
+    if (textSpan) textSpan.textContent = t.deleteAnalysis;
   }
 
   // Mobile TOC button
@@ -898,11 +908,60 @@ function initReanalyzeButton(record) {
   if (!btn) return;
 
   btn.addEventListener('click', () => {
-    if (record && record.url) {
-      window.location.href = `/?url=${encodeURIComponent(record.url)}&reanalyze=true`;
+    const url = record?.url || currentRecord?.url;
+    if (url) {
+      window.location.href = `/app?url=${encodeURIComponent(url)}&reanalyze=true`;
     } else {
-      window.location.href = '/';
+      window.location.href = '/app';
     }
+  });
+}
+
+/**
+ * Initializes delete analysis button
+ */
+function initDeleteButton(record) {
+  const btn = document.getElementById('btn-delete-analysis');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    const isId = currentLang === 'id';
+    const confirmMsg = isId
+      ? 'Hapus analisis ini dari riwayat dan mulai dari awal?'
+      : 'Delete this analysis from history and start fresh?';
+
+    if (!confirm(confirmMsg)) return;
+
+    const id = record?.id || currentRecord?.id || window.__RECORD_ID__;
+    const url = record?.url || currentRecord?.url;
+
+    // 1. Delete from LocalStorage
+    if (window.GitExHistory) {
+      if (id) window.GitExHistory.delete(id);
+      if (url) window.GitExHistory.deleteByUrl(url);
+    }
+    try {
+      const raw = localStorage.getItem('gitex_history');
+      if (raw) {
+        const list = JSON.parse(raw).filter(item => item.id !== id && (!url || item.url !== url));
+        localStorage.setItem('gitex_history', JSON.stringify(list));
+      }
+    } catch {}
+
+    // 2. Delete from server cache
+    if (id) {
+      try {
+        const query = url ? `?url=${encodeURIComponent(url)}` : '';
+        await fetch(`/api/analysis/${encodeURIComponent(id)}${query}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.warn('[GitEx] Failed to delete analysis from server cache:', err);
+      }
+    }
+
+    // 3. Redirect back to dashboard
+    window.location.href = '/app';
   });
 }
 

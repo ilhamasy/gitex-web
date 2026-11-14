@@ -231,5 +231,18 @@ describe('Analysis Viewer & Controller — GITEX-011 & GITEX-012', () => {
     assert.equal(res.body.success, false);
     assert.match(res.body.error, /not found/i);
   });
+
+  it('DELETE /api/analysis/:id deletes record from cache and storage', async () => {
+    const delRes = await request(app)
+      .delete('/api/analysis/test-analysis-456')
+      .expect(200);
+
+    assert.equal(delRes.body.success, true);
+
+    // Verify record is no longer found
+    await request(app)
+      .get('/api/analysis/test-analysis-456')
+      .expect(404);
+  });
 });
 

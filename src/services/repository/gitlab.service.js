@@ -28,6 +28,8 @@ export class GitLabService {
     const requestHeaders = {
       'User-Agent': 'GitEx-Repository-Analyzer',
       'Accept': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
       ...headers,
     };
 
@@ -37,6 +39,7 @@ export class GitLabService {
 
     try {
       const response = await fetch(url, {
+        cache: 'no-store',
         ...fetchOptions,
         headers: requestHeaders,
         signal: controller.signal,

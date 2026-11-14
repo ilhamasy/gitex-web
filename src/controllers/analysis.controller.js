@@ -69,6 +69,14 @@ export const analyzeRepository = async (req, res) => {
   }
 
   try {
+    // Purge any existing cached records matching this URL to guarantee a fresh analysis run
+    const cleanUrl = url.trim().toLowerCase();
+    for (const [key, cached] of analysisCache.entries()) {
+      if (cached.url && cached.url.trim().toLowerCase() === cleanUrl) {
+        analysisCache.delete(key);
+      }
+    }
+
     const record = await PipelineService.run(url.trim());
     cacheRecord(record);
 
@@ -125,6 +133,14 @@ export const streamAnalysis = async (req, res) => {
   };
 
   try {
+    // Purge any existing cached records matching this URL to guarantee a fresh analysis run
+    const cleanUrl = rawUrl.trim().toLowerCase();
+    for (const [key, cached] of analysisCache.entries()) {
+      if (cached.url && cached.url.trim().toLowerCase() === cleanUrl) {
+        analysisCache.delete(key);
+      }
+    }
+
     const record = await PipelineService.run(rawUrl.trim(), {
       onStageChange: (stage, message) => {
         sendEvent('stage', { stage, message, timestamp: new Date().toISOString() });
@@ -134,7 +150,9 @@ export const streamAnalysis = async (req, res) => {
     cacheRecord(record);
     sendEvent('complete', { record });
     cleanup();
-    setTimeout(() => res.end(), 200);
+    setTimeout(() => {
+      try { res.end(); } catch {}
+    }, 400);
   } catch (err) {
     logger.error(`[SSE Analysis Error] ${err.message}`);
     sendEvent('pipeline-error', {
@@ -143,7 +161,9 @@ export const streamAnalysis = async (req, res) => {
       recoverable: true,
     });
     cleanup();
-    setTimeout(() => res.end(), 200);
+    setTimeout(() => {
+      try { res.end(); } catch {}
+    }, 400);
   }
 };
 
@@ -254,11 +274,84 @@ export const translateAnalysis = async (req, res) => {
   }
 };
 
+/**
+ * Deletes an analysis record from memory cache and disk storage
+ * DELETE /api/analysis/:id
+ */
+export const deleteAnalysisRecord = (req, res) => {
+  const id = req.params.id || req.query.id;
+  const targetUrl = req.query.url;
+
+  let deletedCount = 0;
+
+  if (id && id !== 'all') {
+    if (analysisCache.has(id)) {
+      analysisCache.delete(id);
+      deletedCount++;
+    }
+    try {
+      const filePath = path.join(CACHE_DIR, `${id}.json`);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        deletedCount++;
+      }
+    } catch (err) {
+      logger.warn(`[Cache] Error deleting cache file for ${id}: ${err.message}`);
+    }
+  }
+
+  // If URL is provided or id === 'all', purge matching
+  if (targetUrl || id === 'all') {
+    const cleanUrl = targetUrl ? targetUrl.trim().toLowerCase() : null;
+
+    // Purge memory cache
+    for (const [key, record] of analysisCache.entries()) {
+      if (id === 'all' || (cleanUrl && record.url && record.url.trim().toLowerCase() === cleanUrl)) {
+        analysisCache.delete(key);
+        deletedCount++;
+      }
+    }
+
+    // Purge disk cache
+    try {
+      if (fs.existsSync(CACHE_DIR)) {
+        const files = fs.readdirSync(CACHE_DIR);
+        for (const file of files) {
+          if (!file.endsWith('.json')) continue;
+          const filePath = path.join(CACHE_DIR, file);
+          if (id === 'all') {
+            fs.unlinkSync(filePath);
+            deletedCount++;
+          } else if (cleanUrl) {
+            try {
+              const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+              if (content.url && content.url.trim().toLowerCase() === cleanUrl) {
+                fs.unlinkSync(filePath);
+                deletedCount++;
+              }
+            } catch {}
+          }
+        }
+      }
+    } catch (err) {
+      logger.warn(`[Cache] Error scanning disk cache for purge: ${err.message}`);
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: 'Analysis deleted successfully from cache and storage.',
+    deletedCount,
+  });
+};
+
 export default {
   analyzeRepository,
   streamAnalysis,
   renderAnalysis,
   translateAnalysis,
+  deleteAnalysisRecord,
   getCachedRecord,
+  cacheRecord,
 };
 

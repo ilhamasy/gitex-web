@@ -227,11 +227,16 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
    * Runs the full analysis pipeline using Server-Sent Events (SSE)
    */
   async function startAnalysis(rawUrl) {
+    // Purge any existing LocalStorage record for this URL so analysis starts 100% fresh
+    if (window.GitExHistory) {
+      window.GitExHistory.deleteByUrl(rawUrl);
+    }
+
     showProgressModal(rawUrl);
     setLoadingState(true);
     clearValidation();
 
-    const streamUrl = `/api/analyze/stream?url=${encodeURIComponent(rawUrl)}`;
+    const streamUrl = `/api/analyze/stream?url=${encodeURIComponent(rawUrl)}&fresh=true`;
     let eventSource = null;
     let isCompleted = false;
 
@@ -249,6 +254,9 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
 
       eventSource.addEventListener('complete', (event) => {
         isCompleted = true;
+        // Close eventSource immediately to prevent browser from firing 'error' on stream end
+        try { eventSource.close(); } catch {}
+
         try {
           if (progressErrorContainer) {
             progressErrorContainer.classList.add('hidden');
@@ -258,18 +266,16 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           const record = payload.record;
           updateStageUI('Completed', 'Analysis complete! Redirecting...');
 
-          // Save to local history
+          // Save fresh record to local history
           saveRecordToHistory(record);
 
           // Redirect to analysis viewer after a brief pause
           setTimeout(() => {
             window.location.href = `/analysis/${encodeURIComponent(record.id)}`;
-          }, 400);
+          }, 450);
         } catch (e) {
           console.error('[GitEx] Complete event parse error:', e);
           showProgressError('Failed to process completed analysis record.');
-        } finally {
-          eventSource.close();
         }
       });
 
@@ -283,14 +289,14 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           }
         } catch {}
         showProgressError(msg);
-        eventSource.close();
+        try { eventSource.close(); } catch {}
       });
 
       // Native browser EventSource error (triggers on network disconnect / drop)
       eventSource.addEventListener('error', () => {
-        if (isCompleted) return; // Ignore normal connection close after completion
+        if (isCompleted || !eventSource || eventSource.readyState === EventSource.CLOSED) return;
         showProgressError('Connection to analysis stream lost. Please check your network or try again.');
-        eventSource.close();
+        try { eventSource.close(); } catch {}
       });
     } catch (err) {
       // Fallback to standard POST endpoint
@@ -299,7 +305,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         const response = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: rawUrl }),
+          body: JSON.stringify({ url: rawUrl, fresh: true }),
         });
         const data = await response.json();
         if (!response.ok || !data.success) {
@@ -360,20 +366,32 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     renderHistory();
   }
 
-  function deleteHistoryItem(id) {
+  async function deleteHistoryItem(id, url) {
+    // 1. Delete from LocalStorage immediately
     if (window.GitExHistory) {
       window.GitExHistory.delete(id);
+      if (url) window.GitExHistory.deleteByUrl(url);
     } else {
-      let list = getHistory().filter(item => item.id !== id);
+      let list = getHistory().filter(item => item.id !== id && (!url || item.url !== url));
       try {
         localStorage.setItem('gitex_history', JSON.stringify(list));
       } catch {}
     }
     renderHistory();
+
+    // 2. Notify server to delete cache for this record and URL
+    try {
+      const query = url ? `?url=${encodeURIComponent(url)}` : '';
+      await fetch(`/api/analysis/${encodeURIComponent(id)}${query}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.warn('[GitEx] Failed to delete analysis from server cache:', err);
+    }
   }
 
   if (clearHistoryBtn) {
-    clearHistoryBtn.addEventListener('click', () => {
+    clearHistoryBtn.addEventListener('click', async () => {
       if (confirm('Are you sure you want to clear your local analysis history?')) {
         if (window.GitExHistory) {
           window.GitExHistory.clear();
@@ -383,6 +401,13 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           } catch {}
         }
         renderHistory();
+
+        // Also purge all cached analyses on server
+        try {
+          await fetch('/api/analysis/all', { method: 'DELETE' });
+        } catch (err) {
+          console.warn('[GitEx] Failed to purge server cache:', err);
+        }
       }
     });
   }
@@ -457,7 +482,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
             <button type="button" class="btn-action-small btn-view-history" data-id="${item.id}" aria-label="View analysis for ${escapeHtml(fullName)}">
               View Analysis
             </button>
-            <button type="button" class="btn-remove-item" data-id="${item.id}" aria-label="Remove ${escapeHtml(fullName)} from history" title="Remove from history">
+            <button type="button" class="btn-remove-item" data-id="${item.id}" data-url="${escapeHtml(item.url || '')}" aria-label="Remove ${escapeHtml(fullName)} from history" title="Remove from history">
               ✕
             </button>
           </div>
@@ -472,7 +497,8 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const id = btn.getAttribute('data-id');
-        deleteHistoryItem(id);
+        const url = btn.getAttribute('data-url');
+        deleteHistoryItem(id, url);
       });
     });
 
