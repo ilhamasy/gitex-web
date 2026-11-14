@@ -270,6 +270,10 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 - **Fallback Bundling Repomix In-Memory (Zero Dependency on Binary CLI):** Mengantisipasi batasan eksekusi binary CLI Repomix atau pemangkasan symlink `.bin/repomix` oleh compiler Vercel (`@vercel/nft`), `RepomixService` dilengkapi mekanisme resolusi CJS langsung dan fallback otomatis ke pengemasan XML in-memory (`inMemoryPackXml`). Hal ini menjamin pipeline Repomix selalu berhasil 100% tanpa error eksekusi proses pada runtime serverless.
 - **Optimasi Test Suite Offline:** Script pengujian pada `package.json` ditetapkan dengan `NODE_ENV=test` untuk memastikan eksekusi tes unit berjalan offline dan super cepat (~2.9 detik untuk 140 pengujian).
 
+### 14. Perbaikan Kompatibilitas Runtime Node Vercel (Resolusi ERR_REQUIRE_ESM sanitize-html)
+- **Penyebab:** Pada rilis `sanitize-html@2.18.2`, dependensi internalnya mengadopsi `htmlparser2@12.0.0` (pure ESM) yang menyebabkan error fatal `[ERR_REQUIRE_ESM]: require() of ES Module htmlparser2 from sanitize-html not supported` saat dieksekusi di runtime Node.js Vercel serverless.
+- **Solusi:** Mengunci versi dependensi ke `sanitize-html: "2.14.0"` yang menggunakan `htmlparser2@8` CommonJS yang stabil dan kompatibel penuh dengan seluruh runtime Node serverless tanpa konflik modul.
+
 ---
 
 ## Documentation
