@@ -8,9 +8,47 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
 (function () {
   'use strict';
 
+  const DAILY_QUOTA_LIMIT = 5;
+
   const STORAGE_KEYS = {
     HISTORY: 'gitex_history',
+    DAILY_QUOTA: 'gitex_daily_quota',
   };
+
+  function getTodayDateString() {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function getDailyQuotaUsage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.DAILY_QUOTA);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.date === getTodayDateString()) {
+          return typeof parsed.count === 'number' ? parsed.count : 0;
+        }
+      }
+    } catch {}
+    return 0;
+  }
+
+  function incrementDailyQuotaUsage() {
+    const today = getTodayDateString();
+    let count = getDailyQuotaUsage();
+    count += 1;
+    try {
+      localStorage.setItem(STORAGE_KEYS.DAILY_QUOTA, JSON.stringify({ date: today, count }));
+    } catch {}
+    return count;
+  }
+
+  function isDailyQuotaExceeded() {
+    return getDailyQuotaUsage() >= DAILY_QUOTA_LIMIT;
+  }
 
   // -------------------------------------------------------------
   // Provider Detection & URL Form Interaction
@@ -29,6 +67,58 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   const progressErrorContainer = document.getElementById('progress-error-container');
   const progressErrorText = document.getElementById('progress-error-text');
   const btnProgressDismiss = document.getElementById('btn-progress-dismiss');
+
+  // Quota modal elements
+  const quotaModal = document.getElementById('quota-modal');
+  const quotaTitle = document.getElementById('quota-title');
+  const quotaMessage = document.getElementById('quota-message');
+  const quotaCountBadge = document.getElementById('quota-count-badge');
+  const btnQuotaDismiss = document.getElementById('btn-quota-dismiss');
+
+  function showQuotaModal() {
+    if (!quotaModal) return;
+
+    const currentLang = localStorage.getItem('gitex_lang') || 'en';
+    const isId = (currentLang === 'id');
+
+    if (quotaTitle) {
+      quotaTitle.textContent = isId ? 'Batas Harian Tercapai' : 'Daily Limit Reached';
+    }
+    if (quotaMessage) {
+      quotaMessage.textContent = isId
+        ? `Anda telah mencapai batas maksimum ${DAILY_QUOTA_LIMIT} kali hit analisis repositori per hari (${DAILY_QUOTA_LIMIT}/${DAILY_QUOTA_LIMIT} kuota harian terpakai). Penjagaan ini diterapkan untuk menjaga performa server dan efisiensi kuota API. Silakan coba kembali besok!`
+        : `You have reached your daily limit of ${DAILY_QUOTA_LIMIT} repository explanations for today (${DAILY_QUOTA_LIMIT}/${DAILY_QUOTA_LIMIT} daily quota used). This guard preserves server stability and API quota. Please try again tomorrow!`;
+    }
+    if (quotaCountBadge) {
+      quotaCountBadge.textContent = isId
+        ? `${DAILY_QUOTA_LIMIT} / ${DAILY_QUOTA_LIMIT} Kuota Terpakai`
+        : `${DAILY_QUOTA_LIMIT} / ${DAILY_QUOTA_LIMIT} Quota Used`;
+    }
+    if (btnQuotaDismiss) {
+      btnQuotaDismiss.textContent = isId ? 'Mengerti' : 'Understood';
+    }
+
+    quotaModal.classList.remove('hidden');
+    quotaModal.style.display = 'flex';
+  }
+
+  function hideQuotaModal() {
+    if (!quotaModal) return;
+    quotaModal.classList.add('hidden');
+    quotaModal.style.display = 'none';
+  }
+
+  if (btnQuotaDismiss) {
+    btnQuotaDismiss.addEventListener('click', hideQuotaModal);
+  }
+
+  if (quotaModal) {
+    quotaModal.addEventListener('click', (e) => {
+      if (e.target === quotaModal) {
+        hideQuotaModal();
+      }
+    });
+  }
 
   const STAGES_ORDER = ['Validating', 'Fetching', 'Processing', 'Analyzing', 'Generating'];
 
@@ -245,6 +335,14 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
    * Runs the full analysis pipeline using Server-Sent Events (SSE)
    */
   async function startAnalysis(rawUrl) {
+    if (isDailyQuotaExceeded()) {
+      showQuotaModal();
+      return;
+    }
+
+    // Increment daily quota count for this session
+    incrementDailyQuotaUsage();
+
     // Purge any existing LocalStorage record for this URL so analysis starts 100% fresh
     if (window.GitExHistory) {
       window.GitExHistory.deleteByUrl(rawUrl);
@@ -340,6 +438,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   if (repoForm) {
     repoForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      if (isDailyQuotaExceeded()) {
+        showQuotaModal();
+        return;
+      }
 
       const rawUrl = (urlInput ? urlInput.value : '').trim();
       if (!rawUrl) {
@@ -539,15 +642,25 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       .replace(/'/g, '&#039;');
   }
 
-  // Handle ?url=...&reanalyze=true from viewer
+  // Handle ?url=...&reanalyze=true from viewer or ?quota=exceeded
   const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('quota') === 'exceeded' || isDailyQuotaExceeded()) {
+    if (urlParams.get('quota') === 'exceeded') {
+      showQuotaModal();
+    }
+  }
+
   const reanalyzeUrl = urlParams.get('url');
   if (reanalyzeUrl && urlInput) {
     urlInput.value = reanalyzeUrl;
     const detected = detectProviderPreview(reanalyzeUrl);
     updateBadge(detected);
     if (urlParams.get('reanalyze') === 'true') {
-      startAnalysis(reanalyzeUrl);
+      if (isDailyQuotaExceeded()) {
+        showQuotaModal();
+      } else {
+        startAnalysis(reanalyzeUrl);
+      }
     }
   }
 

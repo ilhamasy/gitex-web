@@ -210,6 +210,15 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 - **Penyebab Duplikasi Pesan:** Saat analisis gagal (misalnya karena API key melebihi batas kuota / 429 Quota Exceeded), pesan error sebelumnya dimasukkan ke elemen status proses berjalan (`#stage-current-message` dengan border hijau) sekaligus dimasukkan ke kartu error bawah (`#progress-error-container` bertajuk "Analysis Failed"), menyebabkan teks penjelasan kuota yang panjang muncul dua kali secara berulang.
 - **Tampilan Tunggal & Bersih:** Saat pipeline berstatus `Failed`, elemen status berjalan (`#stage-current-message`) otomatis disembunyikan, sehingga pesan error hanya ditampilkan satu kali secara jelas dan rapi di dalam kotak merah **Analysis Failed** di bagian bawah bersama tombol **Dismiss & Retry**.
 
+### 9. Penjagaan Batas Harian Analisis (Daily Limit 5 Hit/Hari) & Pop-up Peringatan
+- **Batas 5 Analisis per Hari:** Diterapkan penjagaan batas pemakaian harian maksimum **5 kali hit analisis repositori per hari** per sesi browser menggunakan `localStorage` (`gitex_daily_quota` berbasis tanggal `YYYY-MM-DD`).
+- **Pop-up Modal Peringatan Kuota:** Saat pengguna telah mencapai 5 kali hit dan mencoba melakukan analisis baru (atau klik Re-analyze), proses analisis langsung dicegah dan muncul pop-up dialog peringatan yang elegan:
+  - Judul: *"Batas Harian Tercapai"* (atau *"Daily Limit Reached"*).
+  - Pesan penjelasan: Menjelaskan bahwa kuota harian 5/5 telah tercapai untuk melindungi stabilitas server dan kuota API, serta mengarahkan pengguna untuk kembali mencoba esok hari.
+  - Lencana Kuota: Menampilkan indikator status kuota `5 / 5 Kuota Terpakai`.
+  - Tombol Tutup: Tombol interaktif *"Mengerti"* / *"Understood"* serta dukungan penutupan modal via klik backdrop.
+- **Dukungan Bilingual (ID & EN):** Teks pada pop-up otomatis menyesuaikan preferensi bahasa aktif pengguna (Bahasa Indonesia atau English).
+
 ---
 
 ## Documentation

@@ -149,6 +149,29 @@
           </div>
         </div>
       </div>
+
+      <!-- Daily Quota Limit Modal -->
+      <div id="quota-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="quota-title" aria-modal="true" style="display: none;">
+        <div class="progress-card quota-card">
+          <div class="quota-icon-wrap" aria-hidden="true">
+            <span class="quota-alert-icon">⏳</span>
+          </div>
+          <div class="progress-header" style="text-align: center; justify-content: center; border-bottom: none; padding-bottom: 0;">
+            <h3 id="quota-title" class="progress-title" style="font-size: 1.125rem;">Batas Harian Tercapai</h3>
+          </div>
+          <p id="quota-message" class="quota-desc-text">
+            Anda telah mencapai batas maksimum 5 analisis repositori per hari untuk sesi browser ini. Silakan kembali lagi besok!
+          </p>
+          <div class="quota-badge-container">
+            <span id="quota-count-badge" class="badge badge-amber font-mono">5 / 5 Kuota Harian</span>
+          </div>
+          <div style="margin-top: 1.25rem; display: flex; justify-content: center; width: 100%;">
+            <button type="button" id="btn-quota-dismiss" class="btn-primary" style="min-width: 140px; justify-content: center; height: 38px;">
+              Mengerti
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 

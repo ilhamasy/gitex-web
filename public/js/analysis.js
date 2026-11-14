@@ -967,6 +967,21 @@ function initReanalyzeButton(record) {
 
   btn.addEventListener('click', () => {
     const url = record?.url || currentRecord?.url;
+
+    // Check daily quota before navigating
+    try {
+      const quotaRaw = localStorage.getItem('gitex_daily_quota');
+      if (quotaRaw) {
+        const parsed = JSON.parse(quotaRaw);
+        const d = new Date();
+        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (parsed && parsed.date === today && parsed.count >= 5) {
+          window.location.href = '/app?quota=exceeded';
+          return;
+        }
+      }
+    } catch {}
+
     if (url) {
       window.location.href = `/app?url=${encodeURIComponent(url)}&reanalyze=true`;
     } else {

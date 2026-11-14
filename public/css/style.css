@@ -2241,6 +2241,45 @@ pre code {
   color: var(--color-text-primary);
 }
 
+/* Daily Quota Modal Styling */
+.quota-card {
+  max-width: 440px;
+  text-align: center;
+  padding: 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  box-sizing: border-box;
+}
+
+.quota-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: rgba(230, 177, 94, 0.15);
+  border: 1px solid rgba(230, 177, 94, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.quota-desc-text {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  text-align: center;
+}
+
+.quota-badge-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
 /* Toast Notifications */
 .gitex-toast {
   position: fixed;
