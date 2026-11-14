@@ -5,10 +5,17 @@ dotenv.config();
 export const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 3000,
+  aiProvider: process.env.AI_PROVIDER || (process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'gemini'),
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || '',
     model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
     timeoutMs: parseInt(process.env.GEMINI_TIMEOUT_MS, 10) || 60000,
+  },
+  anthropic: {
+    apiKey: process.env.ANTHROPIC_API_KEY || '',
+    baseUrl: (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, ''),
+    model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022',
+    timeoutMs: parseInt(process.env.ANTHROPIC_TIMEOUT_MS, 10) || 90000,
   },
   github: {
     token: process.env.GITHUB_TOKEN || '',
@@ -26,4 +33,3 @@ export const config = {
 };
 
 export default config;
-

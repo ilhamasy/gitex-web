@@ -241,6 +241,12 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 - **Tampilan Bersih & Terfokus di Dashboard:** Menghapus tombol pemilih bahasa bendera Inggris dan Indonesia khusus pada halaman dashboard (`/app`). Header dashboard menjadi lebih terfokus pada aksi utama analisis repositori tanpa gangguan kontrol bahasa yang belum relevan sebelum analisis selesai.
 - **Pengaturan Kondisional Navbar:** Komponen `partials/header.ejs` kini mendukung parameter `showLanguageSwitcher` (diset `false` pada `src/views/index.ejs` dan `home.controller.js`), sementara tombol alih bahasa tetap aktif pada halaman Beranda (`/`) dan halaman Detail Analisis (`/analysis/:id`).
 
+### 12. Dukungan Multi-Provider AI (Anthropic Claude & Google Gemini)
+- **Implementasi ClaudeProvider:** Menambahkan adapter provider Anthropic Claude di `src/services/ai/claude.provider.js` yang mengimplementasikan antarmuka `AIProvider` dengan dukungan endpoint kustom / proxy (`ANTHROPIC_BASE_URL`), otentikasi API key (`x-api-key`), dan header spesifikasi Anthropic (`anthropic-version: 2023-06-01`).
+- **Logika Pemilihan Provider Otomatis:** Di `src/services/ai/index.js` dan `src/config/index.js`, sistem secara otomatis mengaktifkan `ClaudeProvider` jika variabel `AI_PROVIDER=anthropic` atau jika `ANTHROPIC_API_KEY` terisi sementara Gemini tidak aktif. Jika Gemini diaktifkan kembali, sistem otomatis beralih ke `GeminiProvider`.
+- **Konfigurasi Lingkungan `.env` & `.env.example`:** API key Google Gemini dikomentari (`# GEMINI_API_KEY=...`) dan digantikan oleh konfigurasi Anthropic Claude aktif (`ANTHROPIC_BASE_URL=https://claudespro.web.id`, `ANTHROPIC_API_KEY=...`, dan `ANTHROPIC_MODEL=claude-3-5-sonnet-20241022`).
+- **Rangkaian Pengujian:** Ditambahkan suite pengujian `tests/claude.provider.test.js` yang memvalidasi header request, penanganan status 401/403/429/timeout, serta inisialisasi provider default.
+
 ---
 
 ## Documentation

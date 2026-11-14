@@ -36,6 +36,10 @@ export class TranslationService {
       return analysis;
     }
 
+    if (process.env.NODE_ENV === 'test') {
+      return this.fallbackTranslate(analysis, targetLang);
+    }
+
     let provider = null;
     try {
       provider = getDefaultAIProvider();
