@@ -195,6 +195,17 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 ### 6. Perbaikan Scroll & Tata Letak Mobile
 - Memperbaiki scroll lock pada halaman detail analisis dengan mengganti `overflow-x: hidden` di level `html` dan `body` menjadi `overflow-x: clip`, memisahkan drawer mobile dari scroll lock jendela utama, dan memperhalus navigasi Table of Contents (TOC).
 
+### 7. Perbaikan Tata Letak Mobile & Masalah Padding/Margin "Offside" (Anti-Slop & Long Tokens)
+- **Penyebab Masalah Offside:** Pada repositori seperti `miqdadbadjuber/anti-slop`, terdapat string dan URL yang sangat panjang tanpa spasi (misalnya: `curl -o antislop.md https://raw.githubusercontent.com/miqdadbadjuber/anti-slop/main/antislop.md`, link issues `https://github.com/miqdadbadjuber/anti-slop/releases`, path file `.claude-plugin/contrast-mcp-launcher.mjs`, dsb.). Kolom konten utama sebelumnya memiliki default `min-width: auto`, sehingga elemen string panjang tersebut memaksa lebar kolom melar melebihi viewport mobile (393px menjadi >700px), menyebabkan konten terpotong ke kanan dan margin/padding tampak sangat mepet ("offside").
+- **Penerapan Rantai `min-width: 0;` (CSS Grid/Flexbox):** Menambahkan `min-width: 0; max-width: 100%; box-sizing: border-box;` pada seluruh rantai kontainer: `.analysis-workspace-grid`, `.analysis-document-column`, `.analysis-section`, `.section-body`, `.code-block-wrapper`, dan `.install-step-item`.
+- **Pemotongan dan Pembungkusan Teks Otomatis (Word Breaking):**
+  - Menambahkan `overflow-wrap: break-word; word-break: break-word;` pada semua elemen teks (`p`, `li`, `h1`-`h4`, `.section-body`).
+  - Menambahkan `overflow-wrap: anywhere; word-break: break-all;` pada link `<a>` dan inline `<code>` agar URL panjang dapat patah baris secara alami.
+  - Memastikan blok kode `<pre>` tetap dapat di-scroll horizontal secara independen (`overflow-x: auto`) tanpa memperlebar kontainer induk.
+  - Menambahkan `overflow-wrap: anywhere; word-break: break-all; white-space: normal;` pada lencana sumber `.source-badge`.
+- **Harmonisasi Padding Mobile:** Mengatur padding `.container`, `.analysis-workspace-grid`, dan `.analysis-section` secara proporsional dan seimbang di sisi kiri dan kanan pada resolusi mobile (`max-width: 768px` dan `max-width: 480px`), menjamin padding simetris dan rapi.
+- **Cache Invalidation:** Parameter versi stylesheet diperbarui ke `?v=gitex-v7`.
+
 ---
 
 ## Documentation
