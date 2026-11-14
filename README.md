@@ -36,7 +36,7 @@ gitex-web/
 │   ├── views/                # EJS server-rendered templates (dashboard & viewer)
 │   ├── app.js                # Express app setup & middleware
 │   └── server.js             # HTTP server entry point
-├── tests/                    # 119 automated test suites (node:test)
+├── tests/                    # 133 automated tests (node:test)
 ├── .env.example              # Example environment configuration
 ├── .gitignore
 ├── package.json
@@ -140,7 +140,7 @@ curl http://localhost:3000/health
 
 ## Running Automated Tests
 
-Run the built-in test suite (119 automated tests):
+Run the built-in test suite (133 automated tests):
 
 ```bash
 npm test
@@ -154,11 +154,43 @@ Test coverage includes:
 - `tests/repomix.service.test.js`: Repomix packaging, directory traversal safety, and buffer guards.
 - `tests/gemini.provider.test.js`: Gemini Developer API transport and quota/auth error mapping.
 - `tests/analysis.service.test.js` & `analysis.validator.test.js`: 12-section schema, JSON repair, and bounded retries.
+- `tests/translation.test.js`: Multi-language translation engine (EN/ID), schema preservation, and language switcher.
 - `tests/pipeline.service.test.js`: Orchestrator named stages and error propagation.
 - `tests/markdown.service.test.js`: Syntax highlighting and XSS sanitization.
-- `tests/analysis.viewer.test.js`: 12-section fixed order, metadata display, and copy actions.
-- `tests/history.storage.test.js`: LocalStorage validation, secret stripping, deduplication, and quota handling.
+- `tests/analysis.viewer.test.js`: 12-section fixed order, metadata display, copy actions, and deletion endpoint.
+- `tests/history.storage.test.js`: LocalStorage validation, secret stripping, deduplication, quota handling, and clean URL deletion.
 - `tests/mvp.validation.test.js`: Security boundaries, prompt injection isolation, and end-to-end flows.
+
+---
+
+## Changelog & Recent Updates (Catatan Pembaruan)
+
+Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
+
+### 1. Multi-Language Support (English 🇬🇧 & Bahasa Indonesia 🇮🇩)
+- **Language Switcher Bar:** Menambahkan dua tombol bendera (`🇬🇧 EN` default dan `🇮🇩 ID`) di navbar halaman detail analisis (`/analysis/:id`).
+- **Dynamic Content Translation:** Saat memilih bendera Indonesia, seluruh 12 judul seksi, penjelasan naratif, daftar kemampuan, batasan, rekomendasi, dan label antarmuka pengguna (TOC, navigasi dasbor, tombol salin markdown, dsb.) otomatis beralih ke Bahasa Indonesia secara rapi tanpa merusak struktur dokumen atau blok kode bash/URL/commit SHA.
+- **Persistent Preference:** Preferensi bahasa pengguna tersimpan di `localStorage` dan otomatis diterapkan saat membuka kembali halaman.
+- **Backend Translation Engine:** Endpoint `GET /api/analysis/:id/translate?lang=id` menggunakan `TranslationService` yang didukung Gemini AI dengan kamus istilah teknis offline sebagai fallback andal.
+
+### 2. Penghapusan Bersih Analisis (Clean LocalStorage & Server Cache Deletion)
+- **Pembersihan Menyeluruh di LocalStorage:** `GitExHistory.delete(idOrUrl)` dan `deleteByUrl(url)` membersihkan rekaman riwayat berdasarkan `id`, `url`, dan `fullName`, menjamin tidak ada data lama yang tertinggal di browser pengguna.
+- **Pembersihan Cache Server:** Endpoint `DELETE /api/analysis/:id?url=...` dan `DELETE /api/analysis/all` otomatis menghapus entri dari memory cache (`analysisCache`) dan disk storage (`.data/analyses/*.json`).
+- **Tombol Hapus di Halaman Analisis:** Ditambahkan tombol **Delete** (`Hapus`) langsung pada toolbar halaman detail analisis (`/analysis/:id`) selain tombol `✕` pada daftar riwayat di dashboard.
+
+### 3. Jaminan Analisis Ulang Mulai dari Awal (Fresh Pipeline Execution)
+- **Reset Tahap Analisis ke 0:** Saat menempelkan kembali URL repositori dan mengklik **Explain repository**, riwayat lokal untuk URL tersebut langsung dibersihkan sebelum stream dimulai, dan stepper progres di-reset bersih ke Tahap 1 (Validating) aktif dengan nomor 2–5 berstatus pending.
+- **Bypass Cache HTTP ke Provider:** Pada `GitHubService` dan `GitLabService`, ditambahkan header `Cache-Control: no-cache, no-store, must-revalidate` dan opsi `cache: 'no-store'`, memastikan GitEx selalu menarik commit SHA terbaru, tree terbaru, dan README terbaru langsung dari GitHub/GitLab tanpa terhalang cache lama.
+- **Pembersihan Cache Sebelum Pipeline Berjalan:** Pada endpoint analisis (`/api/analyze` dan `/api/analyze/stream`), cache lama untuk URL terkait langsung dibersihkan dari server sebelum proses dimulai.
+
+### 4. Perbaikan Race Condition "Analysis Failed" pada SSE Stream
+- Memperbaiki race condition penutupan koneksi Server-Sent Events (SSE) di mana event `error` native browser sempat terpanggil setelah event `complete` terkirim, yang sebelumnya sempat memunculkan kotak peringatan *"Analysis Failed"* tepat sebelum halaman diarahkan ke detail analisis.
+
+### 5. Homepage Interaktif & Latar Belakang Animasi Vanta.js (Net)
+- Endpoint root `/` kini menjadi landing page interaktif dengan wordmark GitEx, navigasi bersih, dan animasi jaring 3D dinamis menggunakan Vanta.js (Net mode) dengan palet warna selaras tema field notebook (`#0d0e0d` background dan `#c7f36b` citrus dots). Dashboard eksplorasi dipindahkan ke `/app`.
+
+### 6. Perbaikan Scroll & Tata Letak Mobile
+- Memperbaiki scroll lock pada halaman detail analisis dengan mengganti `overflow-x: hidden` di level `html` dan `body` menjadi `overflow-x: clip`, memisahkan drawer mobile dari scroll lock jendela utama, dan memperhalus navigasi Table of Contents (TOC).
 
 ---
 
