@@ -74,29 +74,85 @@
         </div>
       </section>
 
-      <!-- History Section -->
-      <section id="history-section" class="history-section" aria-labelledby="history-heading">
-        <div class="section-head">
-          <h2 id="history-heading" class="section-title">
-            <span>Recent Explains</span>
-            <span id="history-count" class="count-pill">0</span>
-          </h2>
+      <!-- Discovery & History Tabs Section -->
+      <section id="history-section" class="dashboard-tabs-section history-section" aria-label="Repository discovery and history">
+        <div class="tabs-header-bar">
+          <div class="dashboard-tabs-nav" role="tablist" aria-label="Repository view options">
+            <button
+              type="button"
+              id="tab-btn-history"
+              class="dashboard-tab-btn active"
+              role="tab"
+              aria-selected="true"
+              aria-controls="panel-history"
+            >
+              <span>Recent Explains</span>
+              <span id="history-count" class="count-pill">0</span>
+            </button>
+            <button
+              type="button"
+              id="tab-btn-trending"
+              class="dashboard-tab-btn"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-trending"
+            >
+              <span class="trending-hash font-mono">#</span>
+              <span>Trending</span>
+            </button>
+          </div>
+
           <button id="btn-clear-history" class="btn-clear" type="button" style="display: none;">
             Clear history
           </button>
         </div>
 
-        <!-- Dynamic History List / Empty State Container -->
-        <div id="history-container">
-          <div class="empty-history-card">
-            <div class="empty-icon" aria-hidden="true">📋</div>
-            <h3 class="empty-title">No repositories analyzed yet</h3>
-            <p class="empty-desc">
-              Enter a public repository URL above to generate an architecture breakdown, prerequisites, installation commands, and usage guide.
-            </p>
-            <div class="storage-notice">
-              <span aria-hidden="true">🔒</span>
-              <span>Analysis history is stored locally in this browser</span>
+        <!-- Panel 1: Recent Explains -->
+        <div id="panel-history" role="tabpanel" aria-labelledby="tab-btn-history" class="dashboard-tab-panel">
+          <div id="history-container">
+            <div class="empty-history-card">
+              <div class="empty-icon" aria-hidden="true">📋</div>
+              <h3 class="empty-title">No repositories analyzed yet</h3>
+              <p class="empty-desc">
+                Enter a public repository URL above to generate an architecture breakdown, prerequisites, installation commands, and usage guide.
+              </p>
+              <div class="storage-notice">
+                <span aria-hidden="true">🔒</span>
+                <span>Analysis history is stored locally in this browser</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: #Trending on GitHub -->
+        <div id="panel-trending" role="tabpanel" aria-labelledby="tab-btn-trending" class="dashboard-tab-panel" style="display: none;">
+          <div class="trending-toolbar">
+            <div class="trending-title-group">
+              <h2 class="trending-heading">
+                <span class="trending-hash-accent">#Trending</span> on GitHub
+              </h2>
+              <span class="trending-caption">Top 5 breakout repositories across the ecosystem</span>
+            </div>
+
+            <!-- Sort By Period Switcher -->
+            <div class="trending-period-switcher" role="group" aria-label="Trending timeframe">
+              <button type="button" class="period-pill active" data-period="today" aria-pressed="true">
+                Today
+              </button>
+              <button type="button" class="period-pill" data-period="week" aria-pressed="false">
+                This Week
+              </button>
+              <button type="button" class="period-pill" data-period="month" aria-pressed="false">
+                This Month
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Trending List Container -->
+          <div id="trending-container" class="trending-list-wrapper" aria-live="polite">
+            <div class="trending-loading-state">
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Loading top trending repositories...</span>
             </div>
           </div>
         </div>
@@ -174,6 +230,12 @@
       </div>
     </div>
   </main>
+
+  <!-- Transient Toast Notification -->
+  <div id="gitex-toast" class="gitex-toast" role="status" aria-live="polite">
+    <span class="toast-icon">✓</span>
+    <span id="toast-message" class="toast-message"></span>
+  </div>
 
   <%- include('partials/footer') %>
   <script type="module" src="/js/main.js"></script>

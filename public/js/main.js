@@ -530,6 +530,10 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       } catch {}
     }
     renderHistory();
+    // Switch to history tab so user sees the newly analyzed repository
+    if (typeof switchTab === 'function') {
+      switchTab('history');
+    }
   }
 
   async function deleteHistoryItem(id, url) {
@@ -544,6 +548,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       } catch {}
     }
     renderHistory();
+
+    // If history is now empty, automatically switch to #Trending tab
+    if (getHistory().length === 0 && typeof switchTab === 'function') {
+      switchTab('trending');
+    }
 
     // 2. Notify server to delete cache for this record and URL
     try {
@@ -567,6 +576,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           } catch {}
         }
         renderHistory();
+
+        // Switch to #Trending tab when history is cleared (0 items)
+        if (typeof switchTab === 'function') {
+          switchTab('trending');
+        }
 
         // Also purge all cached analyses on server
         try {
@@ -687,6 +701,261 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       .replace(/'/g, '&#039;');
   }
 
+  // -------------------------------------------------------------
+  // Toast Notifications
+  // -------------------------------------------------------------
+  const toastEl = document.getElementById('gitex-toast');
+  const toastMsg = document.getElementById('toast-message');
+  let toastTimer = null;
+
+  function showToast(message, duration = 3000) {
+    if (!toastEl || !toastMsg) return;
+    toastMsg.textContent = message;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove('show');
+    }, duration);
+  }
+
+  function formatCompactNumber(num) {
+    if (typeof num !== 'number') return '0';
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return String(num);
+  }
+
+  // -------------------------------------------------------------
+  // Dashboard Discovery & History Tabs (#Trending on GitHub)
+  // -------------------------------------------------------------
+  const tabBtnHistory = document.getElementById('tab-btn-history');
+  const tabBtnTrending = document.getElementById('tab-btn-trending');
+  const panelHistory = document.getElementById('panel-history');
+  const panelTrending = document.getElementById('panel-trending');
+  const trendingContainer = document.getElementById('trending-container');
+  const periodPills = document.querySelectorAll('.trending-period-switcher .period-pill');
+
+  let activeTab = 'history';
+  let currentTrendingPeriod = 'today';
+  const clientTrendingCache = {
+    today: null,
+    week: null,
+    month: null,
+  };
+
+  function switchTab(tab) {
+    activeTab = tab;
+    if (tab === 'trending') {
+      if (tabBtnTrending) {
+        tabBtnTrending.classList.add('active');
+        tabBtnTrending.setAttribute('aria-selected', 'true');
+      }
+      if (tabBtnHistory) {
+        tabBtnHistory.classList.remove('active');
+        tabBtnHistory.setAttribute('aria-selected', 'false');
+      }
+      if (panelTrending) panelTrending.style.display = 'block';
+      if (panelHistory) panelHistory.style.display = 'none';
+      if (clearHistoryBtn) clearHistoryBtn.style.display = 'none';
+      loadTrending(currentTrendingPeriod);
+    } else {
+      if (tabBtnHistory) {
+        tabBtnHistory.classList.add('active');
+        tabBtnHistory.setAttribute('aria-selected', 'true');
+      }
+      if (tabBtnTrending) {
+        tabBtnTrending.classList.remove('active');
+        tabBtnTrending.setAttribute('aria-selected', 'false');
+      }
+      if (panelHistory) panelHistory.style.display = 'block';
+      if (panelTrending) panelTrending.style.display = 'none';
+      const historyItems = getHistory();
+      if (clearHistoryBtn) {
+        clearHistoryBtn.style.display = historyItems.length > 0 ? 'inline-block' : 'none';
+      }
+    }
+  }
+
+  if (tabBtnHistory) {
+    tabBtnHistory.addEventListener('click', () => switchTab('history'));
+  }
+  if (tabBtnTrending) {
+    tabBtnTrending.addEventListener('click', () => switchTab('trending'));
+  }
+
+  async function loadTrending(period = 'today', force = false) {
+    currentTrendingPeriod = period;
+
+    periodPills.forEach((btn) => {
+      const p = btn.getAttribute('data-period');
+      const isActive = (p === period);
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+
+    if (!trendingContainer) return;
+
+    if (!force && clientTrendingCache[period]) {
+      renderTrendingList(clientTrendingCache[period]);
+      return;
+    }
+
+    trendingContainer.innerHTML = `
+      <div class="trending-loading-state">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Loading top trending repositories...</span>
+      </div>
+    `;
+
+    try {
+      const res = await fetch(`/api/repository/trending?period=${encodeURIComponent(period)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        clientTrendingCache[period] = json.data;
+        renderTrendingList(json.data);
+      } else {
+        throw new Error(json.error || 'Failed to load trending repositories');
+      }
+    } catch (err) {
+      trendingContainer.innerHTML = `
+        <div class="trending-error-state">
+          <p>Failed to load trending repositories (${escapeHtml(err.message)}).</p>
+          <button type="button" class="btn-action-small" id="btn-retry-trending">Retry</button>
+        </div>
+      `;
+      const retryBtn = document.getElementById('btn-retry-trending');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => loadTrending(period, true));
+      }
+    }
+  }
+
+  function renderTrendingList(repos) {
+    if (!trendingContainer) return;
+
+    if (!Array.isArray(repos) || repos.length === 0) {
+      trendingContainer.innerHTML = `
+        <div class="empty-history-card">
+          <p class="empty-desc">No trending repositories found for this period.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const itemsHtml = repos.slice(0, 5).map((repo, idx) => {
+      const rank = idx + 1;
+      const title = repo.fullName || repo.name || 'Repository';
+      const desc = repo.description || 'No description provided.';
+      const lang = repo.language || 'Unknown';
+      const starsFormatted = formatCompactNumber(repo.stars || 0);
+      const forksFormatted = formatCompactNumber(repo.forks || 0);
+      const repoUrl = repo.url || `https://github.com/${title}`;
+
+      return `
+        <div class="trending-card" data-url="${escapeHtml(repoUrl)}">
+          <div class="trending-left">
+            <span class="trending-rank">#${rank}</span>
+            <div class="trending-main">
+              <div class="trending-repo-title-row">
+                <a href="${escapeHtml(repoUrl)}" target="_blank" rel="noopener noreferrer" class="trending-repo-title" title="Open ${escapeHtml(title)} on GitHub">
+                  ${escapeHtml(title)}
+                </a>
+              </div>
+              <p class="trending-repo-desc">${escapeHtml(desc)}</p>
+              <div class="trending-meta-row">
+                <span class="trending-lang-badge">${escapeHtml(lang)}</span>
+                <span class="trending-stat-badge" title="${repo.stars || 0} stars">
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"></path></svg>
+                  <span>${starsFormatted}</span>
+                </span>
+                <span class="trending-stat-badge" title="${repo.forks || 0} forks">
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5 5.372v.878c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.878a2.25 2.25 0 1 1 1.5 0v.878a2.25 2.25 0 0 1-2.25 2.25h-1.5v2.128a2.251 2.251 0 1 1-1.5 0V8.5h-1.5A2.25 2.25 0 0 1 3 6.25v-.878a2.25 2.25 0 1 1 1.5 0ZM5 3.25a.75.75 0 1 0-1.5 0 .75.75 0 0 0 1.5 0Zm6.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm-3 10a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"></path></svg>
+                  <span>${forksFormatted}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="trending-actions">
+            <button
+              type="button"
+              class="btn-copy-trending"
+              data-url="${escapeHtml(repoUrl)}"
+              aria-label="Copy URL for ${escapeHtml(title)}"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy URL</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    trendingContainer.innerHTML = `<div class="trending-list">${itemsHtml}</div>`;
+
+    // Attach copy click listeners
+    trendingContainer.querySelectorAll('.btn-copy-trending').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const urlToCopy = btn.getAttribute('data-url');
+        if (!urlToCopy) return;
+
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(urlToCopy);
+          } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = urlToCopy;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+          }
+
+          // Visual feedback on button
+          btn.classList.add('copied');
+          btn.innerHTML = `
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Copied!</span>
+          `;
+
+          // Toast notification
+          showToast('Repository URL copied to clipboard! Paste it above to explain.');
+
+          // Focus on input bar
+          if (urlInput) {
+            urlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            urlInput.focus();
+          }
+
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy URL</span>
+            `;
+          }, 2000);
+        } catch (copyErr) {
+          console.warn('[GitEx] Failed to copy URL:', copyErr);
+          showToast('Failed to copy to clipboard.');
+        }
+      });
+    });
+  }
+
+  // Hook up period switcher buttons
+  periodPills.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const p = btn.getAttribute('data-period');
+      if (p) loadTrending(p);
+    });
+  });
+
   // Handle ?url=...&reanalyze=true from viewer or ?quota=exceeded
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('quota') === 'exceeded' || isDailyQuotaExceeded()) {
@@ -709,6 +978,14 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     }
   }
 
-  // Initial render of history
+  // Initial render of history and tab activation
+  // Requirement: If recent analysis empty (0 items), only tab Trending should be active!
+  const initialHistory = getHistory();
   renderHistory();
+
+  if (initialHistory.length === 0) {
+    switchTab('trending');
+  } else {
+    switchTab('history');
+  }
 })();

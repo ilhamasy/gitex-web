@@ -157,7 +157,7 @@ curl http://localhost:3000/health
 
 ## Running Automated Tests
 
-Run the built-in test suite (133 automated tests):
+Run the built-in test suite (148 automated tests):
 
 ```bash
 npm test
@@ -277,6 +277,24 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 ### 15. Pembersihan Tombol Bahasa pada Navbar Utama (Homepage & Detail Analysis)
 - **Penghapusan dari Navbar Utama (`.app-header`):** Menghapus tombol bahasa (`🇬🇧 EN` / `🇮🇩 ID`) dari navbar atas di halaman Beranda (`/`) dan halaman Detail Analisis (`/analysis/:id`), sehingga navbar atas tetap konsisten, bersih, dan hanya memuat wordmark GitEx serta toggle tema Light/Dark.
 - **Konsolidasi Kontrol Bahasa pada Toolbar Analisis:** Kontrol bahasa kini terfokus secara eksklusif dan intuitif pada toolbar subheader dokumen analisis (`.analysis-header-bar`), tepat di mana dokumen dioperasikan oleh pengguna tanpa duplikasi kontrol yang redundan.
+
+### 16. Fitur #Trending on GitHub & Navigasi Tab Dashboard
+- **Top 5 Repositori Trending GitHub:** Menghadirkan tab baru `#Trending` di samping `Recent Explains` pada dashboard yang menampilkan 5 repositori GitHub terpopuler yang sedang breakout.
+- **Filter Waktu Fleksibel (Today, This Week, This Month):** Pengguna dapat memfilter repositori trending berdasarkan jangka waktu:
+  - `Today`: Repositori baru dalam 48 jam terakhir dengan akumulasi bintang tertinggi.
+  - `This Week`: Repositori baru dalam 7 hari terakhir.
+  - `This Month`: Repositori baru dalam 30 hari terakhir.
+- **Informasi Kartu Komprehensif:** Setiap kartu trending memuat:
+  - Judul / nama repositori (`owner/repo`) dengan tautan langsung ke GitHub.
+  - Deskripsi singkat repositori (*brief description*).
+  - Lencana teknologi / bahasa pemrograman (*tech stack badge*).
+  - Statistik jumlah bintang (⭐ Stars) dan fork (🍴 Forks) berformat ringkas (`12.4k`, `1.2M`).
+- **Aksi "Copy URL" Satu Pintu (Single-Door UX):** Dilengkapi tombol interaktif **Copy URL** pada setiap kartu trending dengan konfirmasi clipboard instan (`✓ Copied!`), pop-up toast notifikasi di pojok kanan bawah, serta auto-fokus dan smooth-scroll ke input bar utama agar alur pengguna tetap konsisten melalui satu pintu (*Explain repository*).
+- **Aktivasi Tab Otomatis:**
+  - Jika riwayat analisis pengguna di browser masih kosong (0 item), tab `#Trending` secara otomatis aktif sebagai default pada halaman dashboard.
+  - Begitu pengguna mengosongkan riwayat analisis (*Clear history*), antarmuka otomatis berpindah ke tab `#Trending`.
+  - Saat analisis repositori baru selesai disimpan, antarmuka otomatis kembali ke tab `Recent Explains`.
+- **Server Caching 15 Menit & Fallback Mandiri:** Memanfaatkan in-memory cache server selama 15 menit untuk menghemat kuota GitHub Search API dan dilengkapi fallback data kurasi mandiri saat offline atau terkena batasan rate limit.
 
 ---
 
