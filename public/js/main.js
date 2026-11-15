@@ -409,10 +409,55 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       });
 
       // Native browser EventSource error (triggers on network disconnect / drop)
+      let sseErrorCount = 0;
+      let recoveryPolling = false;
+
+      const attemptRecoveryPolling = async () => {
+        if (recoveryPolling || isCompleted) return;
+        recoveryPolling = true;
+
+        for (let attempt = 1; attempt <= 8; attempt++) {
+          if (isCompleted) break;
+          await new Promise((resolve) => setTimeout(resolve, 2500));
+          if (isCompleted) break;
+
+          try {
+            const checkRes = await fetch(`/api/analysis?url=${encodeURIComponent(rawUrl)}`, {
+              headers: { Accept: 'application/json' },
+            });
+            if (checkRes.ok) {
+              const checkData = await checkRes.json();
+              if (checkData.success && checkData.data && checkData.data.status === 'completed') {
+                isCompleted = true;
+                try { eventSource.close(); } catch {}
+                updateStageUI('Completed', 'Analysis complete! Redirecting...');
+                saveRecordToHistory(checkData.data);
+                setTimeout(() => {
+                  window.location.href = `/analysis/${encodeURIComponent(checkData.data.id)}`;
+                }, 400);
+                return;
+              }
+            }
+          } catch {}
+        }
+
+        if (!isCompleted) {
+          showProgressError('Connection to analysis stream lost. Please check your network or try again.');
+          try { eventSource.close(); } catch {}
+        }
+      };
+
       eventSource.addEventListener('error', () => {
-        if (isCompleted || !eventSource || eventSource.readyState === EventSource.CLOSED) return;
-        showProgressError('Connection to analysis stream lost. Please check your network or try again.');
-        try { eventSource.close(); } catch {}
+        if (isCompleted) return;
+        sseErrorCount++;
+
+        // If the browser is still attempting native reconnect (readyState 0), allow it up to 5s before polling fallback
+        if (eventSource && eventSource.readyState === 0 && sseErrorCount <= 2) {
+          return;
+        }
+
+        // Trigger polling recovery to check if server completed or is completing the analysis
+        attemptRecoveryPolling();
       });
     } catch (err) {
       // Fallback to standard POST endpoint

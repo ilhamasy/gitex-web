@@ -110,18 +110,21 @@ export const streamAnalysis = async (req, res) => {
     });
   }
 
-  // Setup SSE headers
-  res.setHeader('Content-Type', 'text/event-stream');
+  // Setup SSE headers with proxy buffering disabled for Vercel/Nginx
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.setHeader('Content-Encoding', 'none');
   res.flushHeaders?.();
 
-  // Send keepalive ping every 5s so connection never drops during LLM generation
+  // Send keepalive ping every 1.5s so connection never drops during LLM generation
   const heartbeat = setInterval(() => {
     try {
       res.write(': keepalive\n\n');
+      res.flush?.();
     } catch {}
-  }, 5000);
+  }, 1500);
 
   const cleanup = () => {
     clearInterval(heartbeat);
@@ -130,8 +133,11 @@ export const streamAnalysis = async (req, res) => {
   req.on('close', cleanup);
 
   const sendEvent = (event, data) => {
-    res.write(`event: ${event}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
+    try {
+      res.write(`event: ${event}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+      res.flush?.();
+    } catch {}
   };
 
   try {
@@ -185,6 +191,15 @@ export const renderAnalysis = (req, res) => {
   const isApi = req.path.startsWith('/api') || req.headers.accept?.includes('application/json');
 
   let record = id ? getCachedRecord(id) : null;
+  if (!record && req.query.url) {
+    const cleanUrl = req.query.url.trim().toLowerCase();
+    for (const cached of analysisCache.values()) {
+      if (cached.url && cached.url.trim().toLowerCase() === cleanUrl) {
+        record = cached;
+        break;
+      }
+    }
+  }
 
   if (isApi) {
     if (!record) {
