@@ -48,6 +48,7 @@ export class ClaudeProvider extends AIProvider {
         method: 'POST',
         headers: {
           'x-api-key': this.apiKey,
+          'Authorization': `Bearer ${this.apiKey}`,
           'anthropic-version': '2023-06-01',
           'Content-Type': 'application/json',
         },
