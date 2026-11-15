@@ -298,7 +298,7 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 
 ### 17. Penyederhanaan Input URL & Animasi Border Berjalan
 - **Indikator Host Dihapus:** Label statis `• GitHub` dan `• GitLab` di bawah kolom URL dihilangkan — keduanya hanya dekoratif tanpa affordance interaktif, sehingga membingungkan. Dukungan kedua host tetap berjalan dan tetap terdeteksi otomatis lewat badge provider saat URL diketik.
-- **Animasi Garis Berjalan pada Kolom URL:** Border kolom input kini punya cahaya putih yang bergerak mengelilingi perimeter persegi panjangnya (`conic-gradient` yang di-mask menjadi ring 1px, dianimasikan lewat CSS `@property --url-border-angle`). Kecepatan 3 detik per putaran saat idle, dipercepat menjadi 1,6 detik dan dibuat lebih terang saat kolom difokuskan, serta otomatis berhenti bila pengguna mengaktifkan `prefers-reduced-motion`.
+- **Animasi Garis Berjalan pada Kolom URL:** Border kolom input kini punya garis aksen hijau (`--color-accent`, sama dengan warna tombol utama) yang bergerak mengelilingi perimeter persegi panjangnya (`conic-gradient` yang di-mask menjadi ring 1px, dianimasikan lewat CSS `@property --url-border-angle`). Kecepatan 3 detik per putaran saat idle, dipercepat menjadi 1,6 detik dan dibuat lebih terang saat kolom difokuskan, serta otomatis berhenti bila pengguna mengaktifkan `prefers-reduced-motion`.
 
 ---
 

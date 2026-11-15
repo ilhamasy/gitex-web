@@ -291,11 +291,11 @@ a {
   border-radius: calc(var(--radius-sm) + 1px);
   background: conic-gradient(
     from var(--url-border-angle),
-    rgba(255, 255, 255, 0) 0deg,
-    rgba(255, 255, 255, 0) 210deg,
-    rgba(255, 255, 255, 0.55) 300deg,
-    #ffffff 348deg,
-    rgba(255, 255, 255, 0.9) 360deg
+    color-mix(in srgb, var(--color-accent) 0%, transparent) 0deg,
+    color-mix(in srgb, var(--color-accent) 0%, transparent) 210deg,
+    color-mix(in srgb, var(--color-accent) 55%, transparent) 300deg,
+    var(--color-accent) 348deg,
+    color-mix(in srgb, var(--color-accent) 90%, transparent) 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
