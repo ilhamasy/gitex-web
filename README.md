@@ -296,6 +296,10 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
   - Saat analisis repositori baru selesai disimpan, antarmuka otomatis kembali ke tab `Recent Explains`.
 - **Server Caching 15 Menit & Fallback Mandiri:** Memanfaatkan in-memory cache server selama 15 menit untuk menghemat kuota GitHub Search API dan dilengkapi fallback data kurasi mandiri saat offline atau terkena batasan rate limit.
 
+### 17. Penyederhanaan Input URL & Animasi Border Berjalan
+- **Indikator Host Dihapus:** Label statis `• GitHub` dan `• GitLab` di bawah kolom URL dihilangkan — keduanya hanya dekoratif tanpa affordance interaktif, sehingga membingungkan. Dukungan kedua host tetap berjalan dan tetap terdeteksi otomatis lewat badge provider saat URL diketik.
+- **Animasi Garis Berjalan pada Kolom URL:** Border kolom input kini punya cahaya putih yang bergerak mengelilingi perimeter persegi panjangnya (`conic-gradient` yang di-mask menjadi ring 1px, dianimasikan lewat CSS `@property --url-border-angle`). Kecepatan 3 detik per putaran saat idle, dipercepat menjadi 1,6 detik dan dibuat lebih terang saat kolom difokuskan, serta otomatis berhenti bila pengguna mengaktifkan `prefers-reduced-motion`.
+
 ---
 
 ## Documentation

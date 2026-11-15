@@ -29,11 +29,13 @@ describe('Dashboard Shell (GITEX-002)', () => {
     assert.ok(res.text.includes('id="provider-badge"'));
   });
 
-  it('sets dark mode as default and displays supported provider badges', async () => {
+  it('sets dark mode as default and omits the static provider pills under the URL input', async () => {
     const res = await request(app).get('/app');
     assert.ok(res.text.includes('data-theme="dark"'));
-    assert.ok(res.text.includes('GitHub'));
-    assert.ok(res.text.includes('GitLab'));
+    assert.equal(res.text.includes('provider-pill'), false);
+    assert.equal(res.text.includes('provider-dot'), false);
+    assert.equal(res.text.includes('id="url-hint"'), false);
+    assert.ok(res.text.includes('id="provider-badge"'));
     assert.equal(res.text.includes('id="btn-example-url"'), false);
   });
 
