@@ -276,7 +276,7 @@ a {
   align-items: center;
 }
 
-/* Running light around the URL field — conic gradient masked to a 1px ring */
+/* Running light around the URL field — seamless dual-beam conic gradient masked to a 1px ring */
 @property --url-border-angle {
   syntax: '<angle>';
   inherits: false;
@@ -291,28 +291,39 @@ a {
   border-radius: calc(var(--radius-sm) + 1px);
   background: conic-gradient(
     from var(--url-border-angle),
-    color-mix(in srgb, var(--color-accent) 0%, transparent) 0deg,
-    color-mix(in srgb, var(--color-accent) 0%, transparent) 210deg,
-    color-mix(in srgb, var(--color-accent) 55%, transparent) 300deg,
-    var(--color-accent) 348deg,
-    color-mix(in srgb, var(--color-accent) 90%, transparent) 360deg
+    transparent 0deg,
+    color-mix(in srgb, var(--color-accent) 25%, transparent) 30deg,
+    color-mix(in srgb, var(--color-accent) 80%, transparent) 70deg,
+    var(--color-accent) 90deg,
+    color-mix(in srgb, var(--color-accent) 80%, transparent) 110deg,
+    color-mix(in srgb, var(--color-accent) 25%, transparent) 150deg,
+    transparent 180deg,
+    color-mix(in srgb, var(--color-accent) 25%, transparent) 210deg,
+    color-mix(in srgb, var(--color-accent) 80%, transparent) 250deg,
+    var(--color-accent) 270deg,
+    color-mix(in srgb, var(--color-accent) 80%, transparent) 290deg,
+    color-mix(in srgb, var(--color-accent) 25%, transparent) 330deg,
+    transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
-  animation: url-border-run 3s linear infinite;
-  opacity: 0.55;
+  animation: url-border-run 4s linear infinite;
+  opacity: 0.65;
   transition: opacity 0.2s ease;
   pointer-events: none;
 }
 
 .input-container:focus-within::after {
   opacity: 1;
-  animation-duration: 1.6s;
+  animation-duration: 2.2s;
 }
 
 @keyframes url-border-run {
+  from {
+    --url-border-angle: 0deg;
+  }
   to {
     --url-border-angle: 360deg;
   }
