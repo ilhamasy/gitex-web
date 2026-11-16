@@ -61,5 +61,14 @@ describe('Dashboard Shell (GITEX-002)', () => {
     assert.equal(lowercaseHtml.includes('supercharge your workflow'), false);
     assert.equal(lowercaseHtml.includes('testimonial'), false);
   });
+
+  it('renders background progress snackbar and dismiss-to-background actions', async () => {
+    const res = await request(app).get('/app');
+    assert.ok(res.text.includes('id="gitex-progress-snackbar"'));
+    assert.ok(res.text.includes('id="btn-progress-background"'));
+    assert.ok(res.text.includes('id="btn-progress-close"'));
+    assert.ok(res.text.includes('id="progress-dismiss-container"'));
+    assert.ok(res.text.includes('id="btn-snackbar-action"'));
+  });
 });
 

@@ -47,7 +47,7 @@ function sanitizeRecordForStorage(record) {
   const url = String(record.url || '').trim();
   const revision = String(record.revision || 'unknown').trim();
   const analyzedAt = record.analyzedAt || new Date().toISOString();
-  const status = ['completed', 'partial', 'failed'].includes(record.status) ? record.status : 'completed';
+  const status = ['completed', 'partial', 'failed', 'generating'].includes(record.status) ? record.status : 'completed';
   const score = typeof record.score === 'number' ? Math.max(0, Math.min(100, record.score)) : 100;
   const description = typeof record.description === 'string' ? record.description : null;
   const language = typeof record.language === 'string' ? record.language : null;

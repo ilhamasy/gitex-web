@@ -67,6 +67,18 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   const progressErrorContainer = document.getElementById('progress-error-container');
   const progressErrorText = document.getElementById('progress-error-text');
   const btnProgressDismiss = document.getElementById('btn-progress-dismiss');
+  const btnProgressClose = document.getElementById('btn-progress-close');
+  const progressDismissContainer = document.getElementById('progress-dismiss-container');
+  const btnProgressBackground = document.getElementById('btn-progress-background');
+
+  // Background Progress Snackbar elements
+  const progressSnackbar = document.getElementById('gitex-progress-snackbar');
+  const snackbarSpinner = document.getElementById('snackbar-spinner');
+  const snackbarIcon = document.getElementById('snackbar-icon');
+  const snackbarRepoTitle = document.getElementById('snackbar-repo-title');
+  const snackbarStatusText = document.getElementById('snackbar-status-text');
+  const btnSnackbarAction = document.getElementById('btn-snackbar-action');
+  const btnSnackbarClose = document.getElementById('btn-snackbar-close');
 
   // Quota modal elements
   const quotaModal = document.getElementById('quota-modal');
@@ -252,6 +264,25 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         if (icon) icon.textContent = String(idx + 1);
       }
     });
+
+    // When reaching Generating stage, surface the dismiss-to-background action
+    if (activeStage === 'Generating') {
+      if (progressDismissContainer) {
+        progressDismissContainer.style.display = 'block';
+      }
+      if (btnProgressClose) {
+        btnProgressClose.classList.remove('hidden');
+        btnProgressClose.style.display = 'flex';
+      }
+    } else if (activeStage !== 'Completed' && activeStage !== 'Failed') {
+      if (progressDismissContainer) {
+        progressDismissContainer.style.display = 'none';
+      }
+      if (btnProgressClose) {
+        btnProgressClose.classList.add('hidden');
+        btnProgressClose.style.display = 'none';
+      }
+    }
   }
 
   function showProgressModal(repoUrl) {
@@ -270,6 +301,13 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     }
     if (progressErrorText) {
       progressErrorText.textContent = '';
+    }
+    if (progressDismissContainer) {
+      progressDismissContainer.style.display = 'none';
+    }
+    if (btnProgressClose) {
+      btnProgressClose.classList.add('hidden');
+      btnProgressClose.style.display = 'none';
     }
     updateStageUI('Validating', 'Validating repository URL...');
     progressModal.classList.remove('hidden');
@@ -297,6 +335,180 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       progressErrorContainer.style.display = 'flex';
     }
     updateStageUI('Failed', text);
+  }
+
+  // -------------------------------------------------------------
+  // Background Progress Snackbar & Active Analysis State
+  // -------------------------------------------------------------
+  let currentRunningAnalysis = null;
+  let snackbarHideTimeout = null;
+
+  function extractRepoMetaFromUrl(rawUrl) {
+    const url = (rawUrl || '').trim();
+    const provider = detectProviderPreview(url) || 'github';
+    let fullName = 'Repository';
+    let owner = '';
+    let name = '';
+
+    try {
+      const clean = url.replace(/\.git$/i, '').replace(/\/+$/, '');
+      const parts = clean.split('/');
+      if (parts.length >= 2) {
+        name = parts[parts.length - 1];
+        owner = parts[parts.length - 2];
+        fullName = `${owner}/${name}`;
+      }
+    } catch {}
+
+    return { fullName, owner, name, provider };
+  }
+
+  function showProgressSnackbar(analysis) {
+    if (!progressSnackbar) return;
+    if (snackbarHideTimeout) clearTimeout(snackbarHideTimeout);
+
+    progressSnackbar.classList.remove('hidden', 'is-completed', 'is-failed');
+    progressSnackbar.style.display = 'block';
+
+    if (snackbarSpinner) snackbarSpinner.classList.remove('hidden');
+    if (snackbarIcon) snackbarIcon.classList.add('hidden');
+    if (btnSnackbarAction) btnSnackbarAction.classList.add('hidden');
+
+    if (snackbarRepoTitle) {
+      snackbarRepoTitle.textContent = analysis?.meta?.fullName || analysis?.url || 'Repository';
+    }
+    if (snackbarStatusText) {
+      snackbarStatusText.textContent = 'Generating technical guide... (Click to view progress)';
+    }
+
+    void progressSnackbar.offsetWidth;
+    progressSnackbar.classList.add('show');
+  }
+
+  function updateProgressSnackbarCompleted(record) {
+    if (!progressSnackbar) return;
+    if (snackbarHideTimeout) clearTimeout(snackbarHideTimeout);
+
+    progressSnackbar.classList.remove('hidden', 'is-failed');
+    progressSnackbar.classList.add('is-completed', 'show');
+    progressSnackbar.style.display = 'block';
+
+    if (snackbarSpinner) snackbarSpinner.classList.add('hidden');
+    if (snackbarIcon) {
+      snackbarIcon.classList.remove('hidden');
+      snackbarIcon.textContent = '✓';
+      snackbarIcon.style.color = '#22c55e';
+      snackbarIcon.style.backgroundColor = 'rgba(34, 197, 94, 0.15)';
+    }
+
+    if (snackbarRepoTitle) {
+      snackbarRepoTitle.textContent = record.fullName || (record.owner && record.name ? `${record.owner}/${record.name}` : record.name) || 'Repository';
+    }
+    if (snackbarStatusText) {
+      snackbarStatusText.textContent = 'Progress finish! Analysis ready to view.';
+    }
+    if (btnSnackbarAction) {
+      btnSnackbarAction.classList.remove('hidden');
+      btnSnackbarAction.textContent = 'View Analysis';
+      btnSnackbarAction.onclick = (e) => {
+        e.stopPropagation();
+        window.location.href = `/analysis/${encodeURIComponent(record.id)}`;
+      };
+    }
+
+    // Auto-hide completed snackbar after 8s
+    snackbarHideTimeout = setTimeout(() => {
+      hideProgressSnackbar();
+    }, 8000);
+  }
+
+  function updateProgressSnackbarFailed(errorMsg) {
+    if (!progressSnackbar) return;
+    if (snackbarHideTimeout) clearTimeout(snackbarHideTimeout);
+
+    progressSnackbar.classList.remove('hidden', 'is-completed');
+    progressSnackbar.classList.add('is-failed', 'show');
+    progressSnackbar.style.display = 'block';
+
+    if (snackbarSpinner) snackbarSpinner.classList.add('hidden');
+    if (snackbarIcon) {
+      snackbarIcon.classList.remove('hidden');
+      snackbarIcon.textContent = '✕';
+      snackbarIcon.style.color = '#ef4444';
+      snackbarIcon.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+    }
+    if (snackbarStatusText) {
+      snackbarStatusText.textContent = `Analysis failed (${errorMsg || 'Error'}). Click to retry.`;
+    }
+  }
+
+  function hideProgressSnackbar() {
+    if (!progressSnackbar) return;
+    progressSnackbar.classList.remove('show');
+    setTimeout(() => {
+      progressSnackbar.classList.add('hidden');
+      progressSnackbar.style.display = 'none';
+    }, 300);
+  }
+
+  function dismissToBackground() {
+    if (!currentRunningAnalysis) return;
+    currentRunningAnalysis.isDismissed = true;
+
+    hideProgressModal();
+    setLoadingState(false);
+
+    // Save temporary generating record to LocalStorage
+    const tempRecord = {
+      id: currentRunningAnalysis.tempId || `temp-${Date.now()}`,
+      url: currentRunningAnalysis.url,
+      fullName: currentRunningAnalysis.meta.fullName,
+      owner: currentRunningAnalysis.meta.owner,
+      name: currentRunningAnalysis.meta.name,
+      provider: currentRunningAnalysis.meta.provider,
+      language: 'Analyzing',
+      status: 'generating',
+      analyzedAt: new Date().toISOString(),
+    };
+    currentRunningAnalysis.tempId = tempRecord.id;
+
+    saveRecordToHistory(tempRecord);
+    if (typeof switchTab === 'function') {
+      switchTab('history');
+    }
+
+    showProgressSnackbar(currentRunningAnalysis);
+  }
+
+  if (btnProgressBackground) {
+    btnProgressBackground.addEventListener('click', dismissToBackground);
+  }
+  if (btnProgressClose) {
+    btnProgressClose.addEventListener('click', dismissToBackground);
+  }
+
+  if (progressSnackbar) {
+    progressSnackbar.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-snackbar-close') || e.target.closest('#btn-snackbar-action')) {
+        return;
+      }
+      if (currentRunningAnalysis && currentRunningAnalysis.isCompleted && currentRunningAnalysis.completedRecord) {
+        window.location.href = `/analysis/${encodeURIComponent(currentRunningAnalysis.completedRecord.id)}`;
+      } else if (currentRunningAnalysis) {
+        // Re-open progress modal
+        currentRunningAnalysis.isDismissed = false;
+        hideProgressSnackbar();
+        showProgressModal(currentRunningAnalysis.url);
+        updateStageUI(currentRunningAnalysis.stage || 'Generating', currentRunningAnalysis.message);
+      }
+    });
+  }
+
+  if (btnSnackbarClose) {
+    btnSnackbarClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideProgressSnackbar();
+    });
   }
 
   if (btnProgressDismiss) {
@@ -348,6 +560,19 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       window.GitExHistory.deleteByUrl(rawUrl);
     }
 
+    const repoMeta = extractRepoMetaFromUrl(rawUrl);
+    currentRunningAnalysis = {
+      url: rawUrl,
+      meta: repoMeta,
+      stage: 'Validating',
+      message: 'Validating repository URL...',
+      isDismissed: false,
+      isCompleted: false,
+      completedRecord: null,
+      tempId: null,
+    };
+
+    hideProgressSnackbar();
     showProgressModal(rawUrl);
     setLoadingState(true);
     clearValidation();
@@ -362,6 +587,13 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       eventSource.addEventListener('stage', (event) => {
         try {
           const payload = JSON.parse(event.data);
+          if (currentRunningAnalysis) {
+            currentRunningAnalysis.stage = payload.stage;
+            currentRunningAnalysis.message = payload.message;
+            if (currentRunningAnalysis.isDismissed && snackbarStatusText) {
+              snackbarStatusText.textContent = `${payload.message || 'Analyzing repository...'} (Click to view progress)`;
+            }
+          }
           updateStageUI(payload.stage, payload.message);
         } catch (e) {
           console.warn('[GitEx] Stage event parse error:', e);
@@ -380,18 +612,30 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           }
           const payload = JSON.parse(event.data);
           const record = payload.record;
-          updateStageUI('Completed', 'Analysis complete! Redirecting...');
 
-          // Save fresh record to local history
+          if (currentRunningAnalysis) {
+            currentRunningAnalysis.isCompleted = true;
+            currentRunningAnalysis.completedRecord = record;
+          }
+
+          // Save fresh record to local history (replaces any temporary in-progress record)
           saveRecordToHistory(record);
 
-          // Redirect to analysis viewer after a brief pause
-          setTimeout(() => {
-            window.location.href = `/analysis/${encodeURIComponent(record.id)}`;
-          }, 450);
+          if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
+            updateProgressSnackbarCompleted(record);
+          } else {
+            updateStageUI('Completed', 'Analysis complete! Redirecting...');
+            setTimeout(() => {
+              window.location.href = `/analysis/${encodeURIComponent(record.id)}`;
+            }, 450);
+          }
         } catch (e) {
           console.error('[GitEx] Complete event parse error:', e);
-          showProgressError('Failed to process completed analysis record.');
+          if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
+            updateProgressSnackbarFailed('Failed to process completed record.');
+          } else {
+            showProgressError('Failed to process completed analysis record.');
+          }
         }
       });
 
@@ -404,7 +648,12 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
             msg = data.message || msg;
           }
         } catch {}
-        showProgressError(msg);
+
+        if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
+          updateProgressSnackbarFailed(msg);
+        } else {
+          showProgressError(msg);
+        }
         try { eventSource.close(); } catch {}
       });
 
@@ -430,11 +679,22 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
               if (checkData.success && checkData.data && checkData.data.status === 'completed') {
                 isCompleted = true;
                 try { eventSource.close(); } catch {}
-                updateStageUI('Completed', 'Analysis complete! Redirecting...');
+
+                if (currentRunningAnalysis) {
+                  currentRunningAnalysis.isCompleted = true;
+                  currentRunningAnalysis.completedRecord = checkData.data;
+                }
+
                 saveRecordToHistory(checkData.data);
-                setTimeout(() => {
-                  window.location.href = `/analysis/${encodeURIComponent(checkData.data.id)}`;
-                }, 400);
+
+                if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
+                  updateProgressSnackbarCompleted(checkData.data);
+                } else {
+                  updateStageUI('Completed', 'Analysis complete! Redirecting...');
+                  setTimeout(() => {
+                    window.location.href = `/analysis/${encodeURIComponent(checkData.data.id)}`;
+                  }, 400);
+                }
                 return;
               }
             }
@@ -442,7 +702,12 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         }
 
         if (!isCompleted) {
-          showProgressError('Connection to analysis stream lost. Please check your network or try again.');
+          const errMsg = 'Connection to analysis stream lost. Please check your network or try again.';
+          if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
+            updateProgressSnackbarFailed(errMsg);
+          } else {
+            showProgressError(errMsg);
+          }
           try { eventSource.close(); } catch {}
         }
       };
@@ -472,10 +737,22 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         if (!response.ok || !data.success) {
           throw new Error(data.error || 'Analysis failed.');
         }
+        if (currentRunningAnalysis) {
+          currentRunningAnalysis.isCompleted = true;
+          currentRunningAnalysis.completedRecord = data.data;
+        }
         saveRecordToHistory(data.data);
-        window.location.href = `/analysis/${encodeURIComponent(data.data.id)}`;
+        if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
+          updateProgressSnackbarCompleted(data.data);
+        } else {
+          window.location.href = `/analysis/${encodeURIComponent(data.data.id)}`;
+        }
       } catch (postErr) {
-        showProgressError(postErr.message);
+        if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
+          updateProgressSnackbarFailed(postErr.message);
+        } else {
+          showProgressError(postErr.message);
+        }
       }
     }
   }
@@ -643,9 +920,10 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       const provider = item.provider || 'git';
       const language = item.language || 'Unknown';
       const timeStr = formatRelativeTime(item.analyzedAt);
+      const isGenerating = item.status === 'generating';
 
       return `
-        <div class="history-item" data-id="${item.id}">
+        <div class="history-item" data-id="${item.id}" data-url="${escapeHtml(item.url || '')}">
           <div class="history-main-info">
             <div class="history-repo-title">
               <span>${escapeHtml(fullName)}</span>
@@ -654,14 +932,22 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
               <span class="font-mono" style="text-transform: capitalize;">${escapeHtml(provider)}</span>
               <span>•</span>
               <span>${escapeHtml(language)}</span>
-              ${timeStr ? `<span>•</span><span>${escapeHtml(timeStr)}</span>` : ''}
+              ${timeStr && !isGenerating ? `<span>•</span><span>${escapeHtml(timeStr)}</span>` : ''}
               ${item.status === 'partial' ? '<span>•</span><span class="badge badge-amber" style="padding:0 4px;font-size:10px;">Partial</span>' : ''}
+              ${isGenerating ? '<span>•</span><span class="badge badge-accent font-mono" style="padding:1px 6px;font-size:10px;display:inline-flex;align-items:center;gap:4px;"><span class="spinner-tiny" aria-hidden="true"></span><span>Generating</span></span>' : ''}
             </div>
           </div>
           <div class="history-actions">
-            <button type="button" class="btn-action-small btn-view-history" data-id="${item.id}" aria-label="View analysis for ${escapeHtml(fullName)}">
-              View Analysis
-            </button>
+            ${isGenerating ? `
+              <button type="button" class="btn-action-small btn-generating" disabled aria-disabled="true" title="Analysis in progress...">
+                <span class="spinner-small" aria-hidden="true"></span>
+                <span>Generating...</span>
+              </button>
+            ` : `
+              <button type="button" class="btn-action-small btn-view-history" data-id="${item.id}" aria-label="View analysis for ${escapeHtml(fullName)}">
+                View Analysis
+              </button>
+            `}
             <button type="button" class="btn-remove-item" data-id="${item.id}" data-url="${escapeHtml(item.url || '')}" aria-label="Remove ${escapeHtml(fullName)} from history" title="Remove from history">
               ✕
             </button>

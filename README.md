@@ -157,7 +157,7 @@ curl http://localhost:3000/health
 
 ## Running Automated Tests
 
-Run the built-in test suite (148 automated tests):
+Run the built-in test suite (149 automated tests):
 
 ```bash
 npm test
@@ -302,6 +302,18 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
   - Menggunakan konfigurasi *dual-beam* 180° simetris: saat berkas pertama meluncur di sisi atas, berkas kedua meluncur di sisi bawah, sehingga cahaya mengalir konstan tanpa ada jeda mati atau kekosongan di sekeliling rectangle.
   - Titik `0deg` dan `360deg` diselaraskan menjadi `transparent` dengan interpolasi eksplisit `from 0deg to 360deg`, menghasilkan perulangan loop 100% mulus tanpa patahan atau stutter.
   - Kecepatan 4 detik per putaran saat idle, dipercepat menjadi 2,2 detik dan dibuat lebih terang saat kolom difokuskan, serta otomatis non-aktif bila pengguna mengaktifkan `prefers-reduced-motion`.
+
+### 18. Peningkatan Alur Analisis Asinkron (Dismiss to Background & Sticky Progress Snackbar)
+- **Tombol Dismiss pada Tahap Generating:** Mengingat tahap ke-5 (*Generating technical guide*) membutuhkan waktu pemrosesan AI, pengguna kini diberikan opsi untuk menutup modal dialog (*Dismiss & Run in Background*) tanpa membatalkan proses analisis yang sedang berjalan.
+- **Kartu Riwayat Berstatus Generating dengan Animasi Circular:**
+  - Begitu modal di-dismiss, repositori langsung tercatat di daftar *Recent Explains* (riwayat lokal browser).
+  - Tombol aksi pada kartu tersebut berstatus *disabled* dan menampilkan animasi *circular spinner* (`Generating...`), menandakan proses masih berjalan dan belum bisa lanjut ke halaman detail analisis.
+- **Top Sticky Progress Snackbar:**
+  - Snackbar melayang di bagian atas halaman menampilkan nama repositori dan status progres secara real-time dengan animasi circular loader.
+  - Bersifat interaktif: mengklik snackbar akan membuka kembali modal dialog progres lengkap (stepper tahap 1–5) yang sedang aktif.
+- **Pemberitahuan Penyelesaian Hijau & Aktivasi Tombol Detail:**
+  - Saat proses analisis selesai di background, snackbar otomatis berganti ke status *Progress Finish* berwarna hijau cerah dengan ikon centang (`✓`) dan tombol cepat *View Analysis*.
+  - Di saat yang sama, tombol pada kartu riwayat analisis otomatis bertransisi menjadi aktif (*View Analysis*), siap diklik untuk membuka panduan teknis repositori.
 
 ---
 
