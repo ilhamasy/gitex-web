@@ -1,232 +1,244 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8">
   <script>
-    (function(){try{var t=localStorage.getItem('gitex_theme')||localStorage.getItem('gitex.theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+    (function () { try { var t = localStorage.getItem('gitex_theme') || localStorage.getItem('gitex.theme'); if (t === 'light' || t === 'dark') { document.documentElement.setAttribute('data-theme', t); } } catch (e) { } })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="GitEx — Every Repository, Explained. A developer research workbench.">
-  <title><%= title %></title>
+  <title>
+    <%= title %>
+  </title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=gitex-v7">
   <script src="/js/theme.js"></script>
 </head>
+
 <body>
   <%- include('partials/header', { showLanguageSwitcher: false, page: 'app' }) %>
 
-  <main class="dashboard-main" id="main-content">
-    <div class="container">
-      <!-- Launcher Section -->
-      <section class="launcher-section" aria-labelledby="launcher-heading">
-        <div class="launcher-header">
-          <h1 id="launcher-heading" class="launcher-title">Every Repository, Explained.</h1>
-          <p class="launcher-desc">
-            Understand what it does, how it works, and how to use it without digging through every file.
-          </p>
-        </div>
+    <main class="dashboard-main" id="main-content">
+      <div class="container">
+        <!-- Launcher Section -->
+        <section class="launcher-section" aria-labelledby="launcher-heading">
+          <div class="launcher-header">
+            <h1 id="launcher-heading" class="launcher-title">Every Repository, Explained.</h1>
+            <p class="launcher-desc">
+              Understand what it does, how it works, and how to use it without digging through every file.
+            </p>
+          </div>
 
-        <div class="url-panel">
-          <form id="repo-form" class="url-form" novalidate>
-            <div class="input-row">
-              <div class="input-container">
-                <label for="repo-url" class="visually-hidden" style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
-                  Repository URL
-                </label>
-                <input
-                  type="url"
-                  id="repo-url"
-                  name="url"
-                  class="url-input"
-                  placeholder="https://github.com/owner/repository"
-                  autocomplete="off"
-                  spellcheck="false"
-                  required
-                  aria-describedby="validation-msg"
-                />
-                <span id="provider-badge" class="provider-detect-badge" aria-live="polite" style="display: none;"></span>
+          <div class="url-panel">
+            <form id="repo-form" class="url-form" novalidate>
+              <div class="input-row">
+                <div class="input-container">
+                  <label for="repo-url" class="visually-hidden"
+                    style="position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+                    Repository URL
+                  </label>
+                  <input type="url" id="repo-url" name="url" class="url-input"
+                    placeholder="https://github.com/owner/repository" autocomplete="off" spellcheck="false" required
+                    aria-describedby="url-hint validation-msg" />
+                  <span id="provider-badge" class="provider-detect-badge" aria-live="polite"
+                    style="display: none;"></span>
+                </div>
+                <button type="button" id="btn-paste" class="btn-paste" title="Paste repository URL from clipboard"
+                  aria-label="Paste URL from clipboard">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h4m-4 4h4m-4-8h.01">
+                    </path>
+                  </svg>
+                </button>
+                <button type="submit" id="btn-analyze" class="btn-primary">
+                  <span>Explain repository</span>
+                </button>
               </div>
-              <button type="button" id="btn-paste" class="btn-paste" title="Paste repository URL from clipboard" aria-label="Paste URL from clipboard">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h4m-4 4h4m-4-8h.01"></path>
-                </svg>
+
+              <div id="validation-msg" class="validation-message" role="alert" aria-live="assertive"></div>
+
+              <div class="meta-row">
+                <div class="provider-hints" id="url-hint">
+                  <span class="provider-pill">
+                    <span class="provider-dot"></span> GitHub
+                  </span>
+                  <span class="provider-pill">
+                    <span class="provider-dot"></span> GitLab
+                  </span>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Discovery & History Tabs Section -->
+        <section id="history-section" class="dashboard-tabs-section history-section"
+          aria-label="Repository discovery and history">
+          <div class="tabs-header-bar">
+            <div class="dashboard-tabs-nav" role="tablist" aria-label="Repository view options">
+              <button type="button" id="tab-btn-history" class="dashboard-tab-btn active" role="tab"
+                aria-selected="true" aria-controls="panel-history">
+                <span>Recent Explains</span>
+                <span id="history-count" class="count-pill">0</span>
               </button>
-              <button type="submit" id="btn-analyze" class="btn-primary">
-                <span>Explain repository</span>
+              <button type="button" id="tab-btn-trending" class="dashboard-tab-btn" role="tab" aria-selected="false"
+                aria-controls="panel-trending">
+                <span class="trending-hash font-mono">#</span>
+                <span>Trending</span>
               </button>
             </div>
 
-            <div id="validation-msg" class="validation-message" role="alert" aria-live="assertive"></div>
-          </form>
-        </div>
-      </section>
-
-      <!-- Discovery & History Tabs Section -->
-      <section id="history-section" class="dashboard-tabs-section history-section" aria-label="Repository discovery and history">
-        <div class="tabs-header-bar">
-          <div class="dashboard-tabs-nav" role="tablist" aria-label="Repository view options">
-            <button
-              type="button"
-              id="tab-btn-history"
-              class="dashboard-tab-btn active"
-              role="tab"
-              aria-selected="true"
-              aria-controls="panel-history"
-            >
-              <span>Recent Explains</span>
-              <span id="history-count" class="count-pill">0</span>
-            </button>
-            <button
-              type="button"
-              id="tab-btn-trending"
-              class="dashboard-tab-btn"
-              role="tab"
-              aria-selected="false"
-              aria-controls="panel-trending"
-            >
-              <span class="trending-hash font-mono">#</span>
-              <span>Trending</span>
+            <button id="btn-clear-history" class="btn-clear" type="button" style="display: none;">
+              Clear history
             </button>
           </div>
 
-          <button id="btn-clear-history" class="btn-clear" type="button" style="display: none;">
-            Clear history
-          </button>
-        </div>
-
-        <!-- Panel 1: Recent Explains -->
-        <div id="panel-history" role="tabpanel" aria-labelledby="tab-btn-history" class="dashboard-tab-panel">
-          <div id="history-container">
-            <div class="empty-history-card">
-              <div class="empty-icon" aria-hidden="true">📋</div>
-              <h3 class="empty-title">No repositories analyzed yet</h3>
-              <p class="empty-desc">
-                Enter a public repository URL above to generate an architecture breakdown, prerequisites, installation commands, and usage guide.
-              </p>
-              <div class="storage-notice">
-                <span aria-hidden="true">🔒</span>
-                <span>Analysis history is stored locally in this browser</span>
+          <!-- Panel 1: Recent Explains -->
+          <div id="panel-history" role="tabpanel" aria-labelledby="tab-btn-history" class="dashboard-tab-panel">
+            <div id="history-container">
+              <div class="empty-history-card">
+                <div class="empty-icon" aria-hidden="true">📋</div>
+                <h3 class="empty-title">No repositories analyzed yet</h3>
+                <p class="empty-desc">
+                  Enter a public repository URL above to generate an architecture breakdown, prerequisites, installation
+                  commands, and usage guide.
+                </p>
+                <div class="storage-notice">
+                  <span aria-hidden="true">🔒</span>
+                  <span>Analysis history is stored locally in this browser</span>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- Panel 2: #Trending on GitHub -->
+          <div id="panel-trending" role="tabpanel" aria-labelledby="tab-btn-trending" class="dashboard-tab-panel"
+            style="display: none;">
+            <div class="trending-toolbar">
+              <div class="trending-title-group">
+                <h2 class="trending-heading">
+                  <span class="trending-hash-accent">#Trending</span> on GitHub
+                </h2>
+                <span class="trending-caption">Top 5 breakout repositories across the ecosystem</span>
+              </div>
+
+              <!-- Sort By Period Switcher -->
+              <div class="trending-period-switcher" role="group" aria-label="Trending timeframe">
+                <button type="button" class="period-pill active" data-period="today" aria-pressed="true">
+                  Today
+                </button>
+                <button type="button" class="period-pill" data-period="week" aria-pressed="false">
+                  This Week
+                </button>
+                <button type="button" class="period-pill" data-period="month" aria-pressed="false">
+                  This Month
+                </button>
+              </div>
+            </div>
+
+            <!-- Dynamic Trending List Container -->
+            <div id="trending-container" class="trending-list-wrapper" aria-live="polite">
+              <div class="trending-loading-state">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>Loading top trending repositories...</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Analysis Progress Modal (GITEX-012) -->
+        <div id="progress-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="progress-title"
+          aria-modal="true">
+          <div class="progress-card">
+            <div class="progress-header">
+              <h3 id="progress-title" class="progress-title">Analyzing Repository</h3>
+              <span id="progress-repo-badge" class="progress-repo-badge font-mono">owner/repo</span>
+            </div>
+
+            <!-- Named Stages Stepper -->
+            <ol class="stage-stepper" id="stage-stepper" aria-label="Analysis named stages">
+              <li class="stage-step-item pending" id="stage-validating" data-stage="Validating">
+                <span class="stage-icon-circle">1</span>
+                <span class="stage-name">Validating repository & provider</span>
+              </li>
+              <li class="stage-step-item pending" id="stage-fetching" data-stage="Fetching">
+                <span class="stage-icon-circle">2</span>
+                <span class="stage-name">Fetching metadata, tree & README</span>
+              </li>
+              <li class="stage-step-item pending" id="stage-processing" data-stage="Processing">
+                <span class="stage-icon-circle">3</span>
+                <span class="stage-name">Processing code context with Repomix</span>
+              </li>
+              <li class="stage-step-item pending" id="stage-analyzing" data-stage="Analyzing">
+                <span class="stage-icon-circle">4</span>
+                <span class="stage-name">Analyzing architecture & dependencies</span>
+              </li>
+              <li class="stage-step-item pending" id="stage-generating" data-stage="Generating">
+                <span class="stage-icon-circle">5</span>
+                <span class="stage-name">Generating technical guide</span>
+              </li>
+            </ol>
+
+            <!-- Current stage message -->
+            <div id="stage-current-message" class="stage-message-text" role="status" aria-live="polite">
+              Initializing analysis pipeline...
+            </div>
+
+            <!-- Error recovery container -->
+            <div id="progress-error-container" class="progress-error-box hidden" role="alert" style="display: none;">
+              <div class="progress-error-title">Analysis Failed</div>
+              <div id="progress-error-text" class="progress-error-msg"></div>
+              <button type="button" id="btn-progress-dismiss" class="btn-secondary"
+                style="margin-top: 0.5rem; align-self: flex-start;">
+                Dismiss & Retry
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Panel 2: #Trending on GitHub -->
-        <div id="panel-trending" role="tabpanel" aria-labelledby="tab-btn-trending" class="dashboard-tab-panel" style="display: none;">
-          <div class="trending-toolbar">
-            <div class="trending-title-group">
-              <h2 class="trending-heading">
-                <span class="trending-hash-accent">#Trending</span> on GitHub
-              </h2>
-              <span class="trending-caption">Top 5 breakout repositories across the ecosystem</span>
+        <!-- Daily Quota Limit Modal -->
+        <div id="quota-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="quota-title"
+          aria-modal="true" style="display: none;">
+          <div class="progress-card quota-card">
+            <div class="quota-icon-wrap" aria-hidden="true">
+              <span class="quota-alert-icon">⏳</span>
             </div>
-
-            <!-- Sort By Period Switcher -->
-            <div class="trending-period-switcher" role="group" aria-label="Trending timeframe">
-              <button type="button" class="period-pill active" data-period="today" aria-pressed="true">
-                Today
-              </button>
-              <button type="button" class="period-pill" data-period="week" aria-pressed="false">
-                This Week
-              </button>
-              <button type="button" class="period-pill" data-period="month" aria-pressed="false">
-                This Month
+            <div class="progress-header"
+              style="text-align: center; justify-content: center; border-bottom: none; padding-bottom: 0;">
+              <h3 id="quota-title" class="progress-title" style="font-size: 1.125rem;">Batas Harian Tercapai</h3>
+            </div>
+            <p id="quota-message" class="quota-desc-text">
+              Anda telah mencapai batas maksimum 5 analisis repositori per hari untuk sesi browser ini. Silakan kembali
+              lagi besok!
+            </p>
+            <div class="quota-badge-container">
+              <span id="quota-count-badge" class="badge badge-amber font-mono">5 / 5 Kuota Harian</span>
+            </div>
+            <div style="margin-top: 1.25rem; display: flex; justify-content: center; width: 100%;">
+              <button type="button" id="btn-quota-dismiss" class="btn-primary"
+                style="min-width: 140px; justify-content: center; height: 38px;">
+                Mengerti
               </button>
             </div>
-          </div>
-
-          <!-- Dynamic Trending List Container -->
-          <div id="trending-container" class="trending-list-wrapper" aria-live="polite">
-            <div class="trending-loading-state">
-              <span class="spinner" aria-hidden="true"></span>
-              <span>Loading top trending repositories...</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Analysis Progress Modal (GITEX-012) -->
-      <div id="progress-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="progress-title" aria-modal="true">
-        <div class="progress-card">
-          <div class="progress-header">
-            <h3 id="progress-title" class="progress-title">Analyzing Repository</h3>
-            <span id="progress-repo-badge" class="progress-repo-badge font-mono">owner/repo</span>
-          </div>
-
-          <!-- Named Stages Stepper -->
-          <ol class="stage-stepper" id="stage-stepper" aria-label="Analysis named stages">
-            <li class="stage-step-item pending" id="stage-validating" data-stage="Validating">
-              <span class="stage-icon-circle">1</span>
-              <span class="stage-name">Validating repository & provider</span>
-            </li>
-            <li class="stage-step-item pending" id="stage-fetching" data-stage="Fetching">
-              <span class="stage-icon-circle">2</span>
-              <span class="stage-name">Fetching metadata, tree & README</span>
-            </li>
-            <li class="stage-step-item pending" id="stage-processing" data-stage="Processing">
-              <span class="stage-icon-circle">3</span>
-              <span class="stage-name">Processing code context with Repomix</span>
-            </li>
-            <li class="stage-step-item pending" id="stage-analyzing" data-stage="Analyzing">
-              <span class="stage-icon-circle">4</span>
-              <span class="stage-name">Analyzing architecture & dependencies</span>
-            </li>
-            <li class="stage-step-item pending" id="stage-generating" data-stage="Generating">
-              <span class="stage-icon-circle">5</span>
-              <span class="stage-name">Generating technical guide</span>
-            </li>
-          </ol>
-
-          <!-- Current stage message -->
-          <div id="stage-current-message" class="stage-message-text" role="status" aria-live="polite">
-            Initializing analysis pipeline...
-          </div>
-
-          <!-- Error recovery container -->
-          <div id="progress-error-container" class="progress-error-box hidden" role="alert" style="display: none;">
-            <div class="progress-error-title">Analysis Failed</div>
-            <div id="progress-error-text" class="progress-error-msg"></div>
-            <button type="button" id="btn-progress-dismiss" class="btn-secondary" style="margin-top: 0.5rem; align-self: flex-start;">
-              Dismiss & Retry
-            </button>
           </div>
         </div>
       </div>
+    </main>
 
-      <!-- Daily Quota Limit Modal -->
-      <div id="quota-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="quota-title" aria-modal="true" style="display: none;">
-        <div class="progress-card quota-card">
-          <div class="quota-icon-wrap" aria-hidden="true">
-            <span class="quota-alert-icon">⏳</span>
-          </div>
-          <div class="progress-header" style="text-align: center; justify-content: center; border-bottom: none; padding-bottom: 0;">
-            <h3 id="quota-title" class="progress-title" style="font-size: 1.125rem;">Batas Harian Tercapai</h3>
-          </div>
-          <p id="quota-message" class="quota-desc-text">
-            Anda telah mencapai batas maksimum 5 analisis repositori per hari untuk sesi browser ini. Silakan kembali lagi besok!
-          </p>
-          <div class="quota-badge-container">
-            <span id="quota-count-badge" class="badge badge-amber font-mono">5 / 5 Kuota Harian</span>
-          </div>
-          <div style="margin-top: 1.25rem; display: flex; justify-content: center; width: 100%;">
-            <button type="button" id="btn-quota-dismiss" class="btn-primary" style="min-width: 140px; justify-content: center; height: 38px;">
-              Mengerti
-            </button>
-          </div>
-        </div>
-      </div>
+    <!-- Transient Toast Notification -->
+    <div id="gitex-toast" class="gitex-toast" role="status" aria-live="polite">
+      <span class="toast-icon">✓</span>
+      <span id="toast-message" class="toast-message"></span>
     </div>
-  </main>
 
-  <!-- Transient Toast Notification -->
-  <div id="gitex-toast" class="gitex-toast" role="status" aria-live="polite">
-    <span class="toast-icon">✓</span>
-    <span id="toast-message" class="toast-message"></span>
-  </div>
-
-  <%- include('partials/footer') %>
-  <script type="module" src="/js/main.js"></script>
+    <%- include('partials/footer') %>
+      <script type="module" src="/js/main.js"></script>
 </body>
+
 </html>
