@@ -2440,8 +2440,18 @@ pre code {
 
 .progress-header {
   display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.progress-header-info {
+  display: flex;
   flex-direction: column;
   gap: 0.375rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .progress-title {
@@ -2687,11 +2697,12 @@ pre code {
 /* Modal Header Close Button */
 .btn-progress-close {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--color-text-secondary);
-  font-size: 1rem;
+  font-size: 1.125rem;
   line-height: 1;
-  padding: 0.25rem 0.5rem;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -2699,11 +2710,13 @@ pre code {
   align-items: center;
   justify-content: center;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .btn-progress-close:hover {
   color: var(--color-text-primary);
   background-color: var(--color-surface-muted);
+  border-color: var(--color-border);
 }
 
 /* Top Floating Background Progress Snackbar (GITEX-012 Enhancement) */

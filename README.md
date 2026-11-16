@@ -319,6 +319,18 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
   - Saat proses analisis selesai di background, snackbar otomatis berganti ke status *Progress Finish* berwarna hijau cerah dengan ikon centang (`✓`) dan tombol cepat *View Analysis*.
   - Di saat yang sama, tombol pada kartu riwayat analisis otomatis bertransisi menjadi aktif (*View Analysis*), siap diklik untuk membuka panduan teknis repositori.
 
+### 19. Penanganan Error Analisis di Background (Auto-Dismiss Snackbar 30 Detik, Auto-Purge Riwayat Gagal, & Modal Error Non-Blocking)
+- **Auto-Dismiss Snackbar Error 30 Detik:** Jika analisis yang berjalan di latar belakang (*background*) mengalami kegagalan, snackbar progres atas otomatis bertransisi ke status kegagalan berwarna merah (`Analysis failed (...)`) dan otomatis menghilang (*auto-dismiss*) setelah 30 detik.
+- **Pembersihan Otomatis Repositori Gagal dari Riwayat (Auto-Purge History):** Repositori yang gagal dianalisis otomatis langsung dihapus dari LocalStorage (*Recent Explains*) menggunakan `tempId` dan normalisasi URL repositori, sehingga tidak pernah meninggalkan kartu `Generating...` macet atau rekaman rusak di browser pengguna.
+- **Tampilan Progres Terakhir & Detail Error saat Snackbar Diklik:**
+  - Jika pengguna mengklik snackbar sebelum 30 detik berlalu, sistem menampilkan kembali modal progres yang menunjukkan tahap terakhir yang dicapai (tahap sebelumnya tercentang `✓` dan tahap yang gagal ditandai silang merah `✕`), serta kotak keterangan error terperinci.
+  - **Pemberian Kontrol Penutupan Lengkap (Non-Blocking UI):**
+    - Tombol silang tutup (`✕`) yang jelas di pojok kanan atas modal.
+    - Tombol aksi penutupan di dalam kotak error.
+    - Penutupan modal dengan mengklik area latar luar (*backdrop click*).
+    - Dukungan penutupan modal menggunakan tombol keyboard `Escape`.
+  - Setelah modal ditutup, kolom input dan tombol **Explain repository** otomatis kembali aktif dan siap digunakan untuk repositori baru.
+
 ---
 
 ## Documentation

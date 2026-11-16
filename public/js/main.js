@@ -214,6 +214,13 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         stageCurrentMsg.style.display = 'none';
         stageCurrentMsg.textContent = '';
       }
+      if (progressDismissContainer) {
+        progressDismissContainer.style.display = 'none';
+      }
+      if (btnProgressClose) {
+        btnProgressClose.classList.remove('hidden');
+        btnProgressClose.style.display = 'flex';
+      }
 
       const failIdx = STAGES_ORDER.indexOf(currentActiveStage);
       STAGES_ORDER.forEach((stage, idx) => {
@@ -285,15 +292,24 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     }
   }
 
-  function showProgressModal(repoUrl) {
+  function showProgressModal(repoUrl, currentStage, currentMsg) {
     if (!progressModal) return;
     if (progressRepoBadge) {
-      progressRepoBadge.textContent = repoUrl;
+      progressRepoBadge.textContent = repoUrl || 'Repository';
     }
+    const stage = currentStage || 'Validating';
+    const msg = currentMsg || (stage === 'Validating' ? 'Validating repository URL...' : '');
+
     if (stageCurrentMsg) {
-      stageCurrentMsg.classList.remove('hidden');
-      stageCurrentMsg.style.display = 'block';
-      stageCurrentMsg.textContent = 'Validating repository URL...';
+      if (msg) {
+        stageCurrentMsg.classList.remove('hidden');
+        stageCurrentMsg.style.display = 'block';
+        stageCurrentMsg.textContent = msg;
+      } else {
+        stageCurrentMsg.classList.add('hidden');
+        stageCurrentMsg.style.display = 'none';
+        stageCurrentMsg.textContent = '';
+      }
     }
     if (progressErrorContainer) {
       progressErrorContainer.classList.add('hidden');
@@ -303,13 +319,18 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       progressErrorText.textContent = '';
     }
     if (progressDismissContainer) {
-      progressDismissContainer.style.display = 'none';
+      progressDismissContainer.style.display = stage === 'Generating' ? 'block' : 'none';
     }
     if (btnProgressClose) {
-      btnProgressClose.classList.add('hidden');
-      btnProgressClose.style.display = 'none';
+      if (stage === 'Generating') {
+        btnProgressClose.classList.remove('hidden');
+        btnProgressClose.style.display = 'flex';
+      } else {
+        btnProgressClose.classList.add('hidden');
+        btnProgressClose.style.display = 'none';
+      }
     }
-    updateStageUI('Validating', 'Validating repository URL...');
+    updateStageUI(stage, msg);
     progressModal.classList.remove('hidden');
   }
 
@@ -329,12 +350,71 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       stageCurrentMsg.style.display = 'none';
       stageCurrentMsg.textContent = '';
     }
+    if (progressDismissContainer) {
+      progressDismissContainer.style.display = 'none';
+    }
+    if (btnProgressClose) {
+      btnProgressClose.classList.remove('hidden');
+      btnProgressClose.style.display = 'flex';
+    }
     if (progressErrorContainer && progressErrorText) {
       progressErrorText.textContent = text;
       progressErrorContainer.classList.remove('hidden');
       progressErrorContainer.style.display = 'flex';
     }
     updateStageUI('Failed', text);
+  }
+
+  function showFailedProgressModal(analysis) {
+    if (!progressModal || !analysis) return;
+    progressModal.classList.remove('hidden');
+
+    if (progressRepoBadge) {
+      progressRepoBadge.textContent = analysis.url || 'Repository';
+    }
+
+    if (btnProgressClose) {
+      btnProgressClose.classList.remove('hidden');
+      btnProgressClose.style.display = 'flex';
+    }
+
+    if (progressDismissContainer) {
+      progressDismissContainer.style.display = 'none';
+    }
+
+    if (stageCurrentMsg) {
+      stageCurrentMsg.classList.add('hidden');
+      stageCurrentMsg.style.display = 'none';
+      stageCurrentMsg.textContent = '';
+    }
+
+    if (progressErrorContainer && progressErrorText) {
+      progressErrorText.textContent = analysis.errorMessage || 'An error occurred during analysis.';
+      progressErrorContainer.classList.remove('hidden');
+      progressErrorContainer.style.display = 'flex';
+    }
+
+    const failedStageName = analysis.failedStage || currentActiveStage || 'Validating';
+    const failedIdx = Math.max(0, STAGES_ORDER.indexOf(failedStageName));
+
+    STAGES_ORDER.forEach((stage, idx) => {
+      const el = document.getElementById(`stage-${stage.toLowerCase()}`);
+      if (!el) return;
+
+      el.classList.remove('pending', 'active', 'complete', 'failed');
+      const icon = el.querySelector('.stage-icon-circle');
+
+      if (idx === failedIdx) {
+        el.classList.add('failed');
+        if (icon) icon.textContent = '✕';
+      } else if (idx < failedIdx) {
+        el.classList.add('complete');
+        if (icon) icon.textContent = '✓';
+      } else {
+        el.classList.add('pending');
+        if (icon) icon.textContent = String(idx + 1);
+      }
+    });
   }
 
   // -------------------------------------------------------------
@@ -438,17 +518,71 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       snackbarIcon.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
     }
     if (snackbarStatusText) {
-      snackbarStatusText.textContent = `Analysis failed (${errorMsg || 'Error'}). Click to retry.`;
+      snackbarStatusText.textContent = `Analysis failed (${errorMsg || 'Error'}). Click to view details.`;
     }
+
+    // Auto dismiss after 30 seconds as requested
+    snackbarHideTimeout = setTimeout(() => {
+      hideProgressSnackbar();
+    }, 30000);
   }
 
   function hideProgressSnackbar() {
     if (!progressSnackbar) return;
+    if (snackbarHideTimeout) clearTimeout(snackbarHideTimeout);
     progressSnackbar.classList.remove('show');
     setTimeout(() => {
       progressSnackbar.classList.add('hidden');
       progressSnackbar.style.display = 'none';
     }, 300);
+  }
+
+  function purgeFailedAnalysisFromHistory() {
+    if (!currentRunningAnalysis) return;
+    try {
+      if (currentRunningAnalysis.tempId && window.GitExHistory) {
+        window.GitExHistory.delete(currentRunningAnalysis.tempId);
+      }
+      if (currentRunningAnalysis.url && window.GitExHistory) {
+        window.GitExHistory.deleteByUrl(currentRunningAnalysis.url);
+      }
+      if (!window.GitExHistory) {
+        const urlNorm = (u) => String(u || '').trim().toLowerCase().replace(/\.git$/i, '').replace(/\/+$/, '');
+        const cleanTarget = urlNorm(currentRunningAnalysis.url);
+        let list = getHistory().filter((item) => {
+          if (currentRunningAnalysis.tempId && item.id === currentRunningAnalysis.tempId) return false;
+          if (cleanTarget && urlNorm(item.url) === cleanTarget) return false;
+          return true;
+        });
+        localStorage.setItem('gitex_history', JSON.stringify(list));
+      }
+      renderHistory();
+    } catch (err) {
+      console.warn('[GitEx] Failed to purge failed analysis from history:', err);
+    }
+  }
+
+  function handleAnalysisFailure(errorMsg) {
+    const text = (typeof errorMsg === 'string' && errorMsg.trim()) ? errorMsg.trim() : 'An error occurred during analysis. Please try again.';
+
+    if (currentRunningAnalysis) {
+      currentRunningAnalysis.isFailed = true;
+      currentRunningAnalysis.failedStage = currentRunningAnalysis.stage || currentActiveStage || 'Validating';
+      currentRunningAnalysis.errorMessage = text;
+    }
+
+    // 1. Automatically purge the failed repository from recent analysis history
+    purgeFailedAnalysisFromHistory();
+
+    // 2. Re-enable explain button and reset input state
+    finishRunningAnalysisUI(false);
+
+    // 3. Show error either in snackbar (if dismissed) or in modal dialog (if open)
+    if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
+      updateProgressSnackbarFailed(text);
+    } else {
+      showProgressError(text);
+    }
   }
 
   function finishRunningAnalysisUI(isSuccess) {
@@ -514,8 +648,17 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   if (btnProgressBackground) {
     btnProgressBackground.addEventListener('click', dismissToBackground);
   }
+
   if (btnProgressClose) {
-    btnProgressClose.addEventListener('click', dismissToBackground);
+    btnProgressClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed && currentRunningAnalysis.stage === 'Generating') {
+        dismissToBackground();
+      } else {
+        hideProgressModal();
+        setLoadingState(false);
+      }
+    });
   }
 
   if (progressSnackbar) {
@@ -525,8 +668,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       }
       if (currentRunningAnalysis && currentRunningAnalysis.isCompleted && currentRunningAnalysis.completedRecord) {
         window.location.href = `/analysis/${encodeURIComponent(currentRunningAnalysis.completedRecord.id)}`;
+      } else if (currentRunningAnalysis && currentRunningAnalysis.isFailed) {
+        // Show failed progress modal with error and close options
+        showFailedProgressModal(currentRunningAnalysis);
       } else if (currentRunningAnalysis) {
-        // Re-open progress modal
+        // Re-open active progress modal
         currentRunningAnalysis.isDismissed = false;
         hideProgressSnackbar();
         showProgressModal(currentRunningAnalysis.url);
@@ -549,6 +695,34 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       if (urlInput) urlInput.focus();
     });
   }
+
+  // Allow dismissing progress modal by clicking outside the card (on backdrop)
+  if (progressModal) {
+    progressModal.addEventListener('click', (e) => {
+      if (e.target === progressModal) {
+        if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed && currentRunningAnalysis.stage === 'Generating') {
+          dismissToBackground();
+        } else {
+          hideProgressModal();
+          setLoadingState(false);
+        }
+      }
+    });
+  }
+
+  // Allow dismissing progress modal with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (progressModal && !progressModal.classList.contains('hidden')) {
+        if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed && currentRunningAnalysis.stage === 'Generating') {
+          dismissToBackground();
+        } else {
+          hideProgressModal();
+          setLoadingState(false);
+        }
+      }
+    }
+  });
 
   if (urlInput) {
     urlInput.addEventListener('input', () => {
@@ -670,11 +844,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           }
         } catch (e) {
           console.error('[GitEx] Complete event parse error:', e);
-          if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
-            updateProgressSnackbarFailed('Failed to process completed record.');
-          } else {
-            showProgressError('Failed to process completed analysis record.');
-          }
+          handleAnalysisFailure('Failed to process completed analysis record.');
         }
       });
 
@@ -688,14 +858,8 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           }
         } catch {}
 
-        finishRunningAnalysisUI(false);
-
-        if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
-          updateProgressSnackbarFailed(msg);
-        } else {
-          showProgressError(msg);
-        }
         try { eventSource.close(); } catch {}
+        handleAnalysisFailure(msg);
       });
 
       // Native browser EventSource error (triggers on network disconnect / drop)
@@ -744,14 +908,9 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         }
 
         if (!isCompleted) {
-          finishRunningAnalysisUI(false);
           const errMsg = 'Connection to analysis stream lost. Please check your network or try again.';
-          if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
-            updateProgressSnackbarFailed(errMsg);
-          } else {
-            showProgressError(errMsg);
-          }
           try { eventSource.close(); } catch {}
+          handleAnalysisFailure(errMsg);
         }
       };
 
@@ -791,11 +950,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           window.location.href = `/analysis/${encodeURIComponent(data.data.id)}`;
         }
       } catch (postErr) {
-        if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
-          updateProgressSnackbarFailed(postErr.message);
-        } else {
-          showProgressError(postErr.message);
-        }
+        handleAnalysisFailure(postErr.message);
       }
     }
   }
@@ -804,7 +959,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     repoForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted) {
+      if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed) {
         showValidationError('An analysis is already in progress in the background. Please wait for it to finish.');
         return;
       }
