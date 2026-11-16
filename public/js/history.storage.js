@@ -182,12 +182,15 @@ export const GitExHistory = {
     const cleanRecord = sanitizeRecordForStorage(record);
     let list = this.getAll();
 
-    // Deduplicate: remove existing entry with same id OR (same normalized URL and revision)
-    list = list.filter(
-      (item) =>
-        item.id !== cleanRecord.id &&
-        !(item.url.toLowerCase() === cleanRecord.url.toLowerCase() && item.revision === cleanRecord.revision)
-    );
+    // Deduplicate: remove any existing entry with same id OR same repository URL (regardless of revision or temp status)
+    const normalizeUrl = (u) => String(u || '').trim().toLowerCase().replace(/\.git$/i, '').replace(/\/+$/, '');
+    const cleanNormUrl = normalizeUrl(cleanRecord.url);
+
+    list = list.filter((item) => {
+      if (item.id === cleanRecord.id) return false;
+      if (cleanNormUrl && normalizeUrl(item.url) === cleanNormUrl) return false;
+      return true;
+    });
 
     list.unshift(cleanRecord);
 

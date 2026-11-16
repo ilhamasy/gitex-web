@@ -289,22 +289,20 @@ a {
   inset: -1px;
   padding: 1px;
   border-radius: calc(var(--radius-sm) + 1px);
-  background: conic-gradient(
-    from var(--url-border-angle),
-    transparent 0deg,
-    color-mix(in srgb, var(--color-accent) 25%, transparent) 30deg,
-    color-mix(in srgb, var(--color-accent) 80%, transparent) 70deg,
-    var(--color-accent) 90deg,
-    color-mix(in srgb, var(--color-accent) 80%, transparent) 110deg,
-    color-mix(in srgb, var(--color-accent) 25%, transparent) 150deg,
-    transparent 180deg,
-    color-mix(in srgb, var(--color-accent) 25%, transparent) 210deg,
-    color-mix(in srgb, var(--color-accent) 80%, transparent) 250deg,
-    var(--color-accent) 270deg,
-    color-mix(in srgb, var(--color-accent) 80%, transparent) 290deg,
-    color-mix(in srgb, var(--color-accent) 25%, transparent) 330deg,
-    transparent 360deg
-  );
+  background: conic-gradient(from var(--url-border-angle),
+      transparent 0deg,
+      color-mix(in srgb, var(--color-accent) 25%, transparent) 30deg,
+      color-mix(in srgb, var(--color-accent) 80%, transparent) 70deg,
+      var(--color-accent) 90deg,
+      color-mix(in srgb, var(--color-accent) 80%, transparent) 110deg,
+      color-mix(in srgb, var(--color-accent) 25%, transparent) 150deg,
+      transparent 180deg,
+      color-mix(in srgb, var(--color-accent) 25%, transparent) 210deg,
+      color-mix(in srgb, var(--color-accent) 80%, transparent) 250deg,
+      var(--color-accent) 270deg,
+      color-mix(in srgb, var(--color-accent) 80%, transparent) 290deg,
+      color-mix(in srgb, var(--color-accent) 25%, transparent) 330deg,
+      transparent 360deg);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -324,6 +322,7 @@ a {
   from {
     --url-border-angle: 0deg;
   }
+
   to {
     --url-border-angle: 360deg;
   }
@@ -2142,7 +2141,9 @@ pre code {
 }
 
 @media (max-width: 768px) {
-  html, body {
+
+  html,
+  body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;

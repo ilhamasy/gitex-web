@@ -451,14 +451,45 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     }, 300);
   }
 
+  function finishRunningAnalysisUI(isSuccess) {
+    if (analyzeBtn) {
+      analyzeBtn.disabled = false;
+      analyzeBtn.removeAttribute('aria-disabled');
+      analyzeBtn.innerHTML = '<span>Explain repository</span>';
+    }
+    if (urlInput) {
+      urlInput.disabled = false;
+    }
+    if (pasteBtn) {
+      pasteBtn.disabled = false;
+    }
+  }
+
   function dismissToBackground() {
     if (!currentRunningAnalysis) return;
     currentRunningAnalysis.isDismissed = true;
 
     hideProgressModal();
-    setLoadingState(false);
 
-    // Save temporary generating record to LocalStorage
+    // 1. Clear input URL field and reset validation
+    if (urlInput) {
+      urlInput.value = '';
+      urlInput.disabled = false;
+      updateBadge(null);
+      clearValidation();
+    }
+    if (pasteBtn) {
+      pasteBtn.disabled = false;
+    }
+
+    // 2. Temporarily disable the Explain repository button while in background
+    if (analyzeBtn) {
+      analyzeBtn.disabled = true;
+      analyzeBtn.setAttribute('aria-disabled', 'true');
+      analyzeBtn.innerHTML = '<span>Explain repository</span>';
+    }
+
+    // 3. Save temporary generating record to LocalStorage
     const tempRecord = {
       id: currentRunningAnalysis.tempId || `temp-${Date.now()}`,
       url: currentRunningAnalysis.url,
@@ -524,6 +555,12 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       clearValidation();
       const detected = detectProviderPreview(urlInput.value);
       updateBadge(detected);
+
+      // Keep explain button disabled if an analysis is actively running in background
+      if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && analyzeBtn) {
+        analyzeBtn.disabled = true;
+        analyzeBtn.setAttribute('aria-disabled', 'true');
+      }
     });
   }
 
@@ -618,6 +655,8 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
             currentRunningAnalysis.completedRecord = record;
           }
 
+          finishRunningAnalysisUI(true);
+
           // Save fresh record to local history (replaces any temporary in-progress record)
           saveRecordToHistory(record);
 
@@ -648,6 +687,8 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
             msg = data.message || msg;
           }
         } catch {}
+
+        finishRunningAnalysisUI(false);
 
         if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
           updateProgressSnackbarFailed(msg);
@@ -685,6 +726,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
                   currentRunningAnalysis.completedRecord = checkData.data;
                 }
 
+                finishRunningAnalysisUI(true);
                 saveRecordToHistory(checkData.data);
 
                 if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
@@ -702,6 +744,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         }
 
         if (!isCompleted) {
+          finishRunningAnalysisUI(false);
           const errMsg = 'Connection to analysis stream lost. Please check your network or try again.';
           if (currentRunningAnalysis && currentRunningAnalysis.isDismissed) {
             updateProgressSnackbarFailed(errMsg);
@@ -761,6 +804,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     repoForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted) {
+        showValidationError('An analysis is already in progress in the background. Please wait for it to finish.');
+        return;
+      }
+
       if (isDailyQuotaExceeded()) {
         showQuotaModal();
         return;
@@ -797,10 +845,29 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   }
 
   function saveRecordToHistory(record) {
+    if (!record) return;
+
     if (window.GitExHistory) {
+      // 1. Explicitly purge temporary in-progress record if one exists
+      if (currentRunningAnalysis && currentRunningAnalysis.tempId && currentRunningAnalysis.tempId !== record.id) {
+        window.GitExHistory.delete(currentRunningAnalysis.tempId);
+      }
+      // 2. Explicitly purge any existing record with the same repository URL
+      if (record.url) {
+        window.GitExHistory.deleteByUrl(record.url);
+      }
       window.GitExHistory.save(record);
     } else {
       let list = getHistory();
+      const normalizeUrl = (u) => String(u || '').trim().toLowerCase().replace(/\.git$/i, '').replace(/\/+$/, '');
+      const cleanNormUrl = normalizeUrl(record.url);
+
+      list = list.filter((item) => {
+        if (item.id === record.id) return false;
+        if (currentRunningAnalysis && currentRunningAnalysis.tempId && item.id === currentRunningAnalysis.tempId) return false;
+        if (cleanNormUrl && normalizeUrl(item.url) === cleanNormUrl) return false;
+        return true;
+      });
       list.unshift(record);
       try {
         localStorage.setItem('gitex_history', JSON.stringify(list));
@@ -1263,6 +1330,27 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       }
     }
   }
+
+  // Prune any stale / orphaned generating records from interrupted sessions
+  function pruneStaleGeneratingRecords() {
+    try {
+      const items = getHistory();
+      const staleItems = items.filter(item => item.status === 'generating');
+      if (staleItems.length > 0) {
+        if (window.GitExHistory) {
+          staleItems.forEach(item => {
+            window.GitExHistory.delete(item.id);
+            if (item.url) window.GitExHistory.deleteByUrl(item.url);
+          });
+        } else {
+          const cleaned = items.filter(item => item.status !== 'generating');
+          localStorage.setItem('gitex_history', JSON.stringify(cleaned));
+        }
+      }
+    } catch {}
+  }
+
+  pruneStaleGeneratingRecords();
 
   // Initial render of history and tab activation
   // Requirement: If recent analysis empty (0 items), only tab Trending should be active!

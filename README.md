@@ -305,9 +305,13 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
 
 ### 18. Peningkatan Alur Analisis Asinkron (Dismiss to Background & Sticky Progress Snackbar)
 - **Tombol Dismiss pada Tahap Generating:** Mengingat tahap ke-5 (*Generating technical guide*) membutuhkan waktu pemrosesan AI, pengguna kini diberikan opsi untuk menutup modal dialog (*Dismiss & Run in Background*) tanpa membatalkan proses analisis yang sedang berjalan.
-- **Kartu Riwayat Berstatus Generating dengan Animasi Circular:**
-  - Begitu modal di-dismiss, repositori langsung tercatat di daftar *Recent Explains* (riwayat lokal browser).
-  - Tombol aksi pada kartu tersebut berstatus *disabled* dan menampilkan animasi *circular spinner* (`Generating...`), menandakan proses masih berjalan dan belum bisa lanjut ke halaman detail analisis.
+- **Pembersihan Kolom URL & Penonaktifan Tombol Explain Sementara:**
+  - Begitu tombol dismiss ditekan, kolom input URL otomatis dikosongkan (*cleared*).
+  - Tombol **Explain repository** dinonaktifkan sementara (*disabled*) selama proses analisis di background belum rampung untuk mencegah konflik eksekusi ganda, dan otomatis aktif kembali saat analisis selesai atau gagal.
+- **Kartu Riwayat Berstatus Generating & Pencegahan Duplikasi:**
+  - Repositori yang sedang digenerate tercatat di daftar *Recent Explains* dengan tombol aksi berstatus *disabled* dan animasi *circular spinner* (`Generating...`).
+  - Diterapkan deduplikasi ketat berbasis normalisasi URL repositori di `GitExHistory`: saat rekaman analisis final tiba, rekaman sementara berstatus `generating` otomatis dihapus bersih dan digantikan oleh rekaman lengkap tanpa duplikasi baris.
+  - Ditambahkan fungsi pembersihan otomatis (*prune*) rekam jejak `generating` basi/yatim dari sesi terinterupsi saat halaman pertama kali dimuat.
 - **Top Sticky Progress Snackbar:**
   - Snackbar melayang di bagian atas halaman menampilkan nama repositori dan status progres secara real-time dengan animasi circular loader.
   - Bersifat interaktif: mengklik snackbar akan membuka kembali modal dialog progres lengkap (stepper tahap 1–5) yang sedang aktif.
