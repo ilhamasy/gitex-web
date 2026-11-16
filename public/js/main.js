@@ -422,6 +422,9 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
   // -------------------------------------------------------------
   let currentRunningAnalysis = null;
   let snackbarHideTimeout = null;
+  let activeEventSource = null;
+  let activePollingCancel = false;
+  let activeAbortController = null;
 
   function extractRepoMetaFromUrl(rawUrl) {
     const url = (rawUrl || '').trim();
@@ -599,6 +602,24 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     }
   }
 
+  function cancelActiveAnalysis(reason) {
+    activePollingCancel = true;
+    if (activeEventSource) {
+      try { activeEventSource.close(); } catch {}
+      activeEventSource = null;
+    }
+    if (activeAbortController) {
+      try { activeAbortController.abort(); } catch {}
+      activeAbortController = null;
+    }
+    purgeFailedAnalysisFromHistory();
+    hideProgressModal();
+    hideProgressSnackbar();
+    setLoadingState(false);
+    finishRunningAnalysisUI(false);
+    currentRunningAnalysis = null;
+  }
+
   function dismissToBackground() {
     if (!currentRunningAnalysis) return;
     currentRunningAnalysis.isDismissed = true;
@@ -655,8 +676,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed && currentRunningAnalysis.stage === 'Generating') {
         dismissToBackground();
       } else {
-        hideProgressModal();
-        setLoadingState(false);
+        cancelActiveAnalysis('User closed modal');
       }
     });
   }
@@ -690,8 +710,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
 
   if (btnProgressDismiss) {
     btnProgressDismiss.addEventListener('click', () => {
-      hideProgressModal();
-      setLoadingState(false);
+      cancelActiveAnalysis('User clicked dismiss');
       if (urlInput) urlInput.focus();
     });
   }
@@ -703,8 +722,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed && currentRunningAnalysis.stage === 'Generating') {
           dismissToBackground();
         } else {
-          hideProgressModal();
-          setLoadingState(false);
+          cancelActiveAnalysis('User clicked backdrop');
         }
       }
     });
@@ -717,8 +735,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed && currentRunningAnalysis.stage === 'Generating') {
           dismissToBackground();
         } else {
-          hideProgressModal();
-          setLoadingState(false);
+          cancelActiveAnalysis('User pressed Escape');
         }
       }
     }
@@ -758,10 +775,28 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
    * Runs the full analysis pipeline using Server-Sent Events (SSE)
    */
   async function startAnalysis(rawUrl) {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      showValidationError('No internet connection. Please check your network and try again.');
+      setLoadingState(false);
+      finishRunningAnalysisUI(false);
+      return;
+    }
+
     if (isDailyQuotaExceeded()) {
       showQuotaModal();
       return;
     }
+
+    // Cancel any previous active stream or polling loop
+    activePollingCancel = false;
+    if (activeEventSource) {
+      try { activeEventSource.close(); } catch {}
+      activeEventSource = null;
+    }
+    if (activeAbortController) {
+      try { activeAbortController.abort(); } catch {}
+    }
+    activeAbortController = new AbortController();
 
     // Increment daily quota count for this session
     incrementDailyQuotaUsage();
@@ -789,13 +824,14 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     clearValidation();
 
     const streamUrl = `/api/analyze/stream?url=${encodeURIComponent(rawUrl)}&fresh=true`;
-    let eventSource = null;
     let isCompleted = false;
 
     try {
-      eventSource = new EventSource(streamUrl);
+      activeEventSource = new EventSource(streamUrl);
+      const eventSource = activeEventSource;
 
       eventSource.addEventListener('stage', (event) => {
+        if (activePollingCancel) return;
         try {
           const payload = JSON.parse(event.data);
           if (currentRunningAnalysis) {
@@ -812,9 +848,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       });
 
       eventSource.addEventListener('complete', (event) => {
+        if (activePollingCancel) return;
         isCompleted = true;
         // Close eventSource immediately to prevent browser from firing 'error' on stream end
         try { eventSource.close(); } catch {}
+        activeEventSource = null;
 
         try {
           if (progressErrorContainer) {
@@ -850,6 +888,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
 
       // Custom pipeline error event from server
       eventSource.addEventListener('pipeline-error', (event) => {
+        if (activePollingCancel) return;
         let msg = 'Analysis failed.';
         try {
           if (event.data) {
@@ -859,6 +898,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         } catch {}
 
         try { eventSource.close(); } catch {}
+        activeEventSource = null;
         handleAnalysisFailure(msg);
       });
 
@@ -867,23 +907,28 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
       let recoveryPolling = false;
 
       const attemptRecoveryPolling = async () => {
-        if (recoveryPolling || isCompleted) return;
+        if (recoveryPolling || isCompleted || activePollingCancel) return;
         recoveryPolling = true;
 
-        for (let attempt = 1; attempt <= 8; attempt++) {
-          if (isCompleted) break;
-          await new Promise((resolve) => setTimeout(resolve, 2500));
-          if (isCompleted) break;
+        for (let attempt = 1; attempt <= 4; attempt++) {
+          if (isCompleted || activePollingCancel) break;
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          if (isCompleted || activePollingCancel) break;
 
           try {
             const checkRes = await fetch(`/api/analysis?url=${encodeURIComponent(rawUrl)}`, {
               headers: { Accept: 'application/json' },
+              signal: activeAbortController ? activeAbortController.signal : undefined,
             });
             if (checkRes.ok) {
               const checkData = await checkRes.json();
               if (checkData.success && checkData.data && checkData.data.status === 'completed') {
                 isCompleted = true;
                 try { eventSource.close(); } catch {}
+                activeEventSource = null;
 
                 if (currentRunningAnalysis) {
                   currentRunningAnalysis.isCompleted = true;
@@ -904,22 +949,46 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
                 return;
               }
             }
-          } catch {}
+          } catch (fetchErr) {
+            if (fetchErr.name === 'AbortError' || activePollingCancel) return;
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+              break;
+            }
+          }
         }
 
-        if (!isCompleted) {
-          const errMsg = 'Connection to analysis stream lost. Please check your network or try again.';
+        if (!isCompleted && !activePollingCancel) {
+          const errMsg = (typeof navigator !== 'undefined' && navigator.onLine === false)
+            ? 'No internet connection. Please check your network and try again.'
+            : 'Connection to analysis stream lost. Please check your network or try again.';
           try { eventSource.close(); } catch {}
+          activeEventSource = null;
           handleAnalysisFailure(errMsg);
         }
       };
 
       eventSource.addEventListener('error', () => {
-        if (isCompleted) return;
+        if (isCompleted || activePollingCancel) return;
         sseErrorCount++;
 
-        // If the browser is still attempting native reconnect (readyState 0), allow it up to 5s before polling fallback
-        if (eventSource && eventSource.readyState === 0 && sseErrorCount <= 2) {
+        // If offline immediately fail without waiting for polling
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          try { eventSource.close(); } catch {}
+          activeEventSource = null;
+          handleAnalysisFailure('No internet connection. Please check your network and try again.');
+          return;
+        }
+
+        // If native EventSource was CLOSED (readyState 2) and no data received
+        if (eventSource.readyState === 2 && sseErrorCount >= 1) {
+          try { eventSource.close(); } catch {}
+          activeEventSource = null;
+          handleAnalysisFailure('Unable to connect to analysis service. Please check your network connection.');
+          return;
+        }
+
+        // If the browser is still attempting native reconnect (readyState 0), allow it up to 2 attempts before polling fallback
+        if (eventSource.readyState === 0 && sseErrorCount <= 2) {
           return;
         }
 
@@ -934,6 +1003,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: rawUrl, fresh: true }),
+          signal: activeAbortController ? activeAbortController.signal : undefined,
         });
         const data = await response.json();
         if (!response.ok || !data.success) {
@@ -950,6 +1020,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           window.location.href = `/analysis/${encodeURIComponent(data.data.id)}`;
         }
       } catch (postErr) {
+        if (postErr.name === 'AbortError' || activePollingCancel) return;
         handleAnalysisFailure(postErr.message);
       }
     }
@@ -959,8 +1030,37 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
     repoForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      if (currentRunningAnalysis && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed) {
+      const inputVal = (urlInput ? urlInput.value : '').trim();
+
+      // Check if an analysis is actively running in background
+      if (currentRunningAnalysis && currentRunningAnalysis.isDismissed && !currentRunningAnalysis.isCompleted && !currentRunningAnalysis.isFailed) {
+        const norm = (u) => String(u || '').trim().toLowerCase().replace(/\.git$/i, '').replace(/\/+$/, '');
+        if (inputVal && norm(inputVal) === norm(currentRunningAnalysis.url)) {
+          // Re-open progress modal for the currently active background analysis
+          currentRunningAnalysis.isDismissed = false;
+          hideProgressSnackbar();
+          showProgressModal(currentRunningAnalysis.url);
+          updateStageUI(currentRunningAnalysis.stage || 'Generating', currentRunningAnalysis.message);
+          return;
+        }
         showValidationError('An analysis is already in progress in the background. Please wait for it to finish.');
+        return;
+      }
+
+      // If an analysis was in progress but not dismissed to background, cancel it cleanly before starting new one
+      if (currentRunningAnalysis && !currentRunningAnalysis.isDismissed && !currentRunningAnalysis.isCompleted) {
+        cancelActiveAnalysis('Restarted by user');
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        showValidationError('No internet connection. Please check your network and try again.');
+        return;
+      }
+
+      if (isDailyQuotaExceeded()) {
+        showQuotaModal();
+        return;
+      }
         return;
       }
 

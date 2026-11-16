@@ -169,11 +169,11 @@
       <div id="progress-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="progress-title" aria-modal="true">
         <div class="progress-card">
           <div class="progress-header">
-            <div class="progress-header-info">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
               <h3 id="progress-title" class="progress-title">Analyzing Repository</h3>
               <span id="progress-repo-badge" class="progress-repo-badge font-mono">owner/repo</span>
             </div>
-            <button type="button" id="btn-progress-close" class="btn-progress-close hidden" aria-label="Close dialog" title="Close dialog" style="display: none;">
+            <button type="button" id="btn-progress-close" class="btn-progress-close hidden" aria-label="Dismiss to background" title="Dismiss to background" style="display: none;">
               ✕
             </button>
           </div>
@@ -257,6 +257,6 @@
   </div>
 
   <%- include('partials/footer') %>
-  <script type="module" src="/js/main.js?v=gitex-v10"></script>
+  <script type="module" src="/js/main.js?v=gitex-v11"></script>
 </body>
 </html>

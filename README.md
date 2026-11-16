@@ -331,6 +331,12 @@ Berikut adalah rekapitulasi perbaikan dan pembaruan fitur terbaru:
     - Dukungan penutupan modal menggunakan tombol keyboard `Escape`.
   - Setelah modal ditutup, kolom input dan tombol **Explain repository** otomatis kembali aktif dan siap digunakan untuk repositori baru.
 
+### 20. Deteksi Offline Instan & Pembatalan Bersih Analisis (Fix 'Already in Progress' Block)
+- **Deteksi Koneksi Offline Seketika (`navigator.onLine`):** Saat tombol Explain diklik dalam keadaan koneksi internet mati/terputus, sistem langsung menampilkan pesan validasi `No internet connection. Please check your network and try again.` tanpa membuka modal, tanpa mengonsumsi kuota harian, dan tanpa meninggalkan task semu di memori.
+- **Fail-Fast pada Jaringan Terputus:** Jika koneksi internet terputus di tengah stream SSE, koneksi langsung diputus dan menampilkan pesan error informatif seketika tanpa tertahan dalam loop recovery polling yang lama.
+- **Pembatalan Bersih Saat Modal Ditutup (`cancelActiveAnalysis`):** Ketika pengguna menutup modal (via tombol `✕`, backdrop click, tombol Dismiss, atau `Escape`), stream EventSource dan loop polling aktif dibatalkan seketika melalui `AbortController`, serta status `currentRunningAnalysis` dibersihkan (`null`).
+- **Eliminasi Pemblokiran Submit Form:** Saat koneksi internet tersambung kembali dan user menekan Explain lagi, pengecekan background task secara ketat hanya berlaku bila analisis benar-benar berstatus `isDismissed` di background. Jika analisis sebelumnya terputus atau modal ditutup, analisis baru langsung dieksekusi dengan bersih tanpa memunculkan pesan keliru *"An analysis is already in progress in the background"*.
+
 ---
 
 ## Documentation
