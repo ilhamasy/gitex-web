@@ -22,7 +22,12 @@ export class ClaudeProvider extends AIProvider {
   constructor(options = {}) {
     super('anthropic');
     this.apiKey = typeof options.apiKey === 'string' ? options.apiKey : (config.anthropic?.apiKey || '');
-    this.baseUrl = (options.baseUrl || config.anthropic?.baseUrl || 'https://api.anthropic.com').replace(/\/+$/, '');
+    this.baseUrl = (options.baseUrl || config.anthropic?.baseUrl || 'https://api.anthropic.com')
+      .replace(/\/+$/, '')
+      // Anthropic-compatible proxies are commonly published as `.../v1`.
+      // Requests are built as `${baseUrl}/v1/messages`, so a trailing `/v1`
+      // would otherwise produce `/v1/v1/messages` and a 404.
+      .replace(/\/v1$/, '');
     this.model = options.model || config.anthropic?.model || 'claude-3-5-sonnet-20241022';
     this.timeoutMs = options.timeoutMs || config.anthropic?.timeoutMs || 90000;
   }
