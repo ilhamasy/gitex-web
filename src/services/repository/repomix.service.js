@@ -11,9 +11,17 @@ import { RepositoryError } from './repository.errors.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Locate the local repomix binary and cjs script for serverless compatibility
-const REPOMIX_BIN = path.resolve(__dirname, '../../../node_modules/.bin/repomix');
+// Locate the local repomix entry point. The .cjs entry run through the Node
+// binary is preferred on every platform: the extensionless .bin/repomix shim is
+// a POSIX shell script that Windows cannot execFile (ENOENT), which used to
+// silently force the in-memory fallback on Windows.
 const REPOMIX_CJS = path.resolve(__dirname, '../../../node_modules/repomix/bin/repomix.cjs');
+const REPOMIX_BIN = path.resolve(
+  __dirname,
+  process.platform === 'win32'
+    ? '../../../node_modules/.bin/repomix.cmd'
+    : '../../../node_modules/.bin/repomix'
+);
 
 const DEFAULT_TIMEOUT_MS = 15000; // 15 seconds
 const DEFAULT_MAX_BUFFER = 2 * 1024 * 1024; // 2MB max output
@@ -76,7 +84,9 @@ export class RepomixService {
 
         fs.mkdirSync(path.dirname(targetPath), { recursive: true });
         fs.writeFileSync(targetPath, file.content, 'utf8');
-        sourcePaths.push(safeRelativePath);
+        // Report POSIX-style paths so evidence badges and file references match
+        // the paths emitted inside the packed bundle on every platform.
+        sourcePaths.push(safeRelativePath.split(path.sep).join('/'));
       }
 
       if (sourcePaths.length === 0) {
@@ -98,9 +108,9 @@ export class RepomixService {
         '--no-security-check',
       ];
 
-      const binToExec = fs.existsSync(REPOMIX_BIN)
-        ? REPOMIX_BIN
-        : (fs.existsSync(REPOMIX_CJS) ? process.execPath : null);
+      const binToExec = fs.existsSync(REPOMIX_CJS)
+        ? process.execPath
+        : (fs.existsSync(REPOMIX_BIN) ? REPOMIX_BIN : null);
       const binArgs = binToExec === process.execPath ? [REPOMIX_CJS, ...args] : args;
 
       let stdout = '';

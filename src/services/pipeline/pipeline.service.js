@@ -4,6 +4,7 @@ import { TreeFilterService } from '../repository/tree-filter.service.js';
 import { RepomixService } from '../repository/repomix.service.js';
 import { AnalysisService } from '../ai/analysis.service.js';
 import { logger } from '../../utils/logger.js';
+import config from '../../config/index.js';
 
 export const PIPELINE_STAGES = {
   VALIDATING: 'Validating',
@@ -83,7 +84,8 @@ export class PipelineService {
       }
 
       // 4. Stage: Analyzing
-      notify(PIPELINE_STAGES.ANALYZING, 'Analyzing architecture, dependencies, and operational workflows with Gemini...');
+      const aiProviderLabel = config.aiProvider === 'anthropic' ? 'Claude' : 'Gemini';
+      notify(PIPELINE_STAGES.ANALYZING, `Analyzing architecture, dependencies, and operational workflows with ${aiProviderLabel}...`);
 
       // 5. Stage: Generating
       notify(PIPELINE_STAGES.GENERATING, 'Validating schema and generating structured technical guide...');
