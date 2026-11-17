@@ -1061,13 +1061,6 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
         showQuotaModal();
         return;
       }
-        return;
-      }
-
-      if (isDailyQuotaExceeded()) {
-        showQuotaModal();
-        return;
-      }
 
       const rawUrl = (urlInput ? urlInput.value : '').trim();
       if (!rawUrl) {
