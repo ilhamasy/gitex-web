@@ -31,12 +31,18 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.ok(res.text.includes('Explore repositories. Understand technology. Build with confidence.'));
   });
 
-  it('removes workflow, how it works, and footer sections as requested', async () => {
+  it('renders How to Works section with 3 video steps and horizontal connectors', async () => {
     const res = await request(app).get('/');
-    assert.equal(res.text.includes('id="how-it-works"'), false);
+    assert.ok(res.text.includes('id="how-to-works"'));
+    assert.ok(res.text.includes('id="link-scroll-how-to-works"'));
+    assert.ok(res.text.includes('Copy URL Repository'));
+    assert.ok(res.text.includes('Paste and Ingest the Repo'));
+    assert.ok(res.text.includes('Explained'));
+    assert.ok(res.text.includes('assets/github.mp4'));
+    assert.ok(res.text.includes('assets/ingest.mp4'));
+    assert.ok(res.text.includes('assets/documentation.mp4'));
     assert.equal(res.text.includes('id="what-you-get"'), false);
     assert.equal(res.text.includes('id="supported-platforms"'), false);
-    assert.equal(res.text.includes('app-footer'), false);
   });
 
   it('loads Three.js and Vanta.js NET scripts', async () => {

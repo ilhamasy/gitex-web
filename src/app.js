@@ -27,6 +27,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Static files
 app.use(express.static(publicPath));
+app.use('/assets', express.static(path.resolve(process.cwd(), 'assets')));
 
 // Mount routes
 app.use('/', routes);

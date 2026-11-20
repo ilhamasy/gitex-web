@@ -57,11 +57,11 @@
         <div class="header-meta-actions">
           <!-- Language Switcher (EN default / ID) -->
           <div class="lang-switch-group" role="group" aria-label="Language selection">
-            <button type="button" id="btn-lang-en" class="lang-btn <%= (!currentLang || currentLang === 'en') ? 'active' : '' %>" aria-pressed="<%= (!currentLang || currentLang === 'en') ? 'true' : 'false' %>" title="English" onclick="if(window.switchLanguage){window.switchLanguage('en',true);}">
+            <button type="button" id="btn-lang-en" class="lang-btn <%= !isId ? 'active' : '' %>" aria-pressed="<%= !isId ? 'true' : 'false' %>" title="English" onclick="if(window.switchLanguage){window.switchLanguage('en',true);}">
               <span class="flag-icon" aria-hidden="true">🇬🇧</span>
               <span class="lang-label">EN</span>
             </button>
-            <button type="button" id="btn-lang-id" class="lang-btn <%= currentLang === 'id' ? 'active' : '' %>" aria-pressed="<%= currentLang === 'id' ? 'true' : 'false' %>" title="Bahasa Indonesia" onclick="if(window.switchLanguage){window.switchLanguage('id',true);}">
+            <button type="button" id="btn-lang-id" class="lang-btn <%= isId ? 'active' : '' %>" aria-pressed="<%= isId ? 'true' : 'false' %>" title="Bahasa Indonesia" onclick="if(window.switchLanguage){window.switchLanguage('id',true);}">
               <span class="flag-icon" aria-hidden="true">🇮🇩</span>
               <span class="lang-label">ID</span>
             </button>

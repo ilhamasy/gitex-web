@@ -58,10 +58,205 @@
           <p class="landing-hero-subtext font-mono">
             Explore repositories. Understand technology. Build with confidence.
           </p>
+
+          <!-- Scroll Down to How It Works Trigger -->
+          <div class="landing-scroll-indicator-wrap">
+            <a href="#how-to-works" class="landing-scroll-link" id="link-scroll-how-to-works" aria-label="Scroll to How it works">
+              <span class="scroll-label font-mono">How to works</span>
+              <span class="scroll-arrow-down" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14M19 12l-7 7-7-7" />
+                </svg>
+              </span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- How it Works Section -->
+      <section id="how-to-works" class="landing-how-section" aria-labelledby="how-title">
+        <div class="container landing-how-container">
+          <div class="landing-section-header">
+            <div class="landing-hero-badge font-mono">
+              <span class="hero-pulse-dot" aria-hidden="true"></span>
+              <span>HOW IT WORKS</span>
+            </div>
+            <h2 id="how-title" class="landing-section-title">
+              Three steps to understand any codebase
+            </h2>
+            <p class="landing-section-subtitle">
+              From raw repository link to deep interactive technical documentation in seconds.
+            </p>
+          </div>
+
+          <!-- Horizontal Steps Container with Connecting Arrows -->
+          <div class="how-steps-flow">
+            <!-- Step 1: Copy URL Repository -->
+            <div class="how-step-card">
+              <div class="how-video-box">
+                <div class="video-window-bar">
+                  <span class="window-dot red"></span>
+                  <span class="window-dot yellow"></span>
+                  <span class="window-dot green"></span>
+                  <span class="window-title font-mono">github.com</span>
+                </div>
+                <div class="video-media-wrap">
+                  <video src="/assets/github.mp4" autoplay loop muted playsinline preload="auto"></video>
+                </div>
+              </div>
+              <div class="how-step-content">
+                <div class="how-step-num font-mono">STEP 01</div>
+                <h3 class="how-step-title">Copy URL Repository</h3>
+                <p class="how-step-desc">
+                  Find any open-source GitHub or GitLab repository and copy its URL directly from your browser address bar or clone menu.
+                </p>
+              </div>
+            </div>
+
+            <!-- Arrow Right Connector between Step 1 and Step 2 -->
+            <div class="how-step-connector" aria-hidden="true">
+              <svg class="connector-arrow-desktop" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              <svg class="connector-arrow-mobile" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M19 12l-7 7-7-7" />
+              </svg>
+            </div>
+
+            <!-- Step 2: Paste and Ingest the Repo -->
+            <div class="how-step-card">
+              <div class="how-video-box">
+                <div class="video-window-bar">
+                  <span class="window-dot red"></span>
+                  <span class="window-dot yellow"></span>
+                  <span class="window-dot green"></span>
+                  <span class="window-title font-mono">gitex.app/ingest</span>
+                </div>
+                <div class="video-media-wrap">
+                  <video src="/assets/ingest.mp4" autoplay loop muted playsinline preload="auto"></video>
+                </div>
+              </div>
+              <div class="how-step-content">
+                <div class="how-step-num font-mono">STEP 02</div>
+                <h3 class="how-step-title">Paste and Ingest the Repo</h3>
+                <p class="how-step-desc">
+                  Paste the repository URL into GitEx. The pipeline validates provider access, parses the directory tree, and packs source context with Repomix.
+                </p>
+              </div>
+            </div>
+
+            <!-- Arrow Right Connector between Step 2 and Step 3 -->
+            <div class="how-step-connector" aria-hidden="true">
+              <svg class="connector-arrow-desktop" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              <svg class="connector-arrow-mobile" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M19 12l-7 7-7-7" />
+              </svg>
+            </div>
+
+            <!-- Step 3: Explained -->
+            <div class="how-step-card">
+              <div class="how-video-box">
+                <div class="video-window-bar">
+                  <span class="window-dot red"></span>
+                  <span class="window-dot yellow"></span>
+                  <span class="window-dot green"></span>
+                  <span class="window-title font-mono">gitex.app/analysis</span>
+                </div>
+                <div class="video-media-wrap">
+                  <video src="/assets/documentation.mp4" autoplay loop muted playsinline preload="auto"></video>
+                </div>
+              </div>
+              <div class="how-step-content">
+                <div class="how-step-num font-mono">STEP 03</div>
+                <h3 class="how-step-title">Explained</h3>
+                <p class="how-step-desc">
+                  Browse structured architecture flowcharts, 12 canonical documentation sections, and interactive graph explorer perspectives in English or Indonesian.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom CTA -->
+          <div class="how-bottom-cta">
+            <a href="/app" class="btn btn-accent btn-hero-cta">
+              <span>Start Analyzing Now</span>
+              <span class="cta-arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
         </div>
       </section>
     </main>
+
+    <%- include('partials/footer') %>
   </div>
+
+  <script>
+    (function(){
+      // Ensure all step videos autoplay, loop and mute
+      document.querySelectorAll('.how-video-box video').forEach(function(v) {
+        v.muted = true;
+        v.play().catch(function(){});
+      });
+
+      // Smooth scroll on clicking arrow / link
+      var scrollLink = document.getElementById('link-scroll-how-to-works');
+      var howSection = document.getElementById('how-to-works');
+
+      if (scrollLink && howSection) {
+        scrollLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          howSection.scrollIntoView({ behavior: 'smooth' });
+          if (window.history && window.history.pushState) {
+            window.history.pushState(null, '', '#how-to-works');
+          } else {
+            window.location.hash = '#how-to-works';
+          }
+        });
+      }
+
+      // Automatically update URL to #how-to-works when scrolling past hero
+      function onScrollCheck() {
+        if (!howSection) return;
+        var scrollY = window.scrollY || window.pageYOffset;
+        var rect = howSection.getBoundingClientRect();
+        
+        // When section enters the upper viewport
+        if (rect.top <= window.innerHeight * 0.65 && rect.bottom >= 150) {
+          if (window.location.hash !== '#how-to-works') {
+            if (window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', '#how-to-works');
+            }
+          }
+        } else if (scrollY < 60) {
+          if (window.location.hash === '#how-to-works') {
+            if (window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          }
+        }
+      }
+
+      var ticking = false;
+      window.addEventListener('scroll', function() {
+        if (!ticking) {
+          window.requestAnimationFrame(function() {
+            onScrollCheck();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, { passive: true });
+
+      // If initial URL has #how-to-works, smooth scroll on load
+      if (window.location.hash === '#how-to-works' && howSection) {
+        setTimeout(function() {
+          howSection.scrollIntoView({ behavior: 'smooth' });
+        }, 200);
+      }
+    })();
+  </script>
 
   <!-- Three.js + Vanta.js NET Scripts -->
   <script src="/vendor/three.r134.min.js"></script>
