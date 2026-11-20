@@ -20,7 +20,7 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.equal(res.text.includes('id="nav-btn-lang-id"'), false);
   });
 
-  it('renders hero with GitEx[plain], tagline, description, and Get Started CTA', async () => {
+  it('renders hero with GitEx[plain], tagline, description, and Get Started CTA without knowledge engine badge', async () => {
     const res = await request(app).get('/');
     assert.ok(res.text.includes('GitEx<span class="title-bracket">[plain]</span>'));
     assert.ok(res.text.includes('Every Repository, Explained.'));
@@ -29,18 +29,22 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.ok(res.text.includes('Get Started'));
     assert.ok(res.text.includes('href="/app"'));
     assert.ok(res.text.includes('Explore repositories. Understand technology. Build with confidence.'));
+    assert.equal(res.text.includes('REPOSITORY KNOWLEDGE ENGINE'), false);
+    assert.ok(res.text.includes('id="hero"'));
   });
 
-  it('renders How to Works section with 3 video steps and horizontal connectors', async () => {
+  it('renders How to Works section with 3 video steps, back to top arrow up, and without bottom CTA', async () => {
     const res = await request(app).get('/');
     assert.ok(res.text.includes('id="how-to-works"'));
     assert.ok(res.text.includes('id="link-scroll-how-to-works"'));
+    assert.ok(res.text.includes('id="link-scroll-to-hero"'));
     assert.ok(res.text.includes('Copy URL Repository'));
     assert.ok(res.text.includes('Paste and Ingest the Repo'));
     assert.ok(res.text.includes('Explained'));
     assert.ok(res.text.includes('assets/github.mp4'));
     assert.ok(res.text.includes('assets/ingest.mp4'));
     assert.ok(res.text.includes('assets/documentation.mp4'));
+    assert.equal(res.text.includes('Start Analyzing Now'), false);
     assert.equal(res.text.includes('id="what-you-get"'), false);
     assert.equal(res.text.includes('id="supported-platforms"'), false);
   });

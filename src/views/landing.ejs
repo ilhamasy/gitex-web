@@ -25,13 +25,8 @@
 
     <main id="main-content" class="landing-main">
       <!-- Hero Section -->
-      <section class="landing-hero-section" aria-labelledby="hero-title">
+      <section class="landing-hero-section" id="hero" aria-labelledby="hero-title">
         <div class="container landing-hero-container">
-          <div class="landing-hero-badge font-mono">
-            <span class="hero-pulse-dot" aria-hidden="true"></span>
-            <span>REPOSITORY KNOWLEDGE ENGINE</span>
-          </div>
-
           <h1 id="hero-title" class="landing-hero-title">
             GitEx<span class="title-bracket">[plain]</span>
           </h1>
@@ -77,9 +72,14 @@
       <section id="how-to-works" class="landing-how-section" aria-labelledby="how-title">
         <div class="container landing-how-container">
           <div class="landing-section-header">
-            <div class="landing-hero-badge font-mono">
-              <span class="hero-pulse-dot" aria-hidden="true"></span>
-              <span>HOW IT WORKS</span>
+            <div class="how-scroll-up-wrap">
+              <a href="#hero" class="landing-scroll-link landing-scroll-link-up" id="link-scroll-to-hero" aria-label="Back to top">
+                <span class="scroll-arrow-up" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 19V5M5 12l7-7 7 7" />
+                  </svg>
+                </span>
+              </a>
             </div>
             <h2 id="how-title" class="landing-section-title">
               Three steps to understand any codebase
@@ -177,14 +177,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Bottom CTA -->
-          <div class="how-bottom-cta">
-            <a href="/app" class="btn btn-accent btn-hero-cta">
-              <span>Start Analyzing Now</span>
-              <span class="cta-arrow" aria-hidden="true">→</span>
-            </a>
-          </div>
         </div>
       </section>
     </main>
@@ -202,7 +194,9 @@
 
       // Smooth scroll on clicking arrow / link
       var scrollLink = document.getElementById('link-scroll-how-to-works');
+      var scrollUpLink = document.getElementById('link-scroll-to-hero');
       var howSection = document.getElementById('how-to-works');
+      var heroSection = document.getElementById('hero');
 
       if (scrollLink && howSection) {
         scrollLink.addEventListener('click', function(e) {
@@ -212,6 +206,18 @@
             window.history.pushState(null, '', '#how-to-works');
           } else {
             window.location.hash = '#how-to-works';
+          }
+        });
+      }
+
+      if (scrollUpLink && heroSection) {
+        scrollUpLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          heroSection.scrollIntoView({ behavior: 'smooth' });
+          if (window.history && window.history.pushState) {
+            window.history.pushState(null, '', window.location.pathname);
+          } else {
+            window.location.hash = '';
           }
         });
       }
