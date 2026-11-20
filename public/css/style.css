@@ -3238,3 +3238,21 @@ pre code {
     padding: 1rem 0.5rem;
   }
 }
+
+/* Translation Loading Modal (AI Translation Progress) */
+.translation-card {
+  max-width: 440px;
+  text-align: center;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.translation-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(199, 243, 107, 0.15);
+  border-top-color: var(--color-citrus);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0.5rem auto;
+}

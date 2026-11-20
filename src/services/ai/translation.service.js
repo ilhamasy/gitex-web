@@ -95,6 +95,17 @@ ${JSON.stringify(analysis, null, 2)}`;
       };
     });
 
+    if (original.flowchart || translated.flowchart) {
+      const origSec = original.flowchart || {};
+      const transSec = translated.flowchart || {};
+      result.flowchart = {
+        ...origSec,
+        ...transSec,
+        title: SECTION_TITLES_ID.flowchart || 'Diagram Alur Aplikasi',
+        sources: origSec.sources || [],
+      };
+    }
+
     return result;
   }
 

@@ -179,6 +179,8 @@ describe('Language Support & Translation Service (EN / ID)', () => {
     assert.match(html, /🇮🇩/);
     assert.match(html, /id="btn-lang-en"\s+class="lang-btn\s+active"/);
     assert.match(html, /Repository Overview/);
+    assert.match(html, /id="translation-modal"/);
+    assert.match(html, /Menerjemahkan Analisis.../);
   });
 
   it('GET /analysis/:id?lang=id renders Indonesian flag as active and Indonesian titles', async () => {
@@ -190,6 +192,19 @@ describe('Language Support & Translation Service (EN / ID)', () => {
     assert.match(html, /id="btn-lang-id"\s+class="lang-btn\s+active"/);
     assert.match(html, /Ringkasan Repositori/);
     assert.match(html, /Panduan Instalasi/);
+    assert.match(html, /Masalah yang Diselesaikan/);
+    assert.match(html, /Tujuan Utama/);
+    assert.match(html, /Pengguna Sasaran/);
+  });
+
+  it('GET /api/analysis?url=... recovers record matching URL from cache', async () => {
+    const res = await request(app)
+      .get('/api/analysis?url=https://github.com/expressjs/express')
+      .expect(200);
+
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.data.id, 'i18n-test-record-123');
+    assert.equal(res.body.data.fullName, 'expressjs/express');
   });
 
   it('preserves feature/component names (Settings Manager, Pointer System, CLI Installer) while translating explanations', () => {

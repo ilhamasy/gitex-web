@@ -41,6 +41,7 @@
 </head>
 <body class="analysis-page">
   <%- include('partials/header') %>
+  <% const isId = (typeof currentLang !== 'undefined' && currentLang === 'id'); %>
 
   <!-- Top Analysis Identity Bar -->
   <header class="analysis-header-bar" id="analysis-top">
@@ -50,7 +51,7 @@
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
-          <span>Dashboard</span>
+          <span><%= isId ? 'Dasbor' : 'Dashboard' %></span>
         </a>
 
         <div class="header-meta-actions">
@@ -81,23 +82,12 @@
               } catch(e) {}
             })();
 
-            window.switchLanguage = window.switchLanguage || function(targetLang) {
-              try {
-                localStorage.setItem('gitex_lang', targetLang);
-                var isId = (targetLang === 'id');
-                var btnEn = document.getElementById('btn-lang-en');
-                var btnId = document.getElementById('btn-lang-id');
-                if (btnEn && btnId) {
-                  btnEn.classList.toggle('active', !isId);
-                  btnEn.setAttribute('aria-pressed', !isId ? 'true' : 'false');
-                  btnId.classList.toggle('active', isId);
-                  btnId.setAttribute('aria-pressed', isId ? 'true' : 'false');
-                }
-                var url = new URL(window.location.href);
-                if (isId) url.searchParams.set('lang', 'id');
-                else url.searchParams.delete('lang');
-                window.location.href = url.toString();
-              } catch(e) {}
+            window.switchLanguage = function(targetLang, showNotification) {
+              if (typeof window._gitexSwitchLanguage === 'function') {
+                window._gitexSwitchLanguage(targetLang, showNotification);
+              } else {
+                window._pendingLangSwitch = targetLang;
+              }
             };
           </script>
 
@@ -106,7 +96,7 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
               </svg>
-              <span class="btn-text">View on <%= record.provider === 'gitlab' ? 'GitLab' : 'GitHub' %></span>
+              <span class="btn-text"><%= isId ? ('Lihat di ' + (record.provider === 'gitlab' ? 'GitLab' : 'GitHub')) : ('View on ' + (record.provider === 'gitlab' ? 'GitLab' : 'GitHub')) %></span>
             </a>
           <% } %>
 
@@ -114,21 +104,21 @@
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
             </svg>
-            <span class="btn-text">Copy Markdown</span>
+            <span class="btn-text"><%= isId ? 'Salin Markdown' : 'Copy Markdown' %></span>
           </button>
           
           <button type="button" id="btn-reanalyze" class="appbar-btn btn-reanalyze" title="Re-run analysis for this repository">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
-            <span class="btn-text">Re-analyze</span>
+            <span class="btn-text"><%= isId ? 'Analisis Ulang' : 'Re-analyze' %></span>
           </button>
 
           <button type="button" id="btn-delete-analysis" class="appbar-btn btn-delete-analysis" title="Delete this analysis and start fresh">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
-            <span class="btn-text">Delete</span>
+            <span class="btn-text"><%= isId ? 'Hapus' : 'Delete' %></span>
           </button>
         </div>
       </div>
@@ -357,7 +347,7 @@
     <!-- Left Navigation Rail (Table of Contents) -->
     <nav class="analysis-toc-rail" id="toc-rail" aria-label="Analysis Sections">
       <div class="toc-header">
-        <span>Table of Contents</span>
+        <span><%= isId ? 'Daftar Isi' : 'Table of Contents' %></span>
         <button type="button" id="btn-close-mobile-toc" class="btn-close-mobile-toc" aria-label="Close table of contents" onclick="window.toggleGitExMobileToc(false)">✕</button>
       </div>
       <ol class="toc-list" id="toc-list">
@@ -386,14 +376,14 @@
               <h2 id="heading-overview" class="section-title"><%= overview.title || 'Repository Overview' %></h2>
             </div>
             <% if (overview.isIncomplete || overview.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
             <% if (overview.isIncomplete || overview.status === 'not_documented') { %>
               <div class="section-incomplete-notice">
                 <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <span>Repository overview could not be verified from repository documentation.</span>
+                <span><%= isId ? 'Ringkasan repositori tidak dapat diverifikasi dari dokumentasi.' : 'Repository overview could not be verified from repository documentation.' %></span>
               </div>
             <% } %>
             <% if (overview.summary && hasContent(overview.summary)) { %>
@@ -403,14 +393,14 @@
             <% } %>
 
             <% if (overview.problemSolved && hasContent(overview.problemSolved)) { %>
-              <h3>Problem Solved</h3>
+              <h3><%= isId ? 'Masalah yang Diselesaikan' : 'Problem Solved' %></h3>
               <div class="prose-block">
                 <%- markdownService.render(overview.problemSolved) %>
               </div>
             <% } %>
 
             <% if (overview.mainGoal && hasContent(overview.mainGoal)) { %>
-              <h3>Main Goal</h3>
+              <h3><%= isId ? 'Tujuan Utama' : 'Main Goal' %></h3>
               <div class="prose-block">
                 <%- markdownService.render(overview.mainGoal) %>
               </div>
@@ -418,7 +408,7 @@
 
             <% if (overview.sources && overview.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% overview.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -438,7 +428,7 @@
               <h2 id="heading-purpose" class="section-title"><%= purpose.title || 'Purpose & Use Cases' %></h2>
             </div>
             <% if (purpose.isIncomplete || purpose.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
@@ -446,7 +436,7 @@
               const validUsers = (purpose.targetUsers || []).filter(hasContent);
               if (validUsers.length > 0) { 
             %>
-              <h3>Target Users</h3>
+              <h3><%= isId ? 'Pengguna Sasaran' : 'Target Users' %></h3>
               <ul>
                 <% validUsers.forEach(user => { %>
                   <li><%- formatItem(user) %></li>
@@ -458,7 +448,7 @@
               const validCaps = (purpose.capabilities || []).filter(hasContent);
               if (validCaps.length > 0) { 
             %>
-              <h3>Core Capabilities</h3>
+              <h3><%= isId ? 'Kemampuan Inti' : 'Core Capabilities' %></h3>
               <ul>
                 <% validCaps.forEach(cap => { %>
                   <li><%- formatItem(cap) %></li>
@@ -470,7 +460,7 @@
               const validScenarios = (purpose.scenarios || []).filter(hasContent);
               if (validScenarios.length > 0) { 
             %>
-              <h3>Real-World Scenarios</h3>
+              <h3><%= isId ? 'Skenario Dunia Nyata' : 'Real-World Scenarios' %></h3>
               <ul>
                 <% validScenarios.forEach(scen => { %>
                   <li><%- formatItem(scen) %></li>
@@ -480,7 +470,7 @@
 
             <% if (purpose.sources && purpose.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% purpose.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -500,7 +490,7 @@
               <h2 id="heading-features" class="section-title"><%= features.title || 'Key Features' %></h2>
             </div>
             <% if (features.isIncomplete || features.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
@@ -508,7 +498,7 @@
               const validCoreFeatures = (features.coreFeatures || []).filter(hasContent);
               if (validCoreFeatures.length > 0) { 
             %>
-              <h3>Core Features</h3>
+              <h3><%= isId ? 'Fitur Utama' : 'Core Features' %></h3>
               <ul>
                 <% validCoreFeatures.forEach(feat => { %>
                   <li><%- formatItem(feat) %></li>
@@ -520,7 +510,7 @@
               const validUnique = (features.uniqueCapabilities || []).filter(hasContent);
               if (validUnique.length > 0) { 
             %>
-              <h3>Distinct Capabilities</h3>
+              <h3><%= isId ? 'Kemampuan Khusus' : 'Distinct Capabilities' %></h3>
               <ul>
                 <% validUnique.forEach(uc => { %>
                   <li><%- formatItem(uc) %></li>
@@ -530,7 +520,7 @@
 
             <% if (features.sources && features.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% features.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -550,12 +540,12 @@
               <h2 id="heading-howItWorks" class="section-title"><%= howItWorks.title || 'How It Works' %></h2>
             </div>
             <% if (howItWorks.isIncomplete || howItWorks.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
             <% if (howItWorks.architecture && hasContent(howItWorks.architecture)) { %>
-              <h3>Architecture</h3>
+              <h3><%= isId ? 'Arsitektur' : 'Architecture' %></h3>
               <div class="prose-block">
                 <%- markdownService.render(howItWorks.architecture) %>
               </div>
@@ -565,7 +555,7 @@
               const validComponents = (howItWorks.components || []).filter(hasContent);
               if (validComponents.length > 0) { 
             %>
-              <h3>Key Components</h3>
+              <h3><%= isId ? 'Komponen Utama' : 'Key Components' %></h3>
               <ul>
                 <% validComponents.forEach(comp => { %>
                   <li>
@@ -579,7 +569,7 @@
             <% } %>
 
             <% if (howItWorks.dataFlow && hasContent(howItWorks.dataFlow)) { %>
-              <h3>Data Flow</h3>
+              <h3><%= isId ? 'Aliran Data' : 'Data Flow' %></h3>
               <div class="prose-block">
                 <%- markdownService.render(howItWorks.dataFlow) %>
               </div>
@@ -587,7 +577,7 @@
 
             <% if (howItWorks.sources && howItWorks.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% howItWorks.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -649,26 +639,26 @@
               <h2 id="heading-prerequisites" class="section-title"><%= prerequisites.title || 'Prerequisites' %></h2>
             </div>
             <% if (prerequisites.isIncomplete || prerequisites.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
             <% if (prerequisites.runtime && hasContent(prerequisites.runtime)) { %>
-              <p><strong>Runtime:</strong> <%= prerequisites.runtime %></p>
+              <p><strong><%= isId ? 'Lingkungan Eksekusi:' : 'Runtime:' %></strong> <%= prerequisites.runtime %></p>
             <% } %>
 
             <% 
               const validLangs = (prerequisites.languages || []).filter(hasContent);
               if (validLangs.length > 0) { 
             %>
-              <p><strong>Required Languages:</strong> <%= validLangs.map(formatItem).join(', ') %></p>
+              <p><strong><%= isId ? 'Bahasa yang Dibutuhkan:' : 'Required Languages:' %></strong> <%= validLangs.map(formatItem).join(', ') %></p>
             <% } %>
 
             <% 
               const validTools = (prerequisites.tools || []).filter(hasContent);
               if (validTools.length > 0) { 
             %>
-              <h3>Required Tools</h3>
+              <h3><%= isId ? 'Alat yang Dibutuhkan' : 'Required Tools' %></h3>
               <ul>
                 <% validTools.forEach(tool => { %>
                   <li><%- formatItem(tool) %></li>
@@ -680,7 +670,7 @@
               const validSys = (prerequisites.system || []).filter(hasContent);
               if (validSys.length > 0) { 
             %>
-              <h3>System Requirements</h3>
+              <h3><%= isId ? 'Persyaratan Sistem' : 'System Requirements' %></h3>
               <ul>
                 <% validSys.forEach(sys => { %>
                   <li><%- formatItem(sys) %></li>
@@ -690,7 +680,7 @@
 
             <% if (prerequisites.sources && prerequisites.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% prerequisites.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -710,7 +700,7 @@
               <h2 id="heading-installation" class="section-title"><%= installation.title || 'Installation Guide' %></h2>
             </div>
             <% if (installation.isIncomplete || installation.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
@@ -735,7 +725,7 @@
                     <%- markdownService.render('```bash\n' + st.command + '\n```') %>
                   <% } %>
                   <% if (st.verification && hasContent(st.verification)) { %>
-                    <p class="text-xs text-text-secondary"><strong>Verification:</strong> <%= st.verification %></p>
+                    <p class="text-xs text-text-secondary"><strong><%= isId ? 'Verifikasi:' : 'Verification:' %></strong> <%= st.verification %></p>
                   <% } %>
                 </div>
               <% }); %>
@@ -746,7 +736,7 @@
               if (validCaveats.length > 0) { 
             %>
               <div class="callout-recommendation">
-                <div class="callout-title">Setup Caveats & Recommendations</div>
+                <div class="callout-title"><%= isId ? 'Peringatan & Rekomendasi Setup' : 'Setup Caveats & Recommendations' %></div>
                 <ul>
                   <% validCaveats.forEach(cav => { %>
                     <li><%- formatItem(cav) %></li>
@@ -757,7 +747,7 @@
 
             <% if (installation.sources && installation.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% installation.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -777,7 +767,7 @@
               <h2 id="heading-configuration" class="section-title"><%= configuration.title || 'Configuration' %></h2>
             </div>
             <% if (configuration.isIncomplete || configuration.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
@@ -785,7 +775,7 @@
               const validConfigs = (configuration.configFiles || []).filter(hasContent);
               if (validConfigs.length > 0) { 
             %>
-              <h3>Configuration Files</h3>
+              <h3><%= isId ? 'Berkas Konfigurasi' : 'Configuration Files' %></h3>
               <ul>
                 <% validConfigs.forEach(cf => { %>
                   <li>
@@ -802,7 +792,7 @@
               const validEnvs = (configuration.environmentVariables || []).filter(hasContent);
               if (validEnvs.length > 0) { 
             %>
-              <h3>Environment Variables</h3>
+              <h3><%= isId ? 'Variabel Lingkungan' : 'Environment Variables' %></h3>
               <ul>
                 <% validEnvs.forEach(ev => { %>
                   <li>
@@ -817,7 +807,7 @@
               const validSecrets = (configuration.secrets || []).filter(hasContent);
               if (validSecrets.length > 0) { 
             %>
-              <h3>Required Secrets & Tokens</h3>
+              <h3><%= isId ? 'Token & Kunci Rahasia yang Dibutuhkan' : 'Required Secrets & Tokens' %></h3>
               <ul>
                 <% validSecrets.forEach(sec => { %>
                   <li><code><%- formatItem(sec) %></code></li>
@@ -827,7 +817,7 @@
 
             <% if (configuration.sources && configuration.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% configuration.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -847,12 +837,12 @@
               <h2 id="heading-usage" class="section-title"><%= usage.title || 'Usage & Examples' %></h2>
             </div>
             <% if (usage.isIncomplete || usage.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
             <% if (usage.quickStart && hasContent(usage.quickStart)) { %>
-              <h3>Quick Start</h3>
+              <h3><%= isId ? 'Memulai Cepat' : 'Quick Start' %></h3>
               <div class="prose-block">
                 <%- markdownService.render(usage.quickStart) %>
               </div>
@@ -862,7 +852,7 @@
               const validCommands = (usage.commonCommands || []).filter(hasContent);
               if (validCommands.length > 0) { 
             %>
-              <h3>Common Commands</h3>
+              <h3><%= isId ? 'Perintah Umum' : 'Common Commands' %></h3>
               <ul>
                 <% validCommands.forEach(cmd => { %>
                   <li>
@@ -877,7 +867,7 @@
               const validExamples = (usage.codeExamples || []).filter(hasContent);
               if (validExamples.length > 0) { 
             %>
-              <h3>Code Examples</h3>
+              <h3><%= isId ? 'Contoh Kode' : 'Code Examples' %></h3>
               <% validExamples.forEach(ex => { %>
                 <% if (ex.title) { %><p><strong><%= ex.title %>:</strong></p><% } %>
                 <% if (ex.code) { %><%- markdownService.render('```' + (ex.language || '') + '\n' + ex.code + '\n```') %><% } %>
@@ -886,7 +876,7 @@
 
             <% if (usage.sources && usage.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% usage.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -906,7 +896,7 @@
               <h2 id="heading-techStack" class="section-title"><%= techStack.title || 'Tech Stack' %></h2>
             </div>
             <% if (techStack.isIncomplete || techStack.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
@@ -914,21 +904,21 @@
               const validLanguages = (techStack.languages || []).filter(hasContent);
               if (validLanguages.length > 0) { 
             %>
-              <p><strong>Languages:</strong> <%= validLanguages.map(formatItem).join(', ') %></p>
+              <p><strong><%= isId ? 'Bahasa:' : 'Languages:' %></strong> <%= validLanguages.map(formatItem).join(', ') %></p>
             <% } %>
 
             <% 
               const validFrameworks = (techStack.frameworks || []).filter(hasContent);
               if (validFrameworks.length > 0) { 
             %>
-              <p><strong>Frameworks:</strong> <%= validFrameworks.map(formatItem).join(', ') %></p>
+              <p><strong><%= isId ? 'Kerangka Kerja:' : 'Frameworks:' %></strong> <%= validFrameworks.map(formatItem).join(', ') %></p>
             <% } %>
 
             <% 
               const validLibraries = (techStack.libraries || []).filter(hasContent);
               if (validLibraries.length > 0) { 
             %>
-              <h3>Key Libraries & Dependencies</h3>
+              <h3><%= isId ? 'Pustaka & Dependensi Utama' : 'Key Libraries & Dependencies' %></h3>
               <ul>
                 <% validLibraries.forEach(lib => { %>
                   <li>
@@ -942,12 +932,12 @@
               const validInfra = (techStack.infrastructure || []).filter(hasContent);
               if (validInfra.length > 0) { 
             %>
-              <p><strong>Infrastructure / Tooling:</strong> <%= validInfra.map(formatItem).join(', ') %></p>
+              <p><strong><%= isId ? 'Infrastruktur / Perkakas:' : 'Infrastructure / Tooling:' %></strong> <%= validInfra.map(formatItem).join(', ') %></p>
             <% } %>
 
             <% if (techStack.sources && techStack.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% techStack.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -967,7 +957,7 @@
               <h2 id="heading-limitations" class="section-title"><%= limitations.title || 'Limitations & Considerations' %></h2>
             </div>
             <% if (limitations.isIncomplete || limitations.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
@@ -975,7 +965,7 @@
               const validLimitations = toArr(limitations.knownLimitations || limitations.documentedLimitations).filter(hasContent);
               if (validLimitations.length > 0) { 
             %>
-              <h3>Known Limitations</h3>
+              <h3><%= isId ? 'Batasan yang Diketahui' : 'Known Limitations' %></h3>
               <ul>
                 <% validLimitations.forEach(lim => { %>
                   <li><%- formatItem(lim) %></li>
@@ -987,7 +977,7 @@
               const validCompatibility = toArr(limitations.compatibility || limitations.compatibilityNotes).filter(hasContent);
               if (validCompatibility.length > 0) { 
             %>
-              <h3>Compatibility Notes</h3>
+              <h3><%= isId ? 'Catatan Kompatibilitas' : 'Compatibility Notes' %></h3>
               <ul>
                 <% validCompatibility.forEach(comp => { %>
                   <li><%- formatItem(comp) %></li>
@@ -999,7 +989,7 @@
               const validSecurity = toArr(limitations.securityCaveats || limitations.securityNotes).filter(hasContent);
               if (validSecurity.length > 0) { 
             %>
-              <h3>Security Caveats</h3>
+              <h3><%= isId ? 'Peringatan Keamanan' : 'Security Caveats' %></h3>
               <ul>
                 <% validSecurity.forEach(sec => { %>
                   <li><%- formatItem(sec) %></li>
@@ -1009,14 +999,14 @@
 
             <% if (limitations.productionReadiness && hasContent(limitations.productionReadiness)) { %>
               <div class="callout-recommendation">
-                <div class="callout-title">Production Readiness Assessment</div>
+                <div class="callout-title"><%= isId ? 'Penilaian Kesiapan Produksi' : 'Production Readiness Assessment' %></div>
                 <p><%= limitations.productionReadiness %></p>
               </div>
             <% } %>
 
             <% if (limitations.sources && limitations.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% limitations.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -1036,7 +1026,7 @@
               <h2 id="heading-alternatives" class="section-title"><%= alternatives.title || 'Alternatives & Similar Projects' %></h2>
             </div>
             <% if (alternatives.isIncomplete || alternatives.status === 'not_documented') { %>
-              <span class="badge badge-amber">Not documented</span>
+              <span class="badge badge-amber"><%= isId ? 'Tidak terdokumentasi' : 'Not documented' %></span>
             <% } %>
           </header>
           <div class="section-body">
@@ -1044,7 +1034,7 @@
               const validAlternatives = toArr(alternatives.comparableProjects || alternatives.similarProjects).filter(hasContent);
               if (validAlternatives.length > 0) { 
             %>
-              <h3>Comparable Projects</h3>
+              <h3><%= isId ? 'Proyek Pembanding / Alternatif' : 'Comparable Projects' %></h3>
               <ul>
                 <% validAlternatives.forEach(proj => { %>
                   <li>
@@ -1056,7 +1046,7 @@
 
             <% if (alternatives.sources && alternatives.sources.filter(hasContent).length > 0) { %>
               <div class="section-sources-row">
-                <span class="sources-label">Sources:</span>
+                <span class="sources-label"><%= isId ? 'Sumber:' : 'Sources:' %></span>
                 <% alternatives.sources.filter(hasContent).forEach(src => { %>
                   <%- markdownService.renderSourceBadge(src, record.url) %>
                 <% }); %>
@@ -1078,12 +1068,12 @@
           </header>
           <div class="section-body">
             <ul>
-              <li><strong>Repository:</strong> <a href="<%= record.url %>" target="_blank" rel="noopener noreferrer"><%= record.url %></a></li>
+              <li><strong><%= isId ? 'Repositori:' : 'Repository:' %></strong> <a href="<%= record.url %>" target="_blank" rel="noopener noreferrer"><%= record.url %></a></li>
               <% if (resources.documentationUrl && hasContent(resources.documentationUrl)) { %>
-                <li><strong>Documentation:</strong> <a href="<%= resources.documentationUrl %>" target="_blank" rel="noopener noreferrer"><%= resources.documentationUrl %></a></li>
+                <li><strong><%= isId ? 'Dokumentasi:' : 'Documentation:' %></strong> <a href="<%= resources.documentationUrl %>" target="_blank" rel="noopener noreferrer"><%= resources.documentationUrl %></a></li>
               <% } %>
               <% if (resources.issueTrackerUrl && hasContent(resources.issueTrackerUrl)) { %>
-                <li><strong>Issues:</strong> <a href="<%= resources.issueTrackerUrl %>" target="_blank" rel="noopener noreferrer"><%= resources.issueTrackerUrl %></a></li>
+                <li><strong><%= isId ? 'Pelaporan Masalah:' : 'Issues:' %></strong> <a href="<%= resources.issueTrackerUrl %>" target="_blank" rel="noopener noreferrer"><%= resources.issueTrackerUrl %></a></li>
               <% } %>
             </ul>
 
@@ -1091,7 +1081,7 @@
               const validCommunity = (resources.communityLinks || []).filter(hasContent);
               if (validCommunity.length > 0) { 
             %>
-              <h3>Community Links</h3>
+              <h3><%= isId ? 'Tautan Komunitas' : 'Community Links' %></h3>
               <ul>
                 <% validCommunity.forEach(comm => { %>
                   <li><a href="<%= comm.url %>" target="_blank" rel="noopener noreferrer"><%= comm.title || comm.url %></a></li>
@@ -1105,7 +1095,7 @@
       <% } else { %>
         <!-- Placeholder for dynamic client-side rendering -->
         <div id="client-document-placeholder" class="analysis-section">
-          <p>Loading analysis from history or cache...</p>
+          <p><%= isId ? 'Memuat analisis dari riwayat atau cache...' : 'Loading analysis from history or cache...' %></p>
         </div>
       <% } %>
     </article>
@@ -1113,26 +1103,39 @@
     <!-- Right Side Evidence Rail (Desktop only) -->
     <aside class="analysis-evidence-rail" aria-label="Analysis Evidence & Metadata">
       <div class="evidence-card">
-        <div class="evidence-header">Analysis Metadata</div>
+        <div class="evidence-header"><%= isId ? 'Metadata Analisis' : 'Analysis Metadata' %></div>
         <div class="evidence-stat-row">
-          <span class="evidence-stat-label">Revision</span>
+          <span class="evidence-stat-label"><%= isId ? 'Revisi' : 'Revision' %></span>
           <span class="evidence-stat-val font-mono"><%= record?.revision ? record.revision.substring(0, 7) : '—' %></span>
         </div>
         <div class="evidence-stat-row">
-          <span class="evidence-stat-label">Completeness</span>
+          <span class="evidence-stat-label"><%= isId ? 'Kelengkapan' : 'Completeness' %></span>
           <span class="evidence-stat-val"><%= record?.score ?? 100 %>%</span>
         </div>
         <div class="evidence-stat-row">
-          <span class="evidence-stat-label">Analyzed</span>
+          <span class="evidence-stat-label"><%= isId ? 'Dianalisis' : 'Analyzed' %></span>
           <span class="evidence-stat-val text-xs"><%= record?.analyzedAt ? new Date(record.analyzedAt).toLocaleDateString() : 'Just now' %></span>
         </div>
         <div class="evidence-stat-row">
-          <span class="evidence-stat-label">Sections</span>
-          <span class="evidence-stat-val"><%= visibleSections.length %> Sections</span>
+          <span class="evidence-stat-label"><%= isId ? 'Bagian' : 'Sections' %></span>
+          <span class="evidence-stat-val"><%= visibleSections.length %> <%= isId ? 'Bagian' : 'Sections' %></span>
         </div>
       </div>
     </aside>
   </main>
+
+  <!-- Translation Loading Modal (AI Translation Progress) -->
+  <div id="translation-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="translation-modal-title" aria-modal="true" style="display: none;">
+    <div class="progress-card translation-card">
+      <div class="translation-spinner" aria-hidden="true"></div>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+        <h3 id="translation-modal-title" class="progress-title" style="font-size: 1.25rem; font-weight: 600; color: var(--color-text); margin: 0;">Menerjemahkan Analisis...</h3>
+        <p id="translation-modal-desc" style="font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.5; margin: 0;">
+          GitEx AI sedang menerjemahkan seluruh konten dokumentasi ke Bahasa Indonesia. Harap tunggu sebentar.
+        </p>
+      </div>
+    </div>
+  </div>
 
   <div id="gitex-toast" class="gitex-toast" role="status" aria-live="polite">
     <span id="toast-message">Copied!</span>

@@ -12,6 +12,7 @@ const router = Router();
 // Pipeline endpoints
 router.post('/api/analyze', analyzeRepository);
 router.get('/api/analyze/stream', streamAnalysis);
+router.get('/api/analysis', renderAnalysis);
 router.get('/api/analysis/:id/translate', translateAnalysis);
 router.delete('/api/analysis/:id', deleteAnalysisRecord);
 router.delete('/api/analysis', deleteAnalysisRecord);

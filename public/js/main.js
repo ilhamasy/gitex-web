@@ -915,7 +915,11 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           if (typeof navigator !== 'undefined' && navigator.onLine === false) {
             break;
           }
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          if (attempt > 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1200));
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 350));
+          }
           if (isCompleted || activePollingCancel) break;
 
           try {
@@ -925,7 +929,7 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
             });
             if (checkRes.ok) {
               const checkData = await checkRes.json();
-              if (checkData.success && checkData.data && checkData.data.status === 'completed') {
+              if (checkData.success && checkData.data && (checkData.data.status === 'completed' || checkData.data.status === 'partial')) {
                 isCompleted = true;
                 try { eventSource.close(); } catch {}
                 activeEventSource = null;
@@ -976,14 +980,6 @@ if (typeof window !== 'undefined' && !window.GitExHistory) {
           try { eventSource.close(); } catch {}
           activeEventSource = null;
           handleAnalysisFailure('No internet connection. Please check your network and try again.');
-          return;
-        }
-
-        // If native EventSource was CLOSED (readyState 2) and no data received
-        if (eventSource.readyState === 2 && sseErrorCount >= 1) {
-          try { eventSource.close(); } catch {}
-          activeEventSource = null;
-          handleAnalysisFailure('Unable to connect to analysis service. Please check your network connection.');
           return;
         }
 

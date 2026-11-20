@@ -161,7 +161,7 @@ export const streamAnalysis = async (req, res) => {
     cleanup();
     setTimeout(() => {
       try { res.end(); } catch {}
-    }, 400);
+    }, 1500);
   } catch (err) {
     logger.error(`[SSE Analysis Error] ${err.message}`);
     sendEvent('pipeline-error', {
@@ -172,7 +172,7 @@ export const streamAnalysis = async (req, res) => {
     cleanup();
     setTimeout(() => {
       try { res.end(); } catch {}
-    }, 400);
+    }, 1000);
   }
 };
 
@@ -181,10 +181,30 @@ export const streamAnalysis = async (req, res) => {
  * GET /analysis/:id or GET /analysis
  */
 function isStaleTitleOnlyTranslation(record, targetLang) {
-  if (targetLang !== 'id' || !record) return false;
-  const originalSummary = record.analysis?.overview?.summary;
-  const translatedSummary = record.translations?.id?.overview?.summary;
-  return Boolean(originalSummary && translatedSummary && originalSummary === translatedSummary);
+  if (targetLang !== 'id' || !record || !record.translations?.id) return false;
+  const origOverview = record.analysis?.overview;
+  const transOverview = record.translations?.id?.overview;
+  const origPurpose = record.analysis?.purpose;
+  const transPurpose = record.translations?.id?.purpose;
+
+  if (!transOverview) return true;
+
+  // If problemSolved exists in both and is identical, it's untranslated fallback
+  if (origOverview?.problemSolved && transOverview?.problemSolved && origOverview.problemSolved.trim() === transOverview.problemSolved.trim()) {
+    return true;
+  }
+  // If targetUsers exists in both and first item is identical, it's untranslated fallback
+  if (origPurpose?.targetUsers?.[0] && transPurpose?.targetUsers?.[0] && origPurpose.targetUsers[0].trim() === transPurpose.targetUsers[0].trim()) {
+    return true;
+  }
+  // If summary is identical or almost identical without common Indonesian words
+  if (origOverview?.summary && transOverview?.summary) {
+    if (origOverview.summary.trim() === transOverview.summary.trim()) return true;
+    const indonesianWordCount = (transOverview.summary.match(/\b(adalah|dan|untuk|yang|dengan|pada|ini|dari|dapat|menggunakan|secara|sebagai)\b/gi) || []).length;
+    if (indonesianWordCount === 0 && transOverview.summary.length > 50) return true;
+  }
+
+  return false;
 }
 
 export const renderAnalysis = (req, res) => {
@@ -193,11 +213,33 @@ export const renderAnalysis = (req, res) => {
 
   let record = id ? getCachedRecord(id) : null;
   if (!record && req.query.url) {
-    const cleanUrl = req.query.url.trim().toLowerCase();
+    const cleanUrl = req.query.url.trim().toLowerCase().replace(/\/+$/, '').replace(/\.git$/, '');
     for (const cached of analysisCache.values()) {
-      if (cached.url && cached.url.trim().toLowerCase() === cleanUrl) {
+      const cachedUrl = (cached.url || '').trim().toLowerCase().replace(/\/+$/, '').replace(/\.git$/, '');
+      if (cachedUrl === cleanUrl) {
         record = cached;
         break;
+      }
+    }
+    if (!record) {
+      try {
+        if (fs.existsSync(CACHE_DIR)) {
+          const files = fs.readdirSync(CACHE_DIR);
+          for (const file of files) {
+            if (!file.endsWith('.json')) continue;
+            try {
+              const diskData = JSON.parse(fs.readFileSync(path.join(CACHE_DIR, file), 'utf8'));
+              const diskUrl = (diskData.url || '').trim().toLowerCase().replace(/\/+$/, '').replace(/\.git$/, '');
+              if (diskUrl === cleanUrl) {
+                record = diskData;
+                analysisCache.set(record.id, record);
+                break;
+              }
+            } catch {}
+          }
+        }
+      } catch (err) {
+        logger.warn(`[Cache] Error searching disk cache by url: ${err.message}`);
       }
     }
   }
@@ -284,9 +326,12 @@ export const translateAnalysis = async (req, res) => {
 
   try {
     const translated = await TranslationService.translate(record.analysis, targetLang);
-    if (!record.translations) record.translations = {};
-    record.translations[targetLang] = translated;
-    cacheRecord(record);
+    const candidateRecord = { analysis: record.analysis, translations: { [targetLang]: translated } };
+    if (!isStaleTitleOnlyTranslation(candidateRecord, targetLang)) {
+      if (!record.translations) record.translations = {};
+      record.translations[targetLang] = translated;
+      cacheRecord(record);
+    }
 
     return res.status(200).json({
       success: true,
