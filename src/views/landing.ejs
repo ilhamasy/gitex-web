@@ -54,18 +54,6 @@
             Explore repositories. Understand technology. Build with confidence.
           </p>
         </div>
-
-        <!-- Scroll Down to How It Works Trigger -->
-        <div class="landing-scroll-indicator-wrap">
-          <a href="#how-to-works" class="landing-scroll-link" id="link-scroll-how-to-works" aria-label="Scroll to How it works">
-            <span class="scroll-label font-mono">How to works</span>
-            <span class="scroll-arrow-down" aria-hidden="true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 5v14M19 12l-7 7-7-7" />
-              </svg>
-            </span>
-          </a>
-        </div>
       </section>
 
       <!-- How it Works Section -->
@@ -180,21 +168,7 @@
         v.play().catch(function(){});
       });
 
-      // Smooth scroll on clicking arrow / link
-      var scrollLink = document.getElementById('link-scroll-how-to-works');
       var howSection = document.getElementById('how-to-works');
-
-      if (scrollLink && howSection) {
-        scrollLink.addEventListener('click', function(e) {
-          e.preventDefault();
-          howSection.scrollIntoView({ behavior: 'smooth' });
-          if (window.history && window.history.pushState) {
-            window.history.pushState(null, '', '#how-to-works');
-          } else {
-            window.location.hash = '#how-to-works';
-          }
-        });
-      }
 
       // Automatically update URL to #how-to-works when scrolling past hero
       function onScrollCheck() {
