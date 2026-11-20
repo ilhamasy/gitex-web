@@ -1,0 +1,2 @@
+# Ignore EJS templates to prevent auto-formatters from corrupting EJS tags (<%- to <% -)
+**/*.ejs
