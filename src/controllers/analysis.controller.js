@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { PipelineService, PIPELINE_STAGES } from '../services/pipeline/pipeline.service.js';
 import { MarkdownService } from '../services/render/markdown.service.js';
+import { generateFlowchartDefinition, hasFlowchartData } from '../services/render/flowchart.service.js';
 import { SECTION_KEYS, SECTION_TITLES, SECTION_TITLES_ID } from '../models/analysis.schema.js';
 import { TranslationService } from '../services/ai/translation.service.js';
 import { logger } from '../utils/logger.js';
@@ -229,6 +230,8 @@ export const renderAnalysis = (req, res) => {
     };
   }
 
+  const flowchartDef = generateFlowchartDefinition(displayRecord?.analysis, currentLang);
+
   // Render view
   res.render('analysis', {
     title: record ? `${record.fullName} — GitEx Analysis` : 'Repository Analysis — GitEx',
@@ -241,6 +244,8 @@ export const renderAnalysis = (req, res) => {
     sectionTitlesEn: SECTION_TITLES,
     sectionTitlesId: SECTION_TITLES_ID,
     markdownService: MarkdownService,
+    flowchartDefinition: flowchartDef,
+    hasFlowchart: hasFlowchartData(displayRecord?.analysis),
   });
 };
 

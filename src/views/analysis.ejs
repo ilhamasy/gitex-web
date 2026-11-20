@@ -264,6 +264,11 @@
 
     function isSectionVisible(key, analysis) {
       if (!analysis) return true;
+      if (key === 'flowchart') {
+        return (typeof hasFlowchart !== 'undefined' && hasFlowchart) ||
+               (analysis.flowchart && (hasContent(analysis.flowchart.diagram) || (analysis.flowchart.steps && analysis.flowchart.steps.length > 0))) ||
+               (analysis.howItWorks && (hasContent(analysis.howItWorks.dataFlow) || (analysis.howItWorks.components || []).some(hasContent)));
+      }
       const sec = analysis[key];
       if (!sec) return false;
 
@@ -281,6 +286,10 @@
           return hasContent(sec.architecture) ||
                  (sec.components || []).some(hasContent) ||
                  hasContent(sec.dataFlow);
+        case 'flowchart':
+          return (typeof hasFlowchart !== 'undefined' && hasFlowchart) ||
+                 (sec && (hasContent(sec.diagram) || (sec.steps && sec.steps.length > 0))) ||
+                 (analysis && analysis.howItWorks && (hasContent(analysis.howItWorks.dataFlow) || (analysis.howItWorks.components || []).some(hasContent)));
         case 'prerequisites':
           return hasContent(sec.runtime) ||
                  (sec.languages || []).some(hasContent) ||
@@ -324,6 +333,7 @@
       { key: 'purpose', title: 'Purpose & Use Cases' },
       { key: 'features', title: 'Key Features' },
       { key: 'howItWorks', title: 'How It Works' },
+      { key: 'flowchart', title: 'Application Flowchart' },
       { key: 'prerequisites', title: 'Prerequisites' },
       { key: 'installation', title: 'Installation Guide' },
       { key: 'configuration', title: 'Configuration' },
@@ -587,7 +597,49 @@
         </section>
         <% } %>
 
-        <!-- 05. Prerequisites -->
+        <!-- 05. Application Flowchart -->
+        <% if (isSectionVisible('flowchart', record.analysis)) { %>
+        <% const effectiveFlowchartDef = typeof flowchartDefinition !== 'undefined' && flowchartDefinition ? flowchartDefinition : ''; %>
+        <section class="analysis-section" id="section-flowchart" aria-labelledby="heading-flowchart">
+          <header class="section-header-row">
+            <div class="section-title-wrap">
+              <span class="section-number"><%= sectionNumMap['flowchart'] %></span>
+              <h2 id="heading-flowchart" class="section-title"><%= (typeof currentLang !== 'undefined' && currentLang === 'id' ? 'Diagram Alur Aplikasi' : 'Application Flowchart') %></h2>
+            </div>
+            <div class="flowchart-header-actions">
+              <button type="button" class="btn-flowchart-action" id="btn-zoom-in-flowchart" title="Zoom In" aria-label="Zoom In">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              </button>
+              <button type="button" class="btn-flowchart-action" id="btn-zoom-out-flowchart" title="Zoom Out" aria-label="Zoom Out">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              </button>
+              <button type="button" class="btn-flowchart-action" id="btn-reset-flowchart" title="Reset View" aria-label="Reset View">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+              </button>
+              <button type="button" class="btn-flowchart-action" id="btn-copy-flowchart" title="Copy Mermaid Definition" aria-label="Copy Mermaid Definition">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span class="btn-copy-label">Mermaid</span>
+              </button>
+            </div>
+          </header>
+          <div class="section-body">
+            <p class="flowchart-lead-text text-sm mb-3 text-text-secondary" style="margin-bottom: 0.875rem;">
+              <%= (typeof currentLang !== 'undefined' && currentLang === 'id' 
+                  ? 'Visualisasi diagram alur cara aplikasi bekerja dan perjalanan data antar komponen.' 
+                  : 'Interactive visual flowchart of application execution flow and component data movement.') %>
+            </p>
+            <div class="flowchart-container" id="flowchart-container">
+              <div class="flowchart-viewport" id="flowchart-viewport" tabindex="0" role="region" aria-label="Interactive Architecture Flowchart Canvas">
+                <div class="mermaid" id="mermaid-flowchart-canvas" data-mermaid="<%= Buffer.from(effectiveFlowchartDef).toString('base64') %>">
+                  <%- effectiveFlowchartDef %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <% } %>
+
+        <!-- Prerequisites -->
         <% const prerequisites = record.analysis.prerequisites || {}; %>
         <% if (isSectionVisible('prerequisites', record.analysis)) { %>
         <section class="analysis-section" id="section-prerequisites" aria-labelledby="heading-prerequisites">
@@ -1097,6 +1149,8 @@
     window.__SECTION_TITLES_EN__ = <%- JSON.stringify(typeof sectionTitlesEn !== 'undefined' ? sectionTitlesEn : {}) %>;
     window.__SECTION_TITLES_ID__ = <%- JSON.stringify(typeof sectionTitlesId !== 'undefined' ? sectionTitlesId : {}) %>;
   </script>
+  <script src="/vendor/mermaid.min.js"></script>
+  <script src="/js/flowchart.controller.js"></script>
   <script src="/js/graph-explorer/graph.parser.js"></script>
   <script src="/js/graph-explorer/graph.engine.js"></script>
   <script src="/js/graph-explorer/graph.controller.js"></script>

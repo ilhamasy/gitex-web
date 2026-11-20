@@ -124,6 +124,7 @@ const SECTION_DEFS = [
   { key: 'purpose', titleEn: 'Purpose & Use Cases', titleId: 'Tujuan & Skenario Penggunaan' },
   { key: 'features', titleEn: 'Key Features', titleId: 'Fitur Utama' },
   { key: 'howItWorks', titleEn: 'How It Works', titleId: 'Cara Kerja' },
+  { key: 'flowchart', titleEn: 'Application Flowchart', titleId: 'Diagram Alur Aplikasi' },
   { key: 'prerequisites', titleEn: 'Prerequisites', titleId: 'Prasyarat' },
   { key: 'installation', titleEn: 'Installation Guide', titleId: 'Panduan Instalasi' },
   { key: 'configuration', titleEn: 'Configuration', titleId: 'Konfigurasi' },
@@ -345,6 +346,16 @@ function renderDocument(analysis, item, lang = 'en') {
 
   // Re-bind code block copy buttons
   initCopyButtons();
+
+  // Re-bind and render flowchart diagram
+  if (window.GitExFlowchart) {
+    try {
+      window.GitExFlowchart.bindControls();
+      window.GitExFlowchart.renderDiagram();
+    } catch (e) {
+      console.warn('[GitEx] Flowchart re-render error:', e);
+    }
+  }
 }
 
 /**
@@ -597,6 +608,10 @@ function isSectionVisible(key, analysis) {
       return hasContent(sec.architecture) ||
              (sec.components || []).some(hasContent) ||
              hasContent(sec.dataFlow);
+    case 'flowchart':
+      return hasContent(sec.diagram) ||
+             (sec.steps && sec.steps.length > 0) ||
+             Boolean(item && item.howItWorks && (hasContent(item.howItWorks.dataFlow) || (item.howItWorks.components || []).some(hasContent)));
     case 'prerequisites':
       return hasContent(sec.runtime) ||
              hasContent(sec.environment) ||
@@ -688,6 +703,40 @@ function renderHydratedSectionContent(key, sec, item, lang = 'en') {
       content += `<h3>${t.keyComponents}</h3><ul>${validComponents.map(c => `<li>${formatItem(c)}</li>`).join('')}</ul>`;
     }
     if (sec.dataFlow && hasContent(sec.dataFlow)) content += `<h3>${t.dataFlow}</h3><p>${escapeHtml(sec.dataFlow)}</p>`;
+  } else if (key === 'flowchart') {
+    const leadText = lang === 'id' 
+      ? 'Visualisasi diagram alur cara aplikasi bekerja dan perjalanan data antar komponen.' 
+      : 'Interactive visual flowchart of application execution flow and component data movement.';
+    
+    const existingCanvas = document.getElementById('mermaid-flowchart-canvas');
+    let flowDef = sec.diagram || (existingCanvas && existingCanvas.dataset.mermaid ? atob(existingCanvas.dataset.mermaid) : '');
+    const b64 = flowDef ? btoa(unescape(encodeURIComponent(flowDef))) : '';
+
+    content += `
+      <div class="flowchart-header-actions mb-3" style="display:flex; justify-content: flex-end; gap:0.375rem; margin-bottom: 0.75rem;">
+        <button type="button" class="btn-flowchart-action" id="btn-zoom-in-flowchart" title="Zoom In" aria-label="Zoom In">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        </button>
+        <button type="button" class="btn-flowchart-action" id="btn-zoom-out-flowchart" title="Zoom Out" aria-label="Zoom Out">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        </button>
+        <button type="button" class="btn-flowchart-action" id="btn-reset-flowchart" title="Reset View" aria-label="Reset View">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+        </button>
+        <button type="button" class="btn-flowchart-action" id="btn-copy-flowchart" title="Copy Mermaid Definition" aria-label="Copy Mermaid Definition">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span class="btn-copy-label">Mermaid</span>
+        </button>
+      </div>
+      <p class="flowchart-lead-text text-sm mb-3 text-text-secondary" style="margin-bottom: 0.875rem;">${leadText}</p>
+      <div class="flowchart-container" id="flowchart-container">
+        <div class="flowchart-viewport" id="flowchart-viewport" tabindex="0" role="region" aria-label="Interactive Architecture Flowchart Canvas">
+          <div class="mermaid" id="mermaid-flowchart-canvas" data-mermaid="${b64}">
+            ${flowDef ? escapeHtml(flowDef) : ''}
+          </div>
+        </div>
+      </div>
+    `;
   } else if (key === 'prerequisites') {
     const rt = sec.runtime || sec.environment;
     if (rt && hasContent(rt)) content += `<p><strong>${t.runtime}:</strong> ${escapeHtml(rt)}</p>`;

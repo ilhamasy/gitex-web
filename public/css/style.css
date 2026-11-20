@@ -1585,7 +1585,7 @@ a {
   border-radius: var(--radius-md);
   padding: 1.75rem;
   margin-bottom: 1.5rem;
-  scroll-margin-top: 6.5rem;
+  scroll-margin-top: calc(var(--analysis-header-height, 175px) + 1.25rem);
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
@@ -3080,5 +3080,161 @@ pre code {
   .btn-hero-cta {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   GitEx — Application Flowchart Section (Mermaid.js Dark & Citrus Theme)
+   ========================================================================== */
+
+.flowchart-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.btn-flowchart-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  background-color: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 0.3125rem 0.5625rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.btn-flowchart-action:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background-color: rgba(199, 243, 107, 0.08);
+}
+
+.btn-flowchart-action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.btn-flowchart-action.btn-copied {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background-color: rgba(199, 243, 107, 0.15);
+}
+
+.flowchart-container {
+  background-color: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  position: relative;
+  min-height: 380px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.flowchart-viewport {
+  width: 100%;
+  min-height: 360px;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background-image: radial-gradient(var(--color-border-subtle) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.flowchart-viewport:active {
+  cursor: grabbing;
+}
+
+.mermaid {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  user-select: none;
+  touch-action: none;
+}
+
+/* Mermaid Dark & Green Palette Overrides */
+#mermaid-flowchart-canvas svg {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+#mermaid-flowchart-canvas svg .node rect,
+#mermaid-flowchart-canvas svg .node circle,
+#mermaid-flowchart-canvas svg .node polygon {
+  fill: #20231F !important;
+  stroke: #3A4038 !important;
+  stroke-width: 1.5px !important;
+}
+
+#mermaid-flowchart-canvas svg .node.startNode rect {
+  fill: #292D28 !important;
+  stroke: #C7F36B !important;
+  stroke-width: 2px !important;
+}
+
+#mermaid-flowchart-canvas svg .node.activeNode rect {
+  fill: #20231F !important;
+  stroke: #C7F36B !important;
+  stroke-width: 1.5px !important;
+}
+
+#mermaid-flowchart-canvas svg .node.endNode rect {
+  fill: #171916 !important;
+  stroke: #65C58B !important;
+  stroke-width: 2px !important;
+}
+
+#mermaid-flowchart-canvas svg .edgePath path.path,
+#mermaid-flowchart-canvas svg .edgePath path {
+  stroke: #C7F36B !important;
+  stroke-width: 2px !important;
+}
+
+#mermaid-flowchart-canvas svg .marker,
+#mermaid-flowchart-canvas svg marker path {
+  fill: #C7F36B !important;
+  stroke: #C7F36B !important;
+}
+
+#mermaid-flowchart-canvas svg .edgeLabel span {
+  background-color: #171916 !important;
+  color: #C7F36B !important;
+  border: 1px solid #3A4038 !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+}
+
+#mermaid-flowchart-canvas svg .label text,
+#mermaid-flowchart-canvas svg .nodeLabel {
+  fill: #F1F2EA !important;
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+@media (max-width: 640px) {
+  .flowchart-container {
+    min-height: 320px;
+  }
+  .flowchart-viewport {
+    min-height: 300px;
+    padding: 1rem 0.5rem;
   }
 }

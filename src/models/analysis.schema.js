@@ -23,6 +23,7 @@ export const SECTION_TITLES = {
   purpose: 'Purpose & Use Cases',
   features: 'Key Features',
   howItWorks: 'How It Works',
+  flowchart: 'Application Flowchart',
   prerequisites: 'Prerequisites',
   installation: 'Installation Guide',
   configuration: 'Configuration',
@@ -38,6 +39,7 @@ export const SECTION_TITLES_ID = {
   purpose: 'Tujuan & Skenario Penggunaan',
   features: 'Fitur Utama',
   howItWorks: 'Cara Kerja',
+  flowchart: 'Diagram Alur Aplikasi',
   prerequisites: 'Prasyarat',
   installation: 'Panduan Instalasi',
   configuration: 'Konfigurasi',
@@ -83,6 +85,13 @@ export function createDefaultSection(key, title = SECTION_TITLES[key]) {
         components: [],
         dataFlow: 'Not documented',
         dependencies: [],
+        sources: [],
+      };
+    case 'flowchart':
+      return {
+        title,
+        diagram: '',
+        steps: [],
         sources: [],
       };
     case 'prerequisites':
