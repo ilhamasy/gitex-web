@@ -11,8 +11,33 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=gitex-v8">
+  <link rel="stylesheet" href="/css/style.css?v=gitex-v9">
+  <link rel="stylesheet" href="/css/graph-explorer.css?v=gitex-v9">
   <script src="/js/theme.js"></script>
+  <script>
+    (function(){
+      try {
+        var t = new URLSearchParams(window.location.search).get('tab');
+        if (t !== 'docs') {
+          document.documentElement.classList.add('tab-graph-active');
+        }
+      } catch(e) {}
+
+      function updateHeaderHeight() {
+        var h = document.getElementById('analysis-top');
+        if (h) {
+          document.documentElement.style.setProperty('--analysis-header-height', h.offsetHeight + 'px');
+        }
+      }
+      window.addEventListener('resize', updateHeaderHeight, { passive: true });
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateHeaderHeight);
+      } else {
+        updateHeaderHeight();
+      }
+      setTimeout(updateHeaderHeight, 100);
+    })();
+  </script>
 </head>
 <body class="analysis-page">
   <%- include('partials/header') %>
@@ -145,8 +170,31 @@
           </div>
         <% } %>
       </div>
+
+      <!-- Top-Level Navigation Tabs: Graph Explorer | Documentation -->
+      <nav class="top-nav-tabs-wrapper" role="tablist" aria-label="Analysis Mode">
+        <button type="button" id="tab-nav-graph" class="top-nav-tab active" role="tab" aria-selected="true" aria-controls="graph-explorer-workspace">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <circle cx="6" cy="12" r="3" stroke-width="2" />
+            <circle cx="18" cy="6" r="3" stroke-width="2" />
+            <circle cx="18" cy="18" r="3" stroke-width="2" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4" />
+          </svg>
+          <span>Graph Explorer</span>
+        </button>
+        <button type="button" id="tab-nav-docs" class="top-nav-tab" role="tab" aria-selected="false" aria-controls="main-content">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>Documentation</span>
+          <span class="tab-badge" id="docs-tab-badge">12</span>
+        </button>
+      </nav>
     </div>
   </header>
+
+  <!-- Dedicated Graph Explorer Workspace -->
+  <%- include('partials/graph-explorer') %>
 
   <!-- Mobile Table of Contents Bar -->
   <div class="mobile-toc-bar">
@@ -1049,6 +1097,9 @@
     window.__SECTION_TITLES_EN__ = <%- JSON.stringify(typeof sectionTitlesEn !== 'undefined' ? sectionTitlesEn : {}) %>;
     window.__SECTION_TITLES_ID__ = <%- JSON.stringify(typeof sectionTitlesId !== 'undefined' ? sectionTitlesId : {}) %>;
   </script>
+  <script src="/js/graph-explorer/graph.parser.js"></script>
+  <script src="/js/graph-explorer/graph.engine.js"></script>
+  <script src="/js/graph-explorer/graph.controller.js"></script>
   <script type="module" src="/js/analysis.js"></script>
 </body>
 </html>

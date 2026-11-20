@@ -1512,9 +1512,9 @@ a {
 /* Left Navigation Rail (TOC) */
 .analysis-toc-rail {
   position: sticky;
-  top: 6rem;
+  top: calc(var(--analysis-header-height, 240px) + 1.25rem);
   height: fit-content;
-  max-height: calc(100vh - 7rem);
+  max-height: calc(100vh - var(--analysis-header-height, 240px) - 2rem);
   overflow-y: auto;
   padding-right: 0.5rem;
 }
@@ -2021,9 +2021,9 @@ pre code {
 .analysis-evidence-rail {
   display: none;
   position: sticky;
-  top: 6rem;
+  top: calc(var(--analysis-header-height, 240px) + 1.25rem);
   height: fit-content;
-  max-height: calc(100vh - 8rem);
+  max-height: calc(100vh - var(--analysis-header-height, 240px) - 2rem);
   overflow-y: auto;
 }
 

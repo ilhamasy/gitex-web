@@ -1,0 +1,108 @@
+<!-- GitEx — Dedicated Graph Explorer Workspace -->
+<section class="container graph-explorer-workspace" id="graph-explorer-workspace" aria-label="Graph Explorer Workspace" style="display: none;">
+  <!-- Views Sub-Navigation Bar -->
+  <header class="graph-views-header">
+    <div class="graph-views-nav-wrapper">
+      <span class="graph-views-label">VIEWS</span>
+      
+      <!-- Desktop: Horizontal list of view pills -->
+      <ul class="graph-views-list" id="graph-views-list" role="tablist" aria-label="Graph perspectives">
+        <!-- Injected dynamically based on repo evidence -->
+      </ul>
+
+      <!-- Mobile: Dropdown trigger button named Views -->
+      <button type="button" id="btn-mobile-views-trigger" class="graph-mobile-views-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="graph-views-modal">
+        <span class="graph-mobile-views-btn-label">Views:</span>
+        <span class="graph-mobile-views-current" id="mobile-views-btn-current">Overview</span>
+        <svg class="graph-mobile-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Search & Node-Type Filter Bar -->
+  <div class="graph-toolbar">
+    <div class="graph-search-box">
+      <svg class="graph-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="graph-search-input" class="graph-search-input" placeholder="Search architecture nodes..." aria-label="Search architecture nodes" autocomplete="off" />
+    </div>
+
+    <div class="graph-filter-chips" id="graph-filter-chips" role="group" aria-label="Filter nodes by type">
+      <!-- Filter chips injected dynamically -->
+    </div>
+  </div>
+
+  <!-- Interactive Canvas Viewport -->
+  <div class="graph-canvas-viewport" id="graph-canvas-viewport" style="position: relative; flex: 1; width: 100%; min-height: 580px;">
+    <!-- Main canvas and minimap injected here by GraphEngine -->
+
+    <!-- Floating Camera HUD Controls -->
+    <div class="graph-hud-controls" role="toolbar" aria-label="Graph camera controls">
+      <button type="button" id="btn-graph-zoom-in" class="graph-hud-btn" title="Zoom in" aria-label="Zoom in">+</button>
+      <button type="button" id="btn-graph-zoom-out" class="graph-hud-btn" title="Zoom out" aria-label="Zoom out">−</button>
+      <button type="button" id="btn-graph-fit" class="graph-hud-btn" title="Fit to screen" aria-label="Fit to screen">⛶</button>
+      <button type="button" id="btn-graph-reset" class="graph-hud-btn" title="Reset layout" aria-label="Reset layout">↺</button>
+    </div>
+
+    <!-- Slide-Over Node / Edge Detail Drawer -->
+    <aside class="graph-detail-drawer" id="graph-detail-drawer" aria-labelledby="drawer-title" role="dialog" aria-modal="false">
+      <div class="drawer-header">
+        <div class="drawer-title-group">
+          <span class="drawer-type-badge" id="drawer-type-badge">COMPONENT</span>
+          <h3 class="drawer-title" id="drawer-title">Node Title</h3>
+        </div>
+        <button type="button" id="btn-close-drawer" class="drawer-close-btn" title="Close drawer" aria-label="Close drawer">✕</button>
+      </div>
+
+      <div class="drawer-content">
+        <!-- Purpose / Description -->
+        <div>
+          <div class="drawer-section-title">Purpose & Function</div>
+          <p class="drawer-desc" id="drawer-desc">Description of the component or node.</p>
+        </div>
+
+        <!-- Source File (if available) -->
+        <div id="drawer-source-container">
+          <div class="drawer-section-title">Source Context</div>
+          <div class="drawer-source-box" id="drawer-source-box">src/index.js</div>
+        </div>
+
+        <!-- Incoming Relationships -->
+        <div>
+          <div class="drawer-section-title">Incoming Relationships</div>
+          <div class="relationship-list" id="drawer-incoming-list">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+
+        <!-- Outgoing Relationships -->
+        <div>
+          <div class="drawer-section-title">Outgoing Relationships</div>
+          <div class="relationship-list" id="drawer-outgoing-list">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- Mobile Views Selection Modal / Pop up -->
+<div class="graph-views-modal-backdrop" id="graph-views-modal-backdrop" style="display: none;" aria-hidden="true">
+  <div class="graph-views-modal" id="graph-views-modal" role="dialog" aria-modal="true" aria-labelledby="modal-views-title">
+    <div class="graph-views-modal-header">
+      <div class="graph-views-modal-title" id="modal-views-title">Select Perspective View</div>
+      <button type="button" id="btn-close-views-modal" class="graph-views-modal-close" aria-label="Close views selection">✕</button>
+    </div>
+    <div class="graph-views-modal-body">
+      <ul class="graph-views-modal-list" id="graph-views-modal-list">
+        <!-- Injected dynamically with view buttons -->
+      </ul>
+    </div>
+  </div>
+</div>
+

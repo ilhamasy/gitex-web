@@ -173,9 +173,13 @@ async function initAnalysis() {
     } else if (!record && recordId) {
       record = await hydrateAnalysis(recordId);
       currentRecord = record;
+      window.__GITEX_RECORD__ = record;
       if (record && record.analysis && !originalAnalysis) {
         originalAnalysis = record.analysis;
       }
+      try {
+        window.dispatchEvent(new CustomEvent('gitex:record-ready', { detail: record }));
+      } catch (e) {}
       initInteractiveUI(record);
     }
   } catch (err) {
@@ -1082,7 +1086,8 @@ function initTocNavigation() {
       document.body.style.overflow = '';
     }
 
-    const headerOffset = 90;
+    const headerEl = document.querySelector('.analysis-header-bar');
+    const headerOffset = (headerEl ? headerEl.offsetHeight : 240) + 20;
     const elementPosition = targetEl.getBoundingClientRect().top;
     const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -1126,7 +1131,8 @@ function initScrollSpy() {
       return;
     }
 
-    const threshold = 120;
+    const headerEl = document.querySelector('.analysis-header-bar');
+    const threshold = (headerEl ? headerEl.offsetHeight : 240) + 40;
     let currentKey = sections[0].id.replace('section-', '');
 
     for (let i = 0; i < sections.length; i++) {
