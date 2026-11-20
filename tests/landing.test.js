@@ -33,11 +33,13 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.ok(res.text.includes('id="hero"'));
   });
 
-  it('renders How to Works section with 3 video steps, back to top arrow up, and without bottom CTA', async () => {
+  it('renders How to Works section with 3 video steps and without arrow up or bottom CTA', async () => {
     const res = await request(app).get('/');
     assert.ok(res.text.includes('id="how-to-works"'));
     assert.ok(res.text.includes('id="link-scroll-how-to-works"'));
-    assert.ok(res.text.includes('id="link-scroll-to-hero"'));
+    assert.ok(res.text.includes('How to works'));
+    assert.equal(res.text.includes('id="link-scroll-to-hero"'), false);
+    assert.equal(res.text.includes('class="window-title'), false);
     assert.ok(res.text.includes('Copy URL Repository'));
     assert.ok(res.text.includes('Paste and Ingest the Repo'));
     assert.ok(res.text.includes('Explained'));

@@ -60,7 +60,7 @@
           <a href="#how-to-works" class="landing-scroll-link" id="link-scroll-how-to-works" aria-label="Scroll to How it works">
             <span class="scroll-label font-mono">How to works</span>
             <span class="scroll-arrow-down" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 5v14M19 12l-7 7-7-7" />
               </svg>
             </span>
@@ -72,15 +72,6 @@
       <section id="how-to-works" class="landing-how-section" aria-labelledby="how-title">
         <div class="container landing-how-container">
           <div class="landing-section-header">
-            <div class="how-scroll-up-wrap">
-              <a href="#hero" class="landing-scroll-link landing-scroll-link-up" id="link-scroll-to-hero" aria-label="Back to top">
-                <span class="scroll-arrow-up" aria-hidden="true">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 19V5M5 12l7-7 7 7" />
-                  </svg>
-                </span>
-              </a>
-            </div>
             <h2 id="how-title" class="landing-section-title">
               Three steps to understand any codebase
             </h2>
@@ -98,7 +89,6 @@
                   <span class="window-dot red"></span>
                   <span class="window-dot yellow"></span>
                   <span class="window-dot green"></span>
-                  <span class="window-title font-mono">github.com</span>
                 </div>
                 <div class="video-media-wrap">
                   <video src="/assets/github.mp4" autoplay loop muted playsinline preload="auto"></video>
@@ -130,7 +120,6 @@
                   <span class="window-dot red"></span>
                   <span class="window-dot yellow"></span>
                   <span class="window-dot green"></span>
-                  <span class="window-title font-mono">gitex.app/ingest</span>
                 </div>
                 <div class="video-media-wrap">
                   <video src="/assets/ingest.mp4" autoplay loop muted playsinline preload="auto"></video>
@@ -162,7 +151,6 @@
                   <span class="window-dot red"></span>
                   <span class="window-dot yellow"></span>
                   <span class="window-dot green"></span>
-                  <span class="window-title font-mono">gitex.app/analysis</span>
                 </div>
                 <div class="video-media-wrap">
                   <video src="/assets/documentation.mp4" autoplay loop muted playsinline preload="auto"></video>
@@ -194,9 +182,7 @@
 
       // Smooth scroll on clicking arrow / link
       var scrollLink = document.getElementById('link-scroll-how-to-works');
-      var scrollUpLink = document.getElementById('link-scroll-to-hero');
       var howSection = document.getElementById('how-to-works');
-      var heroSection = document.getElementById('hero');
 
       if (scrollLink && howSection) {
         scrollLink.addEventListener('click', function(e) {
@@ -206,18 +192,6 @@
             window.history.pushState(null, '', '#how-to-works');
           } else {
             window.location.hash = '#how-to-works';
-          }
-        });
-      }
-
-      if (scrollUpLink && heroSection) {
-        scrollUpLink.addEventListener('click', function(e) {
-          e.preventDefault();
-          heroSection.scrollIntoView({ behavior: 'smooth' });
-          if (window.history && window.history.pushState) {
-            window.history.pushState(null, '', window.location.pathname);
-          } else {
-            window.location.hash = '';
           }
         });
       }
