@@ -5,6 +5,7 @@
       <span class="brand-tag">Field Notebook</span>
     </a>
     <div class="header-actions">
+      <% if (typeof hideThemeToggle === 'undefined' || !hideThemeToggle) { %>
       <button id="theme-toggle" class="btn-ghost" type="button" aria-label="Switch to light theme">
         <span id="theme-icon" aria-hidden="true">☀️</span>
         <span id="theme-label">Light</span>
@@ -22,6 +23,7 @@
           } catch(e) {}
         })();
       </script>
+      <% } %>
     </div>
   </div>
 </header>

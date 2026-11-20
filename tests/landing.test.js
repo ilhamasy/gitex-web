@@ -10,11 +10,11 @@ describe('Landing Homepage (feat/add-homepage)', () => {
     assert.equal(res.headers['content-type'].includes('text/html'), true);
   });
 
-  it('renders navbar with GitEx wordmark and light/dark theme toggle matching detail analysis', async () => {
+  it('renders navbar with GitEx wordmark and without theme toggle on landing page', async () => {
     const res = await request(app).get('/');
     assert.ok(res.text.includes('GitEx'));
     assert.ok(res.text.includes('Field Notebook'));
-    assert.ok(res.text.includes('id="theme-toggle"'));
+    assert.equal(res.text.includes('id="theme-toggle"'), false);
     assert.equal(res.text.includes('landing-nav-cta'), false);
     assert.equal(res.text.includes('id="nav-btn-lang-en"'), false);
     assert.equal(res.text.includes('id="nav-btn-lang-id"'), false);
