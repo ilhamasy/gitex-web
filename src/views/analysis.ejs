@@ -43,6 +43,24 @@
   <%- include('partials/header') %>
   <% const isId = (typeof currentLang !== 'undefined' && currentLang === 'id'); %>
 
+  <!-- Translation Background Progress Floating Snackbar (Top Sticky/Fixed) -->
+  <aside id="translation-progress-snackbar" class="gitex-progress-snackbar hidden" role="status" aria-live="polite" style="display: none;">
+    <div class="snackbar-inner">
+      <div class="snackbar-status-wrap">
+        <span id="trans-snackbar-spinner" class="snackbar-spinner" aria-hidden="true"></span>
+        <span id="trans-snackbar-icon" class="snackbar-icon hidden" aria-hidden="true">✓</span>
+        <div class="snackbar-text-content">
+          <span id="trans-snackbar-title" class="snackbar-repo-title font-mono"><%= record?.fullName || 'Analisis Repositori' %></span>
+          <span id="trans-snackbar-status-text" class="snackbar-status-text">Menerjemahkan ke Bahasa Indonesia... (Klik untuk melihat progress)</span>
+        </div>
+      </div>
+      <div class="snackbar-action-wrap">
+        <button type="button" id="btn-trans-snackbar-action" class="btn-snackbar-view hidden">Lihat Terjemahan</button>
+        <button type="button" id="btn-trans-snackbar-close" class="btn-snackbar-close" aria-label="Tutup notifikasi">✕</button>
+      </div>
+    </div>
+  </aside>
+
   <!-- Top Analysis Identity Bar -->
   <header class="analysis-header-bar" id="analysis-top">
     <div class="container analysis-header-inner">
@@ -1126,13 +1144,21 @@
 
   <!-- Translation Loading Modal (AI Translation Progress) -->
   <div id="translation-modal" class="progress-modal-backdrop hidden" role="dialog" aria-labelledby="translation-modal-title" aria-modal="true" style="display: none;">
-    <div class="progress-card translation-card">
+    <div class="progress-card translation-card" style="position: relative;">
+      <button type="button" id="btn-translation-close" class="btn-progress-close" aria-label="Jalankan di latar belakang" title="Jalankan di latar belakang" style="position: absolute; top: 0.875rem; right: 0.875rem; display: flex;">
+        ✕
+      </button>
       <div class="translation-spinner" aria-hidden="true"></div>
-      <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center; text-align: center; width: 100%;">
         <h3 id="translation-modal-title" class="progress-title" style="font-size: 1.25rem; font-weight: 600; color: var(--color-text); margin: 0;">Menerjemahkan Analisis...</h3>
         <p id="translation-modal-desc" style="font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.5; margin: 0;">
           GitEx AI sedang menerjemahkan seluruh konten dokumentasi ke Bahasa Indonesia. Harap tunggu sebentar.
         </p>
+        <div style="margin-top: 1rem; text-align: center; width: 100%;">
+          <button type="button" id="btn-translation-background" class="btn-ghost" style="font-size: 0.8125rem; color: var(--color-text-secondary); text-decoration: underline; cursor: pointer; padding: 0.25rem 0.5rem; border: none; background: transparent;">
+            Jalankan di latar belakang
+          </button>
+        </div>
       </div>
     </div>
   </div>

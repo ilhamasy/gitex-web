@@ -181,6 +181,27 @@ describe('Language Support & Translation Service (EN / ID)', () => {
     assert.match(html, /Repository Overview/);
     assert.match(html, /id="translation-modal"/);
     assert.match(html, /Menerjemahkan Analisis.../);
+    assert.match(html, /id="translation-progress-snackbar"/);
+    assert.match(html, /id="btn-translation-close"/);
+    assert.match(html, /id="btn-translation-background"/);
+  });
+
+  it('renders dismissible translation modal and top progress snackbar for background translation', async () => {
+    const res = await request(app)
+      .get('/analysis/i18n-test-record-123')
+      .expect(200);
+
+    const html = res.text;
+    assert.match(html, /id="translation-progress-snackbar"/);
+    assert.match(html, /id="trans-snackbar-spinner"/);
+    assert.match(html, /id="trans-snackbar-icon"/);
+    assert.match(html, /id="trans-snackbar-title"/);
+    assert.match(html, /id="trans-snackbar-status-text"/);
+    assert.match(html, /id="btn-trans-snackbar-action"/);
+    assert.match(html, /id="btn-trans-snackbar-close"/);
+    assert.match(html, /id="btn-translation-close"/);
+    assert.match(html, /id="btn-translation-background"/);
+    assert.match(html, /Jalankan di latar belakang/);
   });
 
   it('GET /analysis/:id?lang=id renders Indonesian flag as active and Indonesian titles', async () => {

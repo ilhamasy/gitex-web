@@ -148,6 +148,7 @@ function initInteractiveUI(record) {
   try { initCopyMarkdownButton(); } catch (e) { console.warn('[GitEx] initCopyMarkdown error:', e); }
   try { initReanalyzeButton(record); } catch (e) { console.warn('[GitEx] initReanalyze error:', e); }
   try { initDeleteButton(record); } catch (e) { console.warn('[GitEx] initDeleteButton error:', e); }
+  try { initTranslationModalEvents(); } catch (e) { console.warn('[GitEx] initTranslationModalEvents error:', e); }
 }
 
 async function initAnalysis() {
@@ -458,6 +459,183 @@ function isClientTranslationValid(record) {
   return true;
 }
 
+let isTranslating = false;
+let isTranslationDismissed = false;
+let translationSnackbarTimeout = null;
+
+function showTranslationSnackbar(title, statusText) {
+  const snackbar = document.getElementById('translation-progress-snackbar');
+  if (!snackbar) return;
+  if (translationSnackbarTimeout) clearTimeout(translationSnackbarTimeout);
+
+  snackbar.classList.remove('hidden', 'is-completed', 'is-failed');
+  snackbar.style.display = 'block';
+
+  const spinner = document.getElementById('trans-snackbar-spinner');
+  const icon = document.getElementById('trans-snackbar-icon');
+  const actionBtn = document.getElementById('btn-trans-snackbar-action');
+  const titleEl = document.getElementById('trans-snackbar-title');
+  const textEl = document.getElementById('trans-snackbar-status-text');
+
+  if (spinner) spinner.classList.remove('hidden');
+  if (icon) icon.classList.add('hidden');
+  if (actionBtn) actionBtn.classList.add('hidden');
+
+  if (titleEl && title) titleEl.textContent = title;
+  if (textEl) textEl.textContent = statusText || 'Menerjemahkan ke Bahasa Indonesia... (Klik untuk melihat progress)';
+
+  void snackbar.offsetWidth;
+  snackbar.classList.add('show');
+}
+
+function updateTranslationSnackbarCompleted(message) {
+  const snackbar = document.getElementById('translation-progress-snackbar');
+  if (!snackbar) return;
+  if (translationSnackbarTimeout) clearTimeout(translationSnackbarTimeout);
+
+  snackbar.classList.remove('hidden', 'is-failed');
+  snackbar.classList.add('is-completed', 'show');
+  snackbar.style.display = 'block';
+
+  const spinner = document.getElementById('trans-snackbar-spinner');
+  const icon = document.getElementById('trans-snackbar-icon');
+  const actionBtn = document.getElementById('btn-trans-snackbar-action');
+  const textEl = document.getElementById('trans-snackbar-status-text');
+
+  if (spinner) spinner.classList.add('hidden');
+  if (icon) {
+    icon.classList.remove('hidden');
+    icon.textContent = '✓';
+    icon.style.color = '#22c55e';
+    icon.style.backgroundColor = 'rgba(34, 197, 94, 0.15)';
+  }
+  if (textEl) {
+    textEl.textContent = message || 'Terjemahan selesai! Dokumentasi siap dibaca.';
+  }
+  if (actionBtn) {
+    actionBtn.classList.remove('hidden');
+    actionBtn.textContent = 'Tampilkan';
+    actionBtn.onclick = (e) => {
+      e.stopPropagation();
+      hideTranslationSnackbar();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  }
+
+  translationSnackbarTimeout = setTimeout(() => {
+    hideTranslationSnackbar();
+  }, 8000);
+}
+
+function updateTranslationSnackbarFailed(errorMsg) {
+  const snackbar = document.getElementById('translation-progress-snackbar');
+  if (!snackbar) return;
+  if (translationSnackbarTimeout) clearTimeout(translationSnackbarTimeout);
+
+  snackbar.classList.remove('hidden', 'is-completed');
+  snackbar.classList.add('is-failed', 'show');
+  snackbar.style.display = 'block';
+
+  const spinner = document.getElementById('trans-snackbar-spinner');
+  const icon = document.getElementById('trans-snackbar-icon');
+  const textEl = document.getElementById('trans-snackbar-status-text');
+
+  if (spinner) spinner.classList.add('hidden');
+  if (icon) {
+    icon.classList.remove('hidden');
+    icon.textContent = '✕';
+    icon.style.color = '#ef4444';
+    icon.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+  }
+  if (textEl) {
+    textEl.textContent = `Gagal menerjemahkan (${errorMsg || 'Error'}).`;
+  }
+
+  translationSnackbarTimeout = setTimeout(() => {
+    hideTranslationSnackbar();
+  }, 10000);
+}
+
+function hideTranslationSnackbar() {
+  const snackbar = document.getElementById('translation-progress-snackbar');
+  if (!snackbar) return;
+  if (translationSnackbarTimeout) clearTimeout(translationSnackbarTimeout);
+  snackbar.classList.remove('show');
+  setTimeout(() => {
+    snackbar.classList.add('hidden');
+    snackbar.style.display = 'none';
+  }, 300);
+}
+
+function dismissTranslationToBackground() {
+  const modal = document.getElementById('translation-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+  isTranslationDismissed = true;
+  const repoName = currentRecord?.fullName || (currentRecord?.owner && currentRecord?.name ? `${currentRecord.owner}/${currentRecord.name}` : currentRecord?.name) || 'Analisis Repositori';
+  showTranslationSnackbar(repoName, 'Menerjemahkan ke Bahasa Indonesia... (Klik untuk melihat progress)');
+}
+
+function initTranslationModalEvents() {
+  const modal = document.getElementById('translation-modal');
+  const btnClose = document.getElementById('btn-translation-close');
+  const btnBg = document.getElementById('btn-translation-background');
+  const snackbar = document.getElementById('translation-progress-snackbar');
+  const btnSnackbarClose = document.getElementById('btn-trans-snackbar-close');
+
+  if (btnClose && !btnClose._hasDismissListener) {
+    btnClose._hasDismissListener = true;
+    btnClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dismissTranslationToBackground();
+    });
+  }
+
+  if (btnBg && !btnBg._hasDismissListener) {
+    btnBg._hasDismissListener = true;
+    btnBg.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dismissTranslationToBackground();
+    });
+  }
+
+  if (modal && !modal._hasBackdropListener) {
+    modal._hasBackdropListener = true;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        dismissTranslationToBackground();
+      }
+    });
+  }
+
+  if (btnSnackbarClose && !btnSnackbarClose._hasCloseListener) {
+    btnSnackbarClose._hasCloseListener = true;
+    btnSnackbarClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hideTranslationSnackbar();
+    });
+  }
+
+  if (snackbar && !snackbar._hasClickListener) {
+    snackbar._hasClickListener = true;
+    snackbar.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-trans-snackbar-close') || e.target.closest('#btn-trans-snackbar-action')) {
+        return;
+      }
+      if (isTranslating) {
+        hideTranslationSnackbar();
+        isTranslationDismissed = false;
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
+        }
+      }
+    });
+  }
+}
+
 /**
  * Switches analysis language between 'en' and 'id'
  */
@@ -516,6 +694,8 @@ async function switchLanguage(targetLang, showNotification = true) {
 
   // 2. Show loading modal popup
   const modal = document.getElementById('translation-modal');
+  isTranslating = true;
+  isTranslationDismissed = false;
   if (modal) {
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
@@ -545,7 +725,12 @@ async function switchLanguage(targetLang, showNotification = true) {
       if (currentLang === 'id') {
         renderDocument(json.analysis, currentRecord, 'id');
       }
-      if (showNotification) showToast(t.langSwitched);
+
+      if (isTranslationDismissed) {
+        updateTranslationSnackbarCompleted('Terjemahan selesai! Bahasa Indonesia siap dibaca.');
+      } else {
+        if (showNotification) showToast(t.langSwitched);
+      }
     } else {
       throw new Error(json.error || 'Translation failed');
     }
@@ -557,9 +742,14 @@ async function switchLanguage(targetLang, showNotification = true) {
       const fallbackId = generateClientFallbackIndonesian(baseAnalysis);
       renderDocument(fallbackId, currentRecord, 'id');
     }
-    showToast('Gagal menerjemahkan dokumentasi.');
+    if (isTranslationDismissed) {
+      updateTranslationSnackbarFailed(err.message || 'Gagal menerjemahkan');
+    } else {
+      showToast('Gagal menerjemahkan dokumentasi.');
+    }
   } finally {
-    if (modal) {
+    isTranslating = false;
+    if (!isTranslationDismissed && modal) {
       modal.classList.add('hidden');
       modal.style.display = 'none';
     }
@@ -570,6 +760,9 @@ async function switchLanguage(targetLang, showNotification = true) {
 if (typeof window !== 'undefined') {
   window._gitexSwitchLanguage = switchLanguage;
   window.switchLanguage = switchLanguage;
+  window._gitexDismissTranslation = dismissTranslationToBackground;
+  window._gitexShowTranslationSnackbar = showTranslationSnackbar;
+  window._gitexHideTranslationSnackbar = hideTranslationSnackbar;
   if (window._pendingLangSwitch) {
     const pending = window._pendingLangSwitch;
     window._pendingLangSwitch = null;
