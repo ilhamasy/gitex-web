@@ -191,10 +191,8 @@ async function initAnalysis() {
   // Check saved language preference (if saved as 'id' and currently 'en')
   try {
     const savedLang = localStorage.getItem('gitex_lang') || new URLSearchParams(window.location.search).get('lang');
-    if (savedLang === 'id') {
-      if (!isClientTranslationValid(currentRecord)) {
-        switchLanguage('id', false);
-      }
+    if (savedLang === 'id' && currentLang !== 'id') {
+      switchLanguage('id', false);
     }
   } catch {}
 }
@@ -444,17 +442,28 @@ function generateClientFallbackIndonesian(analysis) {
  */
 function isClientTranslationValid(record) {
   if (!record || !record.translations?.id) return false;
-  const origOverview = record.analysis?.overview || originalAnalysis?.overview;
-  const transOverview = record.translations.id.overview;
-  const origPurpose = record.analysis?.purpose || originalAnalysis?.purpose;
-  const transPurpose = record.translations.id.purpose;
+  const trans = record.translations.id;
+  if (!trans || typeof trans !== 'object') return false;
+  if (!trans.overview && !trans.purpose) return false;
 
-  if (!transOverview) return false;
-  if (origOverview?.problemSolved && transOverview?.problemSolved && origOverview.problemSolved.trim() === transOverview.problemSolved.trim()) {
-    return false;
+  const origOverview = record.analysis?.overview || originalAnalysis?.overview;
+  const transOverview = trans.overview;
+  const origPurpose = record.analysis?.purpose || originalAnalysis?.purpose;
+  const transPurpose = trans.purpose;
+
+  if (origOverview?.problemSolved && transOverview?.problemSolved) {
+    const origPS = origOverview.problemSolved.trim();
+    const transPS = transOverview.problemSolved.trim();
+    if (origPS.length > 20 && origPS === transPS) {
+      return false;
+    }
   }
-  if (origPurpose?.targetUsers?.[0] && transPurpose?.targetUsers?.[0] && origPurpose.targetUsers[0].trim() === transPurpose.targetUsers[0].trim()) {
-    return false;
+  if (origPurpose?.targetUsers?.[0] && transPurpose?.targetUsers?.[0]) {
+    const origTU = origPurpose.targetUsers[0].trim();
+    const transTU = transPurpose.targetUsers[0].trim();
+    if (origTU.length > 20 && origTU === transTU) {
+      return false;
+    }
   }
   return true;
 }
@@ -527,6 +536,42 @@ function updateTranslationSnackbarCompleted(message) {
   }, 8000);
 }
 
+function showTranslationModalError(errorMsg) {
+  const spinner = document.getElementById('translation-modal-spinner');
+  const errorContainer = document.getElementById('translation-modal-error');
+  const errorMsgEl = document.getElementById('translation-modal-error-msg');
+  const actionsContainer = document.getElementById('translation-modal-actions');
+  const titleEl = document.getElementById('translation-modal-title');
+  const descEl = document.getElementById('translation-modal-desc');
+
+  if (spinner) spinner.style.display = 'none';
+  if (actionsContainer) actionsContainer.style.display = 'none';
+  if (titleEl) titleEl.textContent = 'Gagal Menerjemahkan';
+  if (descEl) descEl.textContent = 'Terjadi kendala saat menerjemahkan dokumentasi ke Bahasa Indonesia.';
+  if (errorMsgEl) errorMsgEl.textContent = errorMsg || 'Gagal menerjemahkan dokumentasi.';
+  if (errorContainer) {
+    errorContainer.classList.remove('hidden');
+    errorContainer.style.display = 'flex';
+  }
+}
+
+function resetTranslationModalUI() {
+  const spinner = document.getElementById('translation-modal-spinner');
+  const errorContainer = document.getElementById('translation-modal-error');
+  const actionsContainer = document.getElementById('translation-modal-actions');
+  const titleEl = document.getElementById('translation-modal-title');
+  const descEl = document.getElementById('translation-modal-desc');
+
+  if (spinner) spinner.style.display = '';
+  if (actionsContainer) actionsContainer.style.display = '';
+  if (titleEl) titleEl.textContent = 'Menerjemahkan Analisis...';
+  if (descEl) descEl.textContent = 'GitEx AI sedang menerjemahkan seluruh konten dokumentasi ke Bahasa Indonesia. Harap tunggu sebentar.';
+  if (errorContainer) {
+    errorContainer.classList.add('hidden');
+    errorContainer.style.display = 'none';
+  }
+}
+
 function updateTranslationSnackbarFailed(errorMsg) {
   const snackbar = document.getElementById('translation-progress-snackbar');
   if (!snackbar) return;
@@ -538,6 +583,7 @@ function updateTranslationSnackbarFailed(errorMsg) {
 
   const spinner = document.getElementById('trans-snackbar-spinner');
   const icon = document.getElementById('trans-snackbar-icon');
+  const actionBtn = document.getElementById('btn-trans-snackbar-action');
   const textEl = document.getElementById('trans-snackbar-status-text');
 
   if (spinner) spinner.classList.add('hidden');
@@ -550,10 +596,19 @@ function updateTranslationSnackbarFailed(errorMsg) {
   if (textEl) {
     textEl.textContent = `Gagal menerjemahkan (${errorMsg || 'Error'}).`;
   }
+  if (actionBtn) {
+    actionBtn.classList.remove('hidden');
+    actionBtn.textContent = 'Coba Lagi';
+    actionBtn.onclick = (e) => {
+      e.stopPropagation();
+      hideTranslationSnackbar();
+      switchLanguage('id', true, true);
+    };
+  }
 
   translationSnackbarTimeout = setTimeout(() => {
     hideTranslationSnackbar();
-  }, 10000);
+  }, 12000);
 }
 
 function hideTranslationSnackbar() {
@@ -584,6 +639,8 @@ function initTranslationModalEvents() {
   const btnBg = document.getElementById('btn-translation-background');
   const snackbar = document.getElementById('translation-progress-snackbar');
   const btnSnackbarClose = document.getElementById('btn-trans-snackbar-close');
+  const btnRetry = document.getElementById('btn-translation-retry');
+  const btnCancel = document.getElementById('btn-translation-cancel');
 
   if (btnClose && !btnClose._hasDismissListener) {
     btnClose._hasDismissListener = true;
@@ -598,6 +655,25 @@ function initTranslationModalEvents() {
     btnBg.addEventListener('click', (e) => {
       e.stopPropagation();
       dismissTranslationToBackground();
+    });
+  }
+
+  if (btnRetry && !btnRetry._hasRetryListener) {
+    btnRetry._hasRetryListener = true;
+    btnRetry.addEventListener('click', (e) => {
+      e.stopPropagation();
+      switchLanguage('id', true, true);
+    });
+  }
+
+  if (btnCancel && !btnCancel._hasCancelListener) {
+    btnCancel._hasCancelListener = true;
+    btnCancel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+      }
     });
   }
 
@@ -639,7 +715,7 @@ function initTranslationModalEvents() {
 /**
  * Switches analysis language between 'en' and 'id'
  */
-async function switchLanguage(targetLang, showNotification = true) {
+async function switchLanguage(targetLang, showNotification = true, forceRetry = false) {
   if (targetLang !== 'en' && targetLang !== 'id') return;
 
   const btnEn = document.getElementById('btn-lang-en');
@@ -685,10 +761,21 @@ async function switchLanguage(targetLang, showNotification = true) {
   }
 
   // Target is Indonesian ('id')
-  // 1. Instant render if real AI translation is already cached
-  if (isClientTranslationValid(currentRecord)) {
+  // 1. Instant render if translation is already cached and valid, unless forceRetry is requested
+  if (!forceRetry && isClientTranslationValid(currentRecord)) {
     renderDocument(currentRecord.translations.id, currentRecord, 'id');
     if (showNotification) showToast(t.langSwitched);
+    return;
+  }
+
+  // If already actively translating and not force retry, don't fire duplicate
+  if (isTranslating && !forceRetry) {
+    if (isTranslationDismissed) {
+      showTranslationSnackbar(
+        currentRecord?.fullName || 'Analisis Repositori',
+        'Menerjemahkan ke Bahasa Indonesia... (Klik untuk melihat progress)'
+      );
+    }
     return;
   }
 
@@ -696,6 +783,7 @@ async function switchLanguage(targetLang, showNotification = true) {
   const modal = document.getElementById('translation-modal');
   isTranslating = true;
   isTranslationDismissed = false;
+  resetTranslationModalUI();
   if (modal) {
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
@@ -703,24 +791,72 @@ async function switchLanguage(targetLang, showNotification = true) {
 
   // 3. Asynchronously fetch full AI translation from server
   const pathParts = window.location.pathname.split('/');
-  const pathId = pathParts[1] === 'analysis' ? pathParts[2] : null;
+  const pathId = pathParts[1] === 'analysis' && pathParts[2] ? pathParts[2] : null;
   const recordId = currentRecord?.id || window.__RECORD_ID__ || pathId || new URLSearchParams(window.location.search).get('id');
+  const repoUrl = currentRecord?.url || window.__GITEX_RECORD__?.url || new URLSearchParams(window.location.search).get('url') || '';
 
   try {
-    if (!recordId) {
-      throw new Error('Analysis ID not found');
+    if (!recordId && !repoUrl) {
+      throw new Error('Analysis ID or URL not found');
     }
 
-    const res = await fetch(`/api/analysis/${encodeURIComponent(recordId)}/translate?lang=id`);
+    const queryParams = new URLSearchParams({ lang: 'id' });
+    if (forceRetry) queryParams.set('fresh', 'true');
+    if (repoUrl) queryParams.set('url', repoUrl);
+
+    const targetEndpoint = recordId
+      ? `/api/analysis/${encodeURIComponent(recordId)}/translate?${queryParams.toString()}`
+      : `/api/analysis/translate?${queryParams.toString()}`;
+
+    let res = await fetch(targetEndpoint);
+
+    // If 404 or failed and client has analysis object in memory, fallback to POST with analysis body
+    if (!res.ok && (currentRecord?.analysis || originalAnalysis)) {
+      try {
+        const postEndpoint = recordId
+          ? `/api/analysis/${encodeURIComponent(recordId)}/translate?${queryParams.toString()}`
+          : `/api/analysis/translate?${queryParams.toString()}`;
+        const postRes = await fetch(postEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: recordId,
+            url: repoUrl,
+            analysis: currentRecord?.analysis || originalAnalysis,
+            fresh: forceRetry,
+          }),
+        });
+        if (postRes.ok) {
+          res = postRes;
+        }
+      } catch (postErr) {
+        console.warn('[GitEx Translation] POST fallback failed:', postErr);
+      }
+    }
+
     if (!res.ok) {
       throw new Error(`Translation request failed (${res.status})`);
     }
 
     const json = await res.json();
     if (json.success && json.analysis) {
-      if (!currentRecord) currentRecord = { id: recordId };
+      if (!currentRecord) currentRecord = { id: recordId || `gitex-${Date.now()}`, url: repoUrl };
       if (!currentRecord.translations) currentRecord.translations = {};
       currentRecord.translations.id = json.analysis;
+
+      if (window.__GITEX_RECORD__) {
+        if (!window.__GITEX_RECORD__.translations) window.__GITEX_RECORD__.translations = {};
+        window.__GITEX_RECORD__.translations.id = json.analysis;
+      }
+
+      // Persist to client history immediately so it never needs to re-fetch
+      try {
+        if (window.GitExHistory && currentRecord.id) {
+          window.GitExHistory.save(currentRecord);
+        }
+      } catch (saveErr) {
+        console.warn('[GitEx] Failed to save translation to history:', saveErr);
+      }
 
       if (currentLang === 'id') {
         renderDocument(json.analysis, currentRecord, 'id');
@@ -729,6 +865,10 @@ async function switchLanguage(targetLang, showNotification = true) {
       if (isTranslationDismissed) {
         updateTranslationSnackbarCompleted('Terjemahan selesai! Bahasa Indonesia siap dibaca.');
       } else {
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        }
         if (showNotification) showToast(t.langSwitched);
       }
     } else {
@@ -745,13 +885,16 @@ async function switchLanguage(targetLang, showNotification = true) {
     if (isTranslationDismissed) {
       updateTranslationSnackbarFailed(err.message || 'Gagal menerjemahkan');
     } else {
-      showToast('Gagal menerjemahkan dokumentasi.');
+      showTranslationModalError(err.message || 'Gagal menerjemahkan dokumentasi.');
     }
   } finally {
     isTranslating = false;
     if (!isTranslationDismissed && modal) {
-      modal.classList.add('hidden');
-      modal.style.display = 'none';
+      // If successfully translated, close modal
+      if (currentRecord?.translations?.id && isClientTranslationValid(currentRecord)) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+      }
     }
   }
 }
@@ -784,7 +927,9 @@ function initLanguageSwitcher(record) {
       btn._hasLangListener = true;
       btn.onclick = (e) => {
         e.preventDefault();
-        switchLanguage(lang, true);
+        // If clicking ID and it is not validly translated, force retry from beginning
+        const isRetry = (lang === 'id' && !isClientTranslationValid(currentRecord));
+        switchLanguage(lang, true, isRetry);
       };
     }
   };

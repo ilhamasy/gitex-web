@@ -195,7 +195,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <span>Documentation</span>
-          <span class="tab-badge" id="docs-tab-badge">12</span>
         </button>
       </nav>
     </div>
@@ -1148,16 +1147,27 @@
       <button type="button" id="btn-translation-close" class="btn-progress-close" aria-label="Jalankan di latar belakang" title="Jalankan di latar belakang" style="position: absolute; top: 0.875rem; right: 0.875rem; display: flex;">
         ✕
       </button>
-      <div class="translation-spinner" aria-hidden="true"></div>
-      <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center; text-align: center; width: 100%;">
+      <div id="translation-modal-spinner" class="translation-spinner" aria-hidden="true"></div>
+      <div id="translation-modal-body" style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center; text-align: center; width: 100%;">
         <h3 id="translation-modal-title" class="progress-title" style="font-size: 1.25rem; font-weight: 600; color: var(--color-text); margin: 0;">Menerjemahkan Analisis...</h3>
         <p id="translation-modal-desc" style="font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.5; margin: 0;">
           GitEx AI sedang menerjemahkan seluruh konten dokumentasi ke Bahasa Indonesia. Harap tunggu sebentar.
         </p>
-        <div style="margin-top: 1rem; text-align: center; width: 100%;">
+        <div id="translation-modal-actions" style="margin-top: 1rem; text-align: center; width: 100%;">
           <button type="button" id="btn-translation-background" class="btn-ghost" style="font-size: 0.8125rem; color: var(--color-text-secondary); text-decoration: underline; cursor: pointer; padding: 0.25rem 0.5rem; border: none; background: transparent;">
             Jalankan di latar belakang
           </button>
+        </div>
+        <div id="translation-modal-error" class="hidden" style="display: none; flex-direction: column; gap: 0.75rem; align-items: center; width: 100%; margin-top: 0.5rem;">
+          <p id="translation-modal-error-msg" style="font-size: 0.875rem; color: #ef4444; margin: 0;">Gagal menerjemahkan dokumentasi.</p>
+          <div style="display: flex; gap: 0.75rem; align-items: center; justify-content: center; margin-top: 0.5rem;">
+            <button type="button" id="btn-translation-retry" class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.875rem;">
+              Coba Lagi
+            </button>
+            <button type="button" id="btn-translation-cancel" class="btn-ghost" style="padding: 0.4rem 1rem; font-size: 0.875rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm);">
+              Tutup
+            </button>
+          </div>
         </div>
       </div>
     </div>

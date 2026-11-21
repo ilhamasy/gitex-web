@@ -201,7 +201,13 @@ describe('Language Support & Translation Service (EN / ID)', () => {
     assert.match(html, /id="btn-trans-snackbar-close"/);
     assert.match(html, /id="btn-translation-close"/);
     assert.match(html, /id="btn-translation-background"/);
+    assert.match(html, /id="btn-translation-retry"/);
+    assert.match(html, /id="translation-modal-error"/);
     assert.match(html, /Jalankan di latar belakang/);
+
+    // Verify Requirement 3: Documentation tab has no number badge
+    assert.match(html, /<span>Documentation<\/span>/);
+    assert.doesNotMatch(html, /id="docs-tab-badge"/);
   });
 
   it('GET /analysis/:id?lang=id renders Indonesian flag as active and Indonesian titles', async () => {
@@ -226,6 +232,47 @@ describe('Language Support & Translation Service (EN / ID)', () => {
     assert.equal(res.body.success, true);
     assert.equal(res.body.data.id, 'i18n-test-record-123');
     assert.equal(res.body.data.fullName, 'expressjs/express');
+  });
+
+  it('persists translated analysis in cache so subsequent requests return cached translation', async () => {
+    // 1. Initial translation request translates and caches
+    const res1 = await request(app)
+      .get('/api/analysis/i18n-test-record-123/translate?lang=id')
+      .expect(200);
+    assert.equal(res1.body.success, true);
+    assert.ok(res1.body.analysis);
+
+    // 2. Second request returns the persisted cached translation without error
+    const res2 = await request(app)
+      .get('/api/analysis/i18n-test-record-123/translate?lang=id')
+      .expect(200);
+    assert.equal(res2.body.success, true);
+    assert.equal(res2.body.analysis.overview.title, 'Ringkasan Repositori');
+  });
+
+  it('GET /api/analysis/:id/translate recovers record by URL query if ID is not direct match', async () => {
+    const res = await request(app)
+      .get('/api/analysis/arbitrary-client-id/translate?lang=id&url=https://github.com/expressjs/express')
+      .expect(200);
+
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.lang, 'id');
+    assert.ok(res.body.analysis);
+  });
+
+  it('POST /api/analysis/:id/translate supports payload fallback and fresh retry', async () => {
+    const res = await request(app)
+      .post('/api/analysis/arbitrary-client-id/translate?lang=id&fresh=true')
+      .send({
+        url: 'https://github.com/expressjs/express',
+        analysis: sampleAnalysis,
+        fresh: true,
+      })
+      .expect(200);
+
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.lang, 'id');
+    assert.ok(res.body.analysis);
   });
 
   it('preserves feature/component names (Settings Manager, Pointer System, CLI Installer) while translating explanations', () => {

@@ -70,6 +70,16 @@ function sanitizeRecordForStorage(record) {
     if ('fileContent' in cleanAnalysis[key]) delete cleanAnalysis[key].fileContent;
   });
 
+  // Sanitize translations if present (e.g. id)
+  const cleanTranslations = {};
+  if (record.translations && typeof record.translations === 'object') {
+    for (const [langKey, langAnalysis] of Object.entries(record.translations)) {
+      if (langAnalysis && typeof langAnalysis === 'object') {
+        cleanTranslations[langKey] = langAnalysis;
+      }
+    }
+  }
+
   return {
     id,
     provider,
@@ -88,6 +98,7 @@ function sanitizeRecordForStorage(record) {
     status,
     score,
     analysis: cleanAnalysis,
+    ...(Object.keys(cleanTranslations).length > 0 && { translations: cleanTranslations }),
     missingSections: Array.isArray(record.missingSections) ? record.missingSections : [],
     repaired: Boolean(record.repaired),
   };
