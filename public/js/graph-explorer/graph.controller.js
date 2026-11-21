@@ -174,6 +174,10 @@
 
   function loadView(viewId) {
     currentViewId = viewId;
+    activeFilterType = 'ALL';
+    document.querySelectorAll('.graph-filter-chip').forEach((c) => {
+      c.classList.toggle('active', c.getAttribute('data-filter') === 'ALL');
+    });
 
     // Update active desktop pills
     document.querySelectorAll('.graph-view-pill').forEach((p) => {
@@ -221,7 +225,9 @@
     const container = document.getElementById('graph-filter-chips');
     if (!container) return;
 
-    const types = ['ALL', 'COMPONENT', 'PACKAGE', 'SERVICE', 'ENDPOINT', 'DATABASE'];
+    // Endpoints and Database (ERD) are dedicated primary views at the top,
+    // so we keep the toolbar filter chips focused on core structural elements.
+    const types = ['ALL', 'COMPONENT', 'PACKAGE', 'SERVICE'];
     container.innerHTML = '';
 
     types.forEach((t) => {
@@ -565,7 +571,18 @@
       }
     }
 
-    // Related edges
+    // Related edges (only shown for generic components; specialized panels manage their own relations)
+    const incomingContainer = document.getElementById('drawer-incoming-container');
+    const outgoingContainer = document.getElementById('drawer-outgoing-container');
+
+    if (node.type === 'Endpoint' || node.type === 'Database' || node.type === 'Table') {
+      if (incomingContainer) incomingContainer.style.display = 'none';
+      if (outgoingContainer) outgoingContainer.style.display = 'none';
+    } else {
+      if (incomingContainer) incomingContainer.style.display = 'block';
+      if (outgoingContainer) outgoingContainer.style.display = 'block';
+    }
+
     if (incomingList && outgoingList && graphEngine) {
       const incoming = graphEngine.edges.filter((e) => e.targetNode && e.targetNode.id === node.id);
       const outgoing = graphEngine.edges.filter((e) => e.sourceNode && e.sourceNode.id === node.id);
