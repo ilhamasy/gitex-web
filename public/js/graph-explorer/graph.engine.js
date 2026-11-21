@@ -125,12 +125,12 @@
     setData(nodes, edges) {
       this.nodes = nodes.map((n, idx) => ({
         ...n,
-        x: n.x || (Math.cos((idx / nodes.length) * Math.PI * 2) * 280),
-        y: n.y || (Math.sin((idx / nodes.length) * Math.PI * 2) * 200),
+        x: n.x || (Math.cos((idx / Math.max(1, nodes.length)) * Math.PI * 2) * 280),
+        y: n.y || (Math.sin((idx / Math.max(1, nodes.length)) * Math.PI * 2) * 200),
         vx: 0,
         vy: 0,
-        w: 190,
-        h: 70,
+        w: n.type === 'Endpoint' ? 220 : n.type === 'Database' || n.type === 'Table' ? 200 : 190,
+        h: 74,
       }));
 
       // Map edges to actual node references
@@ -517,31 +517,56 @@
       ctx.fill();
       ctx.stroke();
 
-      // Left Accent Strip
-      ctx.fillStyle = node.id === 'root-system' ? THEME.citrus : isSelected ? THEME.citrus : '#65c58b';
+      // Left Accent Strip & Badge color
+      let accentColor = '#65c58b';
+      let typeLabel = (node.type || 'COMPONENT').toUpperCase();
+
+      if (node.id === 'root-system') {
+        accentColor = THEME.citrus;
+      } else if (node.type === 'Endpoint') {
+        const m = (node.method || '').toUpperCase();
+        if (m === 'POST') accentColor = '#38bdf8';
+        else if (m === 'GET') accentColor = '#34d399';
+        else if (m === 'PUT' || m === 'PATCH') accentColor = '#fbbf24';
+        else if (m === 'DELETE') accentColor = '#f87171';
+        else accentColor = THEME.citrus;
+        typeLabel = m ? `ENDPOINT • ${m}` : 'ENDPOINT';
+      } else if (node.type === 'Database' || node.type === 'Table') {
+        accentColor = '#34d399';
+        typeLabel = 'TABLE (ERD)';
+      }
+
+      ctx.fillStyle = isSelected ? THEME.citrus : accentColor;
       ctx.beginPath();
       ctx.roundRect(x, y, 4, node.h, [r, 0, 0, r]);
       ctx.fill();
 
       // Type Badge
       ctx.font = '700 9px ui-monospace, monospace';
-      ctx.fillStyle = THEME.citrus;
-      ctx.fillText((node.type || 'COMPONENT').toUpperCase(), x + 14, y + 22);
+      ctx.fillStyle = isSelected ? THEME.citrus : accentColor;
+      ctx.fillText(typeLabel, x + 14, y + 22);
 
       // Name label
       ctx.font = '600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif';
       ctx.fillStyle = THEME.textPrimary;
       let displayName = node.name;
-      if (displayName.length > 20) {
-        displayName = displayName.substring(0, 18) + '...';
+      if (displayName.length > 22) {
+        displayName = displayName.substring(0, 20) + '...';
       }
       ctx.fillText(displayName, x + 14, y + 42);
 
-      // Sub-label (source file or category)
+      // Sub-label (source file, columns count, or summary)
       ctx.font = '10px ui-monospace, monospace';
       ctx.fillStyle = THEME.textSecondary;
-      let subText = node.sourceFile || node.category || '';
-      if (subText.length > 24) subText = subText.substring(0, 22) + '...';
+      let subText = '';
+      if (node.type === 'Database' || node.type === 'Table') {
+        subText = node.columns && node.columns.length ? `${node.columns.length} columns • ${node.modelName || 'Entity'}` : (node.sourceFile || 'Entity');
+      } else if (node.type === 'Endpoint') {
+        subText = node.summary || (node.headers && node.headers.length ? `${node.headers.length} headers` : (node.sourceFile || 'API Route'));
+      } else {
+        subText = node.sourceFile || node.category || '';
+      }
+      if (subText.length > 25) subText = subText.substring(0, 23) + '...';
       ctx.fillText(subText, x + 14, y + 58);
 
       ctx.restore();

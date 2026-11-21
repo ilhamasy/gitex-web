@@ -59,10 +59,74 @@
       </div>
 
       <div class="drawer-content">
-        <!-- Purpose / Description -->
-        <div>
-          <div class="drawer-section-title">Purpose & Function</div>
-          <p class="drawer-desc" id="drawer-desc">Description of the component or node.</p>
+        <!-- Endpoint Specification Panel (Shown when Endpoint node is selected) -->
+        <div id="drawer-endpoint-panel" class="drawer-specialized-panel" style="display: none;">
+          <div class="endpoint-header-badge-row">
+            <span class="method-tag method-tag-post" id="drawer-ep-method">POST</span>
+            <span class="endpoint-path-text" id="drawer-ep-path">/api/v1/resource</span>
+          </div>
+
+          <div class="drawer-section-block" id="drawer-ep-summary-block">
+            <div class="drawer-section-title">Endpoint Summary</div>
+            <p class="drawer-desc" id="drawer-ep-summary"></p>
+          </div>
+
+          <div class="drawer-section-block" id="drawer-ep-headers-block">
+            <div class="drawer-section-title">Request Headers</div>
+            <div id="drawer-ep-headers-list" class="endpoint-spec-box">
+              <!-- Dynamically populated headers -->
+            </div>
+          </div>
+
+          <div class="drawer-section-block" id="drawer-ep-body-block">
+            <div class="drawer-section-title">Request Body <span class="content-type-badge" id="drawer-ep-body-type">application/json</span></div>
+            <div id="drawer-ep-body-fields" class="endpoint-fields-table-container"></div>
+            <pre class="endpoint-code-box"><code id="drawer-ep-body-example"></code></pre>
+          </div>
+
+          <div class="drawer-section-block" id="drawer-ep-resp-block">
+            <div class="drawer-section-title">Response Specification</div>
+            <div class="endpoint-resp-header">
+              <span class="resp-status-badge" id="drawer-ep-resp-status">200 OK</span>
+            </div>
+            <div id="drawer-ep-resp-fields" class="endpoint-fields-table-container"></div>
+            <pre class="endpoint-code-box"><code id="drawer-ep-resp-example"></code></pre>
+          </div>
+        </div>
+
+        <!-- Database & ERD Panel (Shown when Database / Table node is selected) -->
+        <div id="drawer-database-panel" class="drawer-specialized-panel" style="display: none;">
+          <div class="db-header-row">
+            <span class="db-table-pill" id="drawer-db-table-pill">table: users</span>
+            <span class="db-model-pill" id="drawer-db-model-pill">entity: User</span>
+          </div>
+
+          <div class="drawer-section-block" id="drawer-db-desc-block">
+            <div class="drawer-section-title">Table Description</div>
+            <p class="drawer-desc" id="drawer-db-desc"></p>
+          </div>
+
+          <div class="drawer-section-block" id="drawer-db-columns-block">
+            <div class="drawer-section-title">Columns & Fields (<span id="drawer-db-col-count">0</span>)</div>
+            <div class="db-columns-table-wrapper" id="drawer-db-columns-wrapper">
+              <!-- Dynamically populated table -->
+            </div>
+          </div>
+
+          <div class="drawer-section-block" id="drawer-db-rel-block">
+            <div class="drawer-section-title">Entity Relationships (ERD)</div>
+            <div class="db-relationships-list" id="drawer-db-relationships-list">
+              <!-- Dynamically populated relationship cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Generic Component Details -->
+        <div id="drawer-generic-panel">
+          <div>
+            <div class="drawer-section-title">Purpose & Function</div>
+            <p class="drawer-desc" id="drawer-desc">Description of the component or node.</p>
+          </div>
         </div>
 
         <!-- Source File (if available) -->
@@ -72,7 +136,7 @@
         </div>
 
         <!-- Incoming Relationships -->
-        <div>
+        <div id="drawer-incoming-container">
           <div class="drawer-section-title">Incoming Relationships</div>
           <div class="relationship-list" id="drawer-incoming-list">
             <!-- Injected dynamically -->
@@ -80,7 +144,7 @@
         </div>
 
         <!-- Outgoing Relationships -->
-        <div>
+        <div id="drawer-outgoing-container">
           <div class="drawer-section-title">Outgoing Relationships</div>
           <div class="relationship-list" id="drawer-outgoing-list">
             <!-- Injected dynamically -->

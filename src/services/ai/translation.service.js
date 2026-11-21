@@ -106,6 +106,14 @@ ${JSON.stringify(analysis, null, 2)}`;
       };
     }
 
+    // Preserve specialized technical models across translation
+    if (original.endpoints || translated.endpoints) {
+      result.endpoints = translated.endpoints || original.endpoints;
+    }
+    if (original.database || translated.database) {
+      result.database = translated.database || original.database;
+    }
+
     return result;
   }
 

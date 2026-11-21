@@ -470,6 +470,395 @@ html.tab-graph-active #graph-explorer-workspace {
   font-weight: 500;
 }
 
+/* Specialized Drawer Panels (Endpoints & Database ERD) */
+.drawer-specialized-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.drawer-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* Endpoint Headers & Method Badges */
+.endpoint-header-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  background: #171916;
+  border: 1px solid #3a4038;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.method-tag {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.method-tag-post {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.method-tag-get {
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.method-tag-put,
+.method-tag-patch {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.method-tag-delete {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.endpoint-path-text {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem;
+  color: #f1f2ea;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.content-type-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  color: #a8aea2;
+  text-transform: none;
+  font-weight: normal;
+  margin-left: 0.375rem;
+}
+
+/* Endpoint Headers Box */
+.endpoint-spec-box {
+  background: #171916;
+  border: 1px solid #3a4038;
+  border-radius: 6px;
+  padding: 0.625rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+}
+
+.header-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  word-break: break-all;
+}
+
+.header-name {
+  color: #c7f36b;
+  font-weight: 600;
+}
+
+.header-val {
+  color: #f1f2ea;
+}
+
+.header-req {
+  font-size: 0.625rem;
+  color: #fbbf24;
+  padding: 1px 4px;
+  background: rgba(251, 191, 36, 0.12);
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+/* Fields Breakdown Table */
+.endpoint-fields-table-container {
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #3a4038;
+  background: #171916;
+  margin-bottom: 0.5rem;
+}
+
+.fields-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  text-align: left;
+}
+
+.fields-table th {
+  padding: 6px 10px;
+  background: #20231f;
+  color: #a8aea2;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-bottom: 1px solid #3a4038;
+}
+
+.fields-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(58, 64, 56, 0.4);
+  color: #f1f2ea;
+  vertical-align: top;
+}
+
+.fields-table tr:last-child td {
+  border-bottom: none;
+}
+
+.field-name-text {
+  font-family: var(--font-mono, monospace);
+  color: #c7f36b;
+  font-weight: 600;
+}
+
+.field-type-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  color: #38bdf8;
+}
+
+.field-req-badge {
+  font-size: 0.625rem;
+  color: #f87171;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+/* Code boxes for payload / response */
+.endpoint-code-box {
+  background: #121411;
+  border: 1px solid #2c3228;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0;
+  overflow-x: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #f1f2ea;
+  max-height: 220px;
+}
+
+.endpoint-code-box code {
+  font-family: inherit;
+  color: inherit;
+  white-space: pre;
+}
+
+.resp-status-badge {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  margin-bottom: 0.375rem;
+}
+
+/* Database / ERD Styling */
+.db-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.db-table-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #171916;
+  background: #c7f36b;
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+
+.db-model-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.db-columns-table-wrapper {
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #3a4038;
+  background: #171916;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.db-columns-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  text-align: left;
+}
+
+.db-columns-table th {
+  padding: 6px 10px;
+  background: #20231f;
+  color: #a8aea2;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-bottom: 1px solid #3a4038;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.db-columns-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(58, 64, 56, 0.4);
+  vertical-align: top;
+}
+
+.col-name-cell {
+  font-family: var(--font-mono, monospace);
+  color: #f1f2ea;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.key-badge {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.key-pk {
+  background: rgba(199, 243, 107, 0.25);
+  color: #c7f36b;
+  border: 1px solid rgba(199, 243, 107, 0.5);
+}
+
+.key-fk {
+  background: rgba(96, 165, 250, 0.25);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.5);
+}
+
+.col-type-cell code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  color: #38bdf8;
+}
+
+.col-constraint-cell {
+  color: #a8aea2;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.fk-target {
+  display: inline-block;
+  color: #60a5fa;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.constraint-tag {
+  display: inline-block;
+  color: #fbbf24;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.625rem;
+  padding: 1px 3px;
+  background: rgba(251, 191, 36, 0.15);
+  border-radius: 2px;
+  margin-right: 4px;
+}
+
+.col-desc {
+  margin-top: 2px;
+  color: #686d63;
+  font-size: 0.6875rem;
+}
+
+/* ERD Relationships list */
+.db-relationships-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.db-rel-card {
+  padding: 0.625rem 0.75rem;
+  border-radius: 6px;
+  background: #171916;
+  border: 1px solid #3a4038;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.db-rel-card:hover {
+  border-color: #c7f36b;
+  background: rgba(199, 243, 107, 0.04);
+}
+
+.db-rel-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rel-target-table {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: #f1f2ea;
+  font-size: 0.8125rem;
+}
+
+.rel-fk-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.6875rem;
+  color: #a8aea2;
+  background: #20231f;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+
+.db-rel-desc {
+  font-size: 0.75rem;
+  color: #a8aea2;
+}
+
 /* Mobile Views Modal Styles & Responsive Overrides */
 .graph-views-modal-backdrop {
   position: fixed;

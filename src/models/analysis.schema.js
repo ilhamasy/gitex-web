@@ -206,6 +206,17 @@ export function validateAndNormalizeAnalysis(rawAnalysis) {
     }
   }
 
+  // Preserve specialized technical data (endpoints, database schema & ERD)
+  if (rawAnalysis.endpoints) {
+    normalized.endpoints = rawAnalysis.endpoints;
+  }
+  if (rawAnalysis.database) {
+    normalized.database = rawAnalysis.database;
+  }
+  if (rawAnalysis.dataModel) {
+    normalized.dataModel = rawAnalysis.dataModel;
+  }
+
   return {
     valid: missingSections.length === 0,
     missingSections,
